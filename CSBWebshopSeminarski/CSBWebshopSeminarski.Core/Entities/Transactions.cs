@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CSBWebshopSeminarski.Core.Entities
+{
+    public class Transactions
+    {
+        [Key]
+        public int TransactionID { get; set; }
+        public int UserID { get; set; }
+        public Users User { get; set; }
+        public DateTime TransactionDate { get; set; }
+        public float Price { get; set; }
+        public string OrderNumber { get; set; }
+        public string Username { get; set; }
+        public int OrderID { get; set; }
+        public Orders Order { get; set; }
+    }
+}

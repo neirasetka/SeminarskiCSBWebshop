@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CSBWebshopSeminarski.Core.Entities
+{
+    public class Orders
+    {
+        public Orders()
+        {
+            OrderItems = new HashSet<OrderItems>();
+        }
+        [Key]
+        public int OrderID { get; set; }
+        public string OrderNumber { get; set; }
+        public DateTime Date { get; set; }
+        public float Price { get; set; }
+        public int UserID { get; set; }
+        public Users User { get; set; }
+        public ICollection<OrderItems> OrderItems { get; set; }
+    }
+}
