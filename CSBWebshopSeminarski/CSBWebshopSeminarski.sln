@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski", "CSBWebshopSeminarski\CSBWebshopSeminarski.csproj", "{8B593BAD-6CD6-4D92-9297-DB508BF5F1EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski.Core", "CSBWebshopSeminarski.Core\CSBWebshopSeminarski.Core.csproj", "{936AC7AE-0129-40C5-A39D-73EC8A421D0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski.Database", "CSBWebshopSeminarski.Database\CSBWebshopSeminarski.Database.csproj", "{2BB516BC-428B-49AC-A495-D898A8980D01}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSWebshopSeminarski.Model", "CBSWebshopSeminarski.Model\CBSWebshopSeminarski.Model.csproj", "{D11A7112-34A7-4458-AB5D-1B85F2040B87}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSWebshopSeminarski.Services", "CBSWebshopSeminarski.Services\CBSWebshopSeminarski.Services.csproj", "{52646BDC-649C-4FC4-838B-2A1C647DDF60}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8B593BAD-6CD6-4D92-9297-DB508BF5F1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B593BAD-6CD6-4D92-9297-DB508BF5F1EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B593BAD-6CD6-4D92-9297-DB508BF5F1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B593BAD-6CD6-4D92-9297-DB508BF5F1EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{936AC7AE-0129-40C5-A39D-73EC8A421D0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{936AC7AE-0129-40C5-A39D-73EC8A421D0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{936AC7AE-0129-40C5-A39D-73EC8A421D0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{936AC7AE-0129-40C5-A39D-73EC8A421D0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BB516BC-428B-49AC-A495-D898A8980D01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BB516BC-428B-49AC-A495-D898A8980D01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BB516BC-428B-49AC-A495-D898A8980D01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BB516BC-428B-49AC-A495-D898A8980D01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D11A7112-34A7-4458-AB5D-1B85F2040B87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D11A7112-34A7-4458-AB5D-1B85F2040B87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D11A7112-34A7-4458-AB5D-1B85F2040B87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D11A7112-34A7-4458-AB5D-1B85F2040B87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
