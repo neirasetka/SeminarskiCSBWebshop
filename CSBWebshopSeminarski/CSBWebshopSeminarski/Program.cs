@@ -72,7 +72,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
