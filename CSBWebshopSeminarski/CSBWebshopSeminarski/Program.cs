@@ -8,6 +8,7 @@ using CSBWebshopSeminarski.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using CSBWebshopSeminarski;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -60,6 +61,9 @@ builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 // Participants service registration
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
+// Shipping tracking service
+builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
+builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
 // Email service registration (values from configuration Smtp section)
 builder.Services.AddSingleton(provider =>

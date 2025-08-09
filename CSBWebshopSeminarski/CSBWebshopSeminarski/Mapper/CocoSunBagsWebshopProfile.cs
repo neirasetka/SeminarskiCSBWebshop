@@ -3,6 +3,8 @@ using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
 using Transaction = CBSWebshopSeminarski.Model.Models.Transaction;
+using ShippingStatusModel = CBSWebshopSeminarski.Model.Models.ShippingStatus;
+using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
 
 namespace CSBWebshopSeminarski.Mapper
 {
@@ -33,6 +35,15 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<Orders, Order>();
             CreateMap<Orders, OrderUpsertRequest>().ReverseMap();
+            CreateMap<TrackingEvents, TrackingEvent>().ReverseMap();
+            CreateMap<Orders, ShippingInfo>()
+                .ForMember(d => d.TrackingEvents, o => o.Ignore());
+
+            // Shipping mappings
+            CreateMap<ShippingStatusEntity, ShippingStatusModel>()
+                .ConvertUsing(src => (ShippingStatusModel)src);
+            CreateMap<ShippingStatusModel, ShippingStatusEntity>()
+                .ConvertUsing(src => (ShippingStatusEntity)src);
 
             CreateMap<OrderItems, OrderItem>().ReverseMap();
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();

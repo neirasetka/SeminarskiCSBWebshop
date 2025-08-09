@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -12,6 +12,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public Orders()
         {
             OrderItems = new HashSet<OrderItems>();
+            TrackingEvents = new HashSet<TrackingEvents>();
         }
         [Key]
         public int OrderID { get; set; }
@@ -21,5 +22,13 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int UserID { get; set; }
         public Users User { get; set; }
         public ICollection<OrderItems> OrderItems { get; set; }
+
+        // Shipping / tracking
+        public string? TrackingNumber { get; set; }
+        public string? CarrierCode { get; set; }
+        public ShippingStatus ShippingStatus { get; set; } = ShippingStatus.Pending;
+        public DateTime? LastStatusUpdate { get; set; }
+        public DateTime? EstimatedDeliveryDate { get; set; }
+        public ICollection<TrackingEvents> TrackingEvents { get; set; }
     }
 }
