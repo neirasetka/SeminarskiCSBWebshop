@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -12,6 +12,10 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class UsersService : CRUDService<User, UserSearchRequest, Users, UserUpsertRequest, UserUpsertRequest>, IUsersService
     {
+        private const int Pbkdf2IterCount = 100_000;
+        private const int Pbkdf2SaltSize = 16;
+        private const int Pbkdf2KeySize = 32;
+
         private readonly CocoSunBagsWebshopDbContext _context;
         private readonly IMapper _mapper;
         public UsersService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
@@ -172,23 +176,18 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public static string GenerateSalt()
         {
-            var buf = new byte[16];
-            new RNGCryptoServiceProvider().GetBytes(buf);
-            return Convert.ToBase64String(buf);
+            var saltBytes = RandomNumberGenerator.GetBytes(Pbkdf2SaltSize);
+            return Convert.ToBase64String(saltBytes);
         }
+
         public static string GenerateHash(string salt, string password)
         {
-            byte[] src = Convert.FromBase64String(salt);
-            byte[] bytes = Encoding.Unicode.GetBytes(password);
-            byte[] dst = new byte[src.Length + bytes.Length];
-
-            Buffer.BlockCopy(src, 0, dst, 0, src.Length);
-            Buffer.BlockCopy(bytes, 0, dst, src.Length, bytes.Length);
-
-            HashAlgorithm algorithm = HashAlgorithm.Create("SHA1");
-            byte[] inArray = algorithm.ComputeHash(dst);
-            return Convert.ToBase64String(inArray);
+            var saltBytes = Convert.FromBase64String(salt);
+            using var deriveBytes = new Rfc2898DeriveBytes(password, saltBytes, Pbkdf2IterCount, HashAlgorithmName.SHA256);
+            var key = deriveBytes.GetBytes(Pbkdf2KeySize);
+            return Convert.ToBase64String(key);
         }
+
         public async Task<User> Authenticate(UserAuthenticationRequest request)
         {
             var user = await _context.Users
