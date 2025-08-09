@@ -1,4 +1,4 @@
-﻿using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CSBWebshopSeminarski.Database
@@ -26,5 +26,6 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<Participants> Participants { get; set; }
         public DbSet<Giveaways> Giveaways { get; set; }
         public DbSet<Subscribers> Subscribers { get; set; }
+        public DbSet<TrackingEvents> TrackingEvents { get; set; }
     }
 }
