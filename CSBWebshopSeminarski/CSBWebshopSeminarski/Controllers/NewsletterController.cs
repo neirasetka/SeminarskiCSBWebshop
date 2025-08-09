@@ -1,4 +1,4 @@
-﻿using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +11,10 @@ namespace CSBWebshopSeminarski.Controllers
     {
         private readonly CocoSunBagsWebshopDbContext _context;
 
+        public NewsletterController(CocoSunBagsWebshopDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpPost("subscribe")]
         public async Task<IActionResult> Subscribe([FromBody] Subscribers subscriber)

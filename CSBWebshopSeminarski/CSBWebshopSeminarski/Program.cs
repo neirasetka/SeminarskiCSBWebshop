@@ -49,8 +49,8 @@ builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddTransient<IBagsService, BagsService>();
 builder.Services.AddTransient<IBeltsService, BeltsService>();
 builder.Services.AddTransient<IBaseService<Role, object>, RolesService>();
-//builder.Services.AddTransient<ICRUDService<Transaction, TransactionSearchRequest, TransactionUpsertRequest, TransactionUpsertRequest>, TransactionsService>();
-builder.Services.AddScoped<TransactionsService>();
+// Correct registration for Transactions generic service
+builder.Services.AddTransient<ICRUDService<Transaction, TransactionSearchRequest, TransactionUpsertRequest, TransactionUpsertRequest>, TransactionsService>();
 builder.Services.AddTransient<ICRUDService<Favorite, FavoriteSearchRequest, FavoriteUpsertRequest, FavoriteUpsertRequest>, FavoritesService>();
 builder.Services.AddTransient<IReviewsService, ReviewsService>();
 builder.Services.AddTransient<ICRUDService<Purchase, PurchaseSearchRequest, PurchaseUpsertRequest, PurchaseUpsertRequest>, PurchasesService>();
@@ -58,6 +58,18 @@ builder.Services.AddTransient<IOrderService, OrdersService>();
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
+// Participants service registration
+builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
+
+// Email service registration (values from configuration Smtp section)
+builder.Services.AddSingleton(provider =>
+    new EmailService(
+        builder.Configuration["Smtp:Host"] ?? "",
+        int.TryParse(builder.Configuration["Smtp:Port"], out var port) ? port : 587,
+        builder.Configuration["Smtp:User"] ?? "",
+        builder.Configuration["Smtp:Pass"] ?? ""
+    )
+);
 
 builder.Services.AddAuthentication("BasicAuthentication").AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 var app = builder.Build();

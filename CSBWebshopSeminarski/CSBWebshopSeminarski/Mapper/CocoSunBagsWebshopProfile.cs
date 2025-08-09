@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
@@ -18,8 +18,12 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<BeltTypes, BeltTypeSearchRequest>().ReverseMap();
             CreateMap<BeltTypes, BeltTypeUpsertRequest>().ReverseMap();
 
-            CreateMap<Users, User>();
+            CreateMap<Users, User>()
+                .ForMember(d => d.UserRole, o => o.MapFrom(s => s.UserRoles));
             CreateMap<Users, UserUpsertRequest>().ReverseMap();
+
+            CreateMap<UserRoles, UserRole>()
+                .ForMember(d => d.Role, o => o.MapFrom(s => s.Roles));
 
             CreateMap<Bags, Bag>().ReverseMap();
             CreateMap<Bags, BagUpsertRequest>().ReverseMap();
@@ -34,10 +38,6 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();
 
             CreateMap<Roles, Role>();
-            CreateMap<UserRoles, UserRole>();
-
-            CreateMap<Roles, Role>();
-            CreateMap<UserRoles, UserRole>();
 
             CreateMap<Transactions, Transaction>();
             CreateMap<Transactions, TransactionUpsertRequest>().ReverseMap();

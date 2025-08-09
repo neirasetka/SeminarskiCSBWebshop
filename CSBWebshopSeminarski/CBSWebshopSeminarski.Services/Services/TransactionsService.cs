@@ -1,10 +1,10 @@
-﻿using AutoMapper;
+using AutoMapper;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
-using System.Transactions;
 
 namespace CBSWebshopSeminarski.Services.Services
 {

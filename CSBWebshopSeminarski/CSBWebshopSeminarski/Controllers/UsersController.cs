@@ -1,9 +1,7 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
@@ -25,6 +23,12 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("Login")]
+        public async Task<User> Login(UserAuthenticationRequest request)
+        {
+            return await _service.Authenticate(request);
+        }
+
+        [HttpPost("Register")]
         public async Task<User> Register(UserUpsertRequest request)
         {
             return await _service.Insert(request);
