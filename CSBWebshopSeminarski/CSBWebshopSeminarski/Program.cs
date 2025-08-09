@@ -23,13 +23,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CocoSunBagsWebshop API", Version = "v1" });
-    c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "basic",
-        In = ParameterLocation.Header
-    });
     c.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme",
@@ -48,17 +41,6 @@ builder.Services.AddSwaggerGen(c =>
                {
                    Type=ReferenceType.SecurityScheme,
                    Id="bearer"
-               }
-           },
-           new string[]{}
-       },
-       {
-           new OpenApiSecurityScheme
-           {
-               Reference=new OpenApiReference
-               {
-                   Type=ReferenceType.SecurityScheme,
-                   Id="basic"
                }
            },
            new string[]{}
@@ -100,7 +82,7 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
-// Authentication: default to JWT, keep Basic scheme available
+// Authentication: JWT only
 var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;
 var jwtIssuer = builder.Configuration["JWTSettings:Issuer"] ?? string.Empty;
 var jwtAudience = builder.Configuration["JWTSettings:Audience"] ?? string.Empty;
@@ -120,8 +102,7 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
-})
-.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+});
 
 var app = builder.Build();
 //// Configure the HTTP request pipeline.
