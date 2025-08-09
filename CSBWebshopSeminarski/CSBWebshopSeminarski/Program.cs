@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using CSBWebshopSeminarski;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -27,8 +30,28 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "basic",
         In = ParameterLocation.Header
     });
+    c.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
    {
+       {
+           new OpenApiSecurityScheme
+           {
+               Reference=new OpenApiReference
+               {
+                   Type=ReferenceType.SecurityScheme,
+                   Id="bearer"
+               }
+           },
+           new string[]{}
+       },
        {
            new OpenApiSecurityScheme
            {
@@ -63,6 +86,8 @@ builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
 // Shipping tracking service
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
+// JWT token generator
+builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
 // Email service registration (values from configuration Smtp section)
@@ -75,7 +100,29 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
-builder.Services.AddAuthentication("BasicAuthentication").AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+// Authentication: default to JWT, keep Basic scheme available
+var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;
+var jwtIssuer = builder.Configuration["JWTSettings:Issuer"] ?? string.Empty;
+var jwtAudience = builder.Configuration["JWTSettings:Audience"] ?? string.Empty;
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+})
+.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
 var app = builder.Build();
 //// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
