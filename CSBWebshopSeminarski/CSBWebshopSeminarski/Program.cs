@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using CSBWebshopSeminarski;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -20,12 +23,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CocoSunBagsWebshop API", Version = "v1" });
-    c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
+    c.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
     {
+        Description = "JWT Authorization header using the Bearer scheme",
         Name = "Authorization",
+        In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "basic",
-        In = ParameterLocation.Header
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
    {
@@ -35,7 +40,7 @@ builder.Services.AddSwaggerGen(c =>
                Reference=new OpenApiReference
                {
                    Type=ReferenceType.SecurityScheme,
-                   Id="basic"
+                   Id="bearer"
                }
            },
            new string[]{}
@@ -63,6 +68,8 @@ builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
 // Shipping tracking service
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
+// JWT token generator
+builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
 // Email service registration (values from configuration Smtp section)
@@ -75,7 +82,28 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
-builder.Services.AddAuthentication("BasicAuthentication").AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+// Authentication: JWT only
+var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;
+var jwtIssuer = builder.Configuration["JWTSettings:Issuer"] ?? string.Empty;
+var jwtAudience = builder.Configuration["JWTSettings:Audience"] ?? string.Empty;
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
 var app = builder.Build();
 //// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
