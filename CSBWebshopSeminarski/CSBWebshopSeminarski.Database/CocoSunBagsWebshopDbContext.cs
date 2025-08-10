@@ -27,5 +27,24 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<Giveaways> Giveaways { get; set; }
         public DbSet<Subscribers> Subscribers { get; set; }
         public DbSet<TrackingEvents> TrackingEvents { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Participants>()
+                .HasOne(p => p.Giveaway)
+                .WithMany(g => g.Participants)
+                .HasForeignKey(p => p.GiveawayId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Giveaways>()
+                .HasOne(g => g.WinnerParticipant)
+                .WithMany()
+                .HasForeignKey(g => g.WinnerParticipantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Participants>()
+                .HasIndex(p => new { p.GiveawayId, p.Email })
+                .IsUnique();
+        }
     }
 }

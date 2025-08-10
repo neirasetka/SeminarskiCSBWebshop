@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +12,9 @@ namespace CSBWebshopSeminarski.Core.Entities
         public string Title { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public bool IsClosed { get; set; }
+        public int? WinnerParticipantId { get; set; }
+        public Participants? WinnerParticipant { get; set; }
+        public ICollection<Participants> Participants { get; set; } = new List<Participants>();
     }
 }
