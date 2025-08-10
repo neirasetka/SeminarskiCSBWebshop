@@ -6,5 +6,6 @@ namespace CBSWebshopSeminarski.Services.Interfaces
     {
         Task<Participants> AddAsync(Participants participant);
         Task<Participants?> GetRandomWinnerAsync();
+        Task<Participants?> GetRandomWinnerAsync(int giveawayId);
     }
 }

@@ -22,7 +22,18 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Participants?> GetRandomWinnerAsync()
         {
+            // Kept for backward compatibility; not meaningful without giveaway context
             var participants = await _context.Participants.ToListAsync();
+            if (participants.Count == 0) return null;
+            var random = new Random();
+            return participants[random.Next(participants.Count)];
+        }
+
+        public async Task<Participants?> GetRandomWinnerAsync(int giveawayId)
+        {
+            var participants = await _context.Participants
+                .Where(p => p.GiveawayId == giveawayId)
+                .ToListAsync();
             if (participants.Count == 0) return null;
             var random = new Random();
             return participants[random.Next(participants.Count)];
