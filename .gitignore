@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Local .NET SDK install (keep environment artifacts out of repo)
+.dotnet/
