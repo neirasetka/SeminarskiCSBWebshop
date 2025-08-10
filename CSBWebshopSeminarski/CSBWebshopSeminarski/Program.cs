@@ -64,11 +64,13 @@ builder.Services.AddTransient<IOrderService, OrdersService>();
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
-// Participants service registration
-builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
-// Shipping tracking service
-builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
-// JWT token generator
+        // Participants service registration
+        builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
+        // Shipping tracking service
+        builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
+        // Reports service registration
+        builder.Services.AddTransient<IReportsService, ReportsService>();
+        // JWT token generator
 builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
