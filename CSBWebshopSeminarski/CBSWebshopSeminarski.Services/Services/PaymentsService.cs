@@ -36,6 +36,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
+            // mark order as paid
+            order.PaymentStatus = PaymentStatus.Paid;
+
             var purchase = new Purchases
             {
                 OrderID = order.OrderID,
@@ -53,7 +56,16 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task HandlePaymentFailedAsync(string paymentIntentId, IDictionary<string, string> metadata, string failureMessage)
         {
-            // For now just no-op; could log failure or mark order as payment_failed if that field exists
+            var orderId = metadata.TryGetValue("order_id", out var idStr) && int.TryParse(idStr, out var id) ? id : 0;
+            if (orderId != 0)
+            {
+                var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
+                if (order != null)
+                {
+                    order.PaymentStatus = PaymentStatus.Failed;
+                    await _db.SaveChangesAsync();
+                }
+            }
             await Task.CompletedTask;
         }
     }

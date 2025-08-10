@@ -20,6 +20,16 @@ namespace CSBWebshopSeminarski.Controllers
             _db = db;
         }
 
+        /// <summary>
+        /// Create Stripe PaymentIntent for a given Order.
+        /// </summary>
+        /// <remarks>
+        /// Returns a client_secret used by the client to complete the payment.
+        /// </remarks>
+        /// <response code="200">Returns client secret and intent id</response>
+        /// <response code="404">Order not found</response>
+        [ProducesResponseType(typeof(CreatePaymentIntentResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost("create-payment-intent")]
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult<CreatePaymentIntentResponse>> CreatePaymentIntent([FromBody] CreatePaymentIntentRequest request)
