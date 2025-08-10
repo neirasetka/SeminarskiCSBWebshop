@@ -12,6 +12,7 @@ using CSBWebshopSeminarski;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -74,6 +75,9 @@ builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
+// Payments
+builder.Services.AddTransient<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService, CBSWebshopSeminarski.Services.Services.PaymentsService>();
+
 // Email service registration (values from configuration Smtp section)
 builder.Services.AddSingleton(provider =>
     new EmailService(
@@ -106,6 +110,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Stripe configuration
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"] ?? string.Empty;
+
 var app = builder.Build();
 //// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -124,5 +131,38 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Stripe recommends verifying webhook signatures using the endpoint secret from configuration
+var stripeWebhookSecret = builder.Configuration["Stripe:WebhookSecret"] ?? string.Empty;
+app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider sp, ILoggerFactory loggerFactory) =>
+{
+    var logger = loggerFactory.CreateLogger("StripeWebhook");
+    var json = await new StreamReader(request.Body).ReadToEndAsync();
+    try
+    {
+        var signatureHeader = request.Headers["Stripe-Signature"].ToString();
+        var stripeEvent = EventUtility.ConstructEvent(json, signatureHeader, stripeWebhookSecret);
+
+        if (stripeEvent.Type == "payment_intent.succeeded")
+        {
+            var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
+            var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
+            await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, paymentIntent.Metadata);
+        }
+        else if (stripeEvent.Type == "payment_intent.payment_failed")
+        {
+            var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
+            var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
+            await paymentsService.HandlePaymentFailedAsync(paymentIntent.Id, paymentIntent.Metadata, paymentIntent.LastPaymentError?.Message ?? "");
+        }
+        return Results.Ok();
+    }
+    catch (StripeException e)
+    {
+        logger.LogError(e, "Stripe webhook error: {Message}", e.Message);
+        return Results.BadRequest();
+    }
+});
+
 app.MapControllers();
 app.Run();

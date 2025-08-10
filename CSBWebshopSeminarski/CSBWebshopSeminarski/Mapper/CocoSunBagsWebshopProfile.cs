@@ -33,7 +33,8 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<Belts, Belt>().ReverseMap();
             CreateMap<Belts, BeltUpsertRequest>().ReverseMap();
 
-            CreateMap<Orders, Order>();
+            CreateMap<Orders, Order>()
+                .ForMember(d => d.PaymentStatus, o => o.MapFrom(s => s.PaymentStatus.ToString()));
             CreateMap<Orders, OrderUpsertRequest>().ReverseMap();
             CreateMap<TrackingEvents, TrackingEvent>().ReverseMap();
             CreateMap<Orders, ShippingInfo>()

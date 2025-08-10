@@ -23,6 +23,9 @@ namespace CSBWebshopSeminarski.Core.Entities
         public Users User { get; set; }
         public ICollection<OrderItems> OrderItems { get; set; }
 
+        // Payment
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+ 
         // Shipping / tracking
         public string? TrackingNumber { get; set; }
         public string? CarrierCode { get; set; }

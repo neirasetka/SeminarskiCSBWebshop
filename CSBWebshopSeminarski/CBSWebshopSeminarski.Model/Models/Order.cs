@@ -22,5 +22,8 @@ namespace CBSWebshopSeminarski.Model.Models
         public ShippingStatus ShippingStatus { get; set; }
         public DateTime? LastStatusUpdate { get; set; }
         public DateTime? EstimatedDeliveryDate { get; set; }
+
+        // Payment projection
+        public string? PaymentStatus { get; set; }
     }
 }
