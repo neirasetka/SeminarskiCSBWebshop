@@ -3,6 +3,8 @@ using System.Linq;
 using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using CBSWebshopSeminarski.Model.Requests;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -19,9 +21,8 @@ namespace CSBWebshopSeminarski.Controllers
             _context = context;
         }
 
-        public record CreateGiveawayRequest(string Title, DateTime StartDate, DateTime EndDate);
-
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateGiveawayRequest request)
         {
             var created = await _giveawaysService.CreateGiveawayAsync(request.Title, request.StartDate, request.EndDate);
@@ -29,6 +30,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(int id)
         {
             var giveaway = await _context.Giveaways.FindAsync(id);
@@ -37,10 +39,20 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("{id:int}/participants")]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetParticipants(int id)
         {
             var participants = _context.Participants.Where(p => p.GiveawayId == id).ToList();
             return Ok(participants);
+        }
+
+        [HttpPost("{id:int}/draw")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Draw(int id)
+        {
+            var winner = await _giveawaysService.DrawAndPersistWinnerAsync(id);
+            if (winner == null) return NotFound("No participants or giveaway closed without a winner");
+            return Ok(winner);
         }
     }
 }

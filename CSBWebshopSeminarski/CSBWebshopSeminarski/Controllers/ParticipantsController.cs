@@ -4,6 +4,8 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using CBSWebshopSeminarski.Model.Requests;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -24,6 +26,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("participant")]
+        [Authorize(Roles = "Admin")] // legacy insert without validation
         public async Task<IActionResult> AddParticipant(Participants participant)
         {
             var created = await _service.AddAsync(participant);
@@ -31,19 +34,22 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("{giveawayId:int}/participants")]
-        public async Task<IActionResult> RegisterParticipant(int giveawayId, [FromBody] Participants participant)
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterParticipant(int giveawayId, [FromBody] RegisterParticipantRequest request)
         {
-            var created = await _giveawaysService.RegisterParticipantAsync(giveawayId, participant.Name ?? string.Empty, participant.Email ?? string.Empty);
+            var created = await _giveawaysService.RegisterParticipantAsync(giveawayId, request.Name, request.Email);
             return Ok(created);
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")] // ambiguous without giveaway; restrict usage
         public async Task<Participants?> SelectRandomWinner()
         {
             return await _service.GetRandomWinnerAsync();
         }
 
         [HttpPost("{giveawayId:int}/draw")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DrawWinner(int giveawayId)
         {
             var winner = await _giveawaysService.DrawAndPersistWinnerAsync(giveawayId);
@@ -52,6 +58,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("winner")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinner([FromBody] Participants winner)
         {
             if (string.IsNullOrWhiteSpace(winner?.Email)) return BadRequest("Email is required");
@@ -65,6 +72,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("{giveawayId:int}/notify-winner")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinnerForGiveaway(int giveawayId)
         {
             var giveaway = await _context.Giveaways.FindAsync(giveawayId);
