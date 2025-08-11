@@ -28,6 +28,7 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<Subscribers> Subscribers { get; set; }
         public DbSet<TrackingEvents> TrackingEvents { get; set; }
         public DbSet<AnnouncementAudit> AnnouncementAudits { get; set; }
+        public DbSet<LookbookItems> LookbookItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +51,18 @@ namespace CSBWebshopSeminarski.Database
             modelBuilder.Entity<Giveaways>()
                 .Property(g => g.RowVersion)
                 .IsRowVersion();
+
+            modelBuilder.Entity<LookbookItems>()
+                .HasOne(li => li.Bag)
+                .WithMany()
+                .HasForeignKey(li => li.BagID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<LookbookItems>()
+                .HasOne(li => li.Belt)
+                .WithMany()
+                .HasForeignKey(li => li.BeltID)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -65,6 +65,9 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<Favorites, Favorite>();
             CreateMap<Favorites, FavoriteUpsertRequest>().ReverseMap();
+
+            CreateMap<LookbookItems, LookbookItem>().ReverseMap();
+            CreateMap<LookbookItems, LookbookUpsertRequest>().ReverseMap();
         }
     }
 }
