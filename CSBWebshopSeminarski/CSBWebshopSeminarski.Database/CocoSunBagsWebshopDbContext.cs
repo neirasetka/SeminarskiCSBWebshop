@@ -29,6 +29,7 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<TrackingEvents> TrackingEvents { get; set; }
         public DbSet<AnnouncementAudit> AnnouncementAudits { get; set; }
         public DbSet<LookbookItems> LookbookItems { get; set; }
+        public DbSet<NewsItem> News { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

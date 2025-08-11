@@ -4,6 +4,8 @@ using CBSWebshopSeminarski.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using CSBWebshopSeminarski.Database;
+using CSBWebshopSeminarski.Core.Entities;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -17,17 +19,20 @@ namespace CSBWebshopSeminarski.Controllers
         private readonly ITemplateRenderer _templateRenderer;
         private readonly AnnouncementAuditService _auditService;
         private readonly ILogger<AnnouncementsController> _logger;
+        private readonly CocoSunBagsWebshopDbContext _db;
 
         public AnnouncementsController(
             NotificationsService notificationService,
             ITemplateRenderer templateRenderer,
             AnnouncementAuditService auditService,
-            ILogger<AnnouncementsController> logger)
+            ILogger<AnnouncementsController> logger,
+            CocoSunBagsWebshopDbContext db)
         {
             _notificationService = notificationService;
             _templateRenderer = templateRenderer;
             _auditService = auditService;
             _logger = logger;
+            _db = db;
         }
 
         [HttpPost("giveaway")]
@@ -64,6 +69,8 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 return Problem(detail: error, statusCode: 500);
             }
+
+            await PersistNewsAsync(subject, body, request, AnnouncementSegment.GiveawaySubscribers);
             return Ok(new { sent });
         }
 
@@ -101,7 +108,27 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 return Problem(detail: error, statusCode: 500);
             }
+
+            await PersistNewsAsync(subject, body, request, AnnouncementSegment.NewCollectionSubscribers);
             return Ok(new { sent });
+        }
+
+        private async Task PersistNewsAsync(string subject, string body, AnnouncementRequest request, AnnouncementSegment segment)
+        {
+            var item = new NewsItem
+            {
+                PublishedAtUtc = DateTime.UtcNow,
+                Title = subject,
+                Body = body,
+                Segment = segment.ToString(),
+                LaunchDate = request.LaunchDate,
+                ProductName = request.ProductName,
+                Price = request.Price,
+                Color = request.Color,
+                CreatedBy = User?.Identity?.Name
+            };
+            _db.News.Add(item);
+            await _db.SaveChangesAsync();
         }
     }
 }
