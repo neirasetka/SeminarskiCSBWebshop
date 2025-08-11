@@ -15,6 +15,8 @@ using System.Text;
 using Stripe;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using Microsoft.Extensions.DependencyInjection;
+using CSBWebshopSeminarski.Core.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -197,4 +199,82 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
 });
 
 app.MapControllers();
+
+// Seed roles and default admin user on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<CocoSunBagsWebshopDbContext>();
+        var config = services.GetRequiredService<IConfiguration>();
+
+        // Apply migrations
+        await context.Database.MigrateAsync();
+
+        // Ensure roles
+        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
+        if (adminRole == null)
+        {
+            adminRole = new Roles { RoleName = "Admin" };
+            await context.Roles.AddAsync(adminRole);
+            await context.SaveChangesAsync();
+        }
+        var buyerRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Buyer");
+        if (buyerRole == null)
+        {
+            buyerRole = new Roles { RoleName = "Buyer" };
+            await context.Roles.AddAsync(buyerRole);
+            await context.SaveChangesAsync();
+        }
+
+        // Ensure admin user
+        var adminSeedSection = config.GetSection("AdminSeed");
+        var adminUserName = adminSeedSection["UserName"] ?? "admin";
+        var adminEmail = adminSeedSection["Email"] ?? "admin@example.com";
+        var adminPassword = adminSeedSection["Password"] ?? "Admin123!";
+
+        var adminUser = await context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Roles)
+            .FirstOrDefaultAsync(u => u.UserName == adminUserName);
+
+        if (adminUser == null)
+        {
+            var salt = UsersService.GenerateSalt();
+            var hash = UsersService.GenerateHash(salt, adminPassword);
+            adminUser = new Users
+            {
+                Name = "System",
+                Surname = "Administrator",
+                Email = adminEmail,
+                Phone = "",
+                UserName = adminUserName,
+                PasswordSalt = salt,
+                PasswordHash = hash,
+                Image = Array.Empty<byte>()
+            };
+            await context.Users.AddAsync(adminUser);
+            await context.SaveChangesAsync();
+        }
+
+        // Ensure Admin role assignment
+        var hasAdminRole = await context.UserRoles.AnyAsync(ur => ur.UserID == adminUser.UserID && ur.RolesID == adminRole.RoleID);
+        if (!hasAdminRole)
+        {
+            await context.UserRoles.AddAsync(new UserRoles
+            {
+                UserID = adminUser.UserID,
+                RolesID = adminRole.RoleID
+            });
+            await context.SaveChangesAsync();
+        }
+    }
+    catch (Exception seedingEx)
+    {
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("StartupSeeding");
+        logger.LogError(seedingEx, "Error during startup seeding");
+    }
+}
+
 app.Run();
