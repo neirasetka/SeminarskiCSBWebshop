@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113 d17.12
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSWebshopSeminarski.Model", "CBSWebshopSeminarski.Model\CBSWebshopSeminarski.Model.csproj", "{D11A7112-34A7-4458-AB5D-1B85F2040B87}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSWebshopSeminarski.Services", "CBSWebshopSeminarski.Services\CBSWebshopSeminarski.Services.csproj", "{52646BDC-649C-4FC4-838B-2A1C647DDF60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski.Notifications", "CSBWebshopSeminarski.Notifications\CSBWebshopSeminarski.Notifications.csproj", "{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52646BDC-649C-4FC4-838B-2A1C647DDF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
