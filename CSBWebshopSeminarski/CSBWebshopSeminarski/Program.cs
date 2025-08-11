@@ -116,6 +116,9 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
+// Register Lookbook service
+builder.Services.AddTransient<ILookbookService, LookbookService>();
+
 // Authentication: JWT only
 var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;
 var jwtIssuer = builder.Configuration["JWTSettings:Issuer"] ?? string.Empty;
