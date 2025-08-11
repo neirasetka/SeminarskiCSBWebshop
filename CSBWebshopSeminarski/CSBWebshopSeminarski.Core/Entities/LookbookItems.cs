@@ -19,5 +19,9 @@ namespace CSBWebshopSeminarski.Core.Entities
 
         public int? BeltID { get; set; }
         public Belts? Belt { get; set; }
+
+        public OccasionType? Occasion { get; set; }
+        public StyleType? Style { get; set; }
+        public SeasonType? Season { get; set; }
     }
 }
