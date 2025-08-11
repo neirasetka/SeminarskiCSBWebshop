@@ -85,6 +85,15 @@ builder.Services.AddTransient<ICRUDService<Favorite, FavoriteSearchRequest, Favo
 builder.Services.AddTransient<IReviewsService, ReviewsService>();
 builder.Services.AddTransient<ICRUDService<Purchase, PurchaseSearchRequest, PurchaseUpsertRequest, PurchaseUpsertRequest>, PurchasesService>();
 builder.Services.AddTransient<IOrderService, OrdersService>();
+
+// RabbitMQ publisher for domain events
+builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.IEventPublisher>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var host = configuration["RabbitMQ:HostName"] ?? "localhost";
+    var exchange = configuration["RabbitMQ:Exchange"] ?? "webshop.events";
+    return new CBSWebshopSeminarski.Services.Services.RabbitMqEventPublisher(host, exchange);
+});
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();

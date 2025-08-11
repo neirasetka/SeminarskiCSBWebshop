@@ -13,11 +13,13 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private readonly CocoSunBagsWebshopDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IEventPublisher _eventPublisher;
 
-        public OrdersService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
+        public OrdersService(CocoSunBagsWebshopDbContext context, IMapper mapper, IEventPublisher eventPublisher) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
+            _eventPublisher = eventPublisher;
         }
 
         public override async Task<List<Order>> Get(OrderSearchRequest request)
@@ -58,7 +60,27 @@ namespace CBSWebshopSeminarski.Services.Services
             _context.Set<Orders>().Add(entity);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<Order>(entity);
+            var result = _mapper.Map<Order>(entity);
+
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == entity.UserID);
+                var evt = new CBSWebshopSeminarski.Model.Events.OrderCreatedEvent
+                {
+                    OrderID = entity.OrderID,
+                    OrderNumber = entity.OrderNumber,
+                    UserID = entity.UserID,
+                    UserEmail = user?.Email,
+                    Amount = (decimal)entity.Price,
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+                await _eventPublisher.PublishAsync("orders.created", evt);
+            }
+            catch
+            {
+            }
+
+            return result;
         }
 
         public override async Task<Order> Update(int ID, OrderUpsertRequest request)
