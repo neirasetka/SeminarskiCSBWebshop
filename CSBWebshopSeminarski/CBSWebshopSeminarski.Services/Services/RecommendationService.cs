@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
@@ -16,194 +16,127 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public async Task<List<Belt>> GetRecommendedBelts(int UserID)
+
+        public async Task<List<Belt>> GetRecommendedBelts(int UserID, int take = 3)
         {
-            try
+            if (UserID <= 0)
             {
-                if (UserID == 0)
-                {
-                    throw new Exception();
-                }
-                List<Rates> userRates = await _context.Rates.Where(x => x.UserID == UserID)
-                    .Include(x => x.User)
-                    .Include(x => x.Belt)
-                    .Include(x => x.Belt.BeltType)
-                    .Include(x => x.Belt.User)
+                return new List<Belt>();
+            }
+
+            var favoriteBeltTypeIds = await _context.Favorites
+                .Where(f => f.UserID == UserID && f.BeltID != 0)
+                .Include(f => f.Belt)
+                .Select(f => f.Belt.BeltTypeID)
+                .Distinct()
+                .ToListAsync();
+
+            if (favoriteBeltTypeIds.Count == 0)
+            {
+                var ratedTypes = await _context.Rates
+                    .Where(r => r.UserID == UserID && r.BeltID != 0 && r.Rating >= 3)
+                    .Include(r => r.Belt)
+                    .Select(r => r.Belt.BeltTypeID)
+                    .Distinct()
                     .ToListAsync();
-
-                List<Rates> bestRatedBelt = userRates
-                    .Where(x => x.Rating >= 3)
-                    .ToList();
-                if (bestRatedBelt.Count > 0)
-                {
-                    List<BeltTypes> beltType = new List<BeltTypes>();
-
-                    foreach (var beltTypes in bestRatedBelt)
-                    {
-                        var beltBeltsType = await _context.Belts.Where(m => m.BeltTypeID == beltTypes.Belt.BeltTypeID)
-                           .Select(s => s.BeltType)
-                           .ToListAsync();
-
-                        foreach (var x in beltBeltsType)
-                        {
-                            bool add = true;
-                            for (int i = 0; i < beltType.Count; i++)
-                            {
-                                if (x.BeltName == beltType[i].BeltName)
-                                {
-                                    add = false;
-                                }
-                            }
-                            if (add)
-                            {
-                                beltType.Add(x);
-                            }
-                        }
-                    }
-
-
-                    List<Belts> final = new List<Belts>();
-                    var userBoughtBelts = await _context.Purchases.Where(k => k.UserID == UserID).Include(k => k.Order).ThenInclude(n => n.OrderItems).ToListAsync();
-                    foreach (var item in beltType)
-                    {
-                        var beltsListBelts = await _context.Belts
-                            .Where(s => s.BeltTypeID == item.BeltTypeID)
-                            .Include(i => i.User)
-                            .ToListAsync();
-
-                        foreach (var belt in beltsListBelts)
-                        {
-                            bool add = true;
-                            var ifExists = userBoughtBelts.Where(m => m.Order.OrderItems.Any(ns => ns.BeltID == belt.BeltID)).Any();
-                            if (ifExists == false)
-                            {
-                                for (int i = 0; i < final.Count; i++)
-                                {
-                                    if (belt.BeltName == final[i].BeltName)
-                                    {
-                                        add = false;
-                                    }
-                                }
-                                foreach (var rate in userRates)
-                                {
-                                    if (belt.BeltName == rate.Belt.BeltName)
-                                    {
-                                        add = false;
-                                    }
-                                }
-                                if (add)
-                                {
-                                    final.Add(belt);
-                                }
-                            }
-                        }
-                    }
-
-                    final = final.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
-
-                    return _mapper.Map<List<Belt>>(final);
-                }
-                throw new Exception();
+                favoriteBeltTypeIds = ratedTypes;
             }
-            catch (Exception ex)
+
+            if (favoriteBeltTypeIds.Count == 0)
             {
-                return _mapper.Map<List<Belt>>(null);
+                return new List<Belt>();
             }
+
+            var purchasedBeltIds = await _context.Purchases
+                .Where(p => p.UserID == UserID)
+                .Include(p => p.Order)
+                .ThenInclude(o => o.OrderItems)
+                .SelectMany(p => p.Order.OrderItems)
+                .Where(oi => oi.BeltID > 0)
+                .Select(oi => oi.BeltID)
+                .Distinct()
+                .ToListAsync();
+
+            var favoritedBeltIds = await _context.Favorites
+                .Where(f => f.UserID == UserID && f.BeltID != 0)
+                .Select(f => f.BeltID)
+                .Distinct()
+                .ToListAsync();
+
+            var candidateBelts = await _context.Belts
+                .Where(b => favoriteBeltTypeIds.Contains(b.BeltTypeID)
+                            && !purchasedBeltIds.Contains(b.BeltID)
+                            && !favoritedBeltIds.Contains(b.BeltID))
+                .Include(b => b.User)
+                .ToListAsync();
+
+            var selected = candidateBelts
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(Math.Max(1, take))
+                .ToList();
+
+            return _mapper.Map<List<Belt>>(selected);
         }
 
-        public async Task<List<Bag>> GetRecommendedBags(int UserID)
+        public async Task<List<Bag>> GetRecommendedBags(int UserID, int take = 3)
         {
-            try
+            if (UserID <= 0)
             {
-                if (UserID == 0)
-                {
-                    throw new Exception();
-                }
-                List<Rates> userRates = await _context.Rates.Where(x => x.UserID == UserID)
-                    .Include(x => x.User)
-                    .Include(x => x.Bag)
-                    .Include(x => x.Bag.BagType)
-                    .Include(x => x.Bag.User)
+                return new List<Bag>();
+            }
+
+            var favoriteBagTypeIds = await _context.Favorites
+                .Where(f => f.UserID == UserID && f.BagID != 0)
+                .Include(f => f.Bag)
+                .Select(f => f.Bag.BagTypeID ?? 0)
+                .Distinct()
+                .ToListAsync();
+
+            if (favoriteBagTypeIds.Count == 0)
+            {
+                var ratedTypes = await _context.Rates
+                    .Where(r => r.UserID == UserID && r.BagID != 0 && r.Rating >= 3)
+                    .Include(r => r.Bag)
+                    .Select(r => r.Bag.BagTypeID ?? 0)
+                    .Distinct()
                     .ToListAsync();
-
-                List<Rates> bestRatedBag = userRates
-                    .Where(x => x.Rating >= 3)
-                    .ToList();
-                if (bestRatedBag.Count > 0)
-                {
-                    List<BagTypes> bagType = new List<BagTypes>();
-
-                    foreach (var bagTypes in bestRatedBag)
-                    {
-                        var bagBagsType = await _context.Bags.Where(m => m.BagTypeID == bagTypes.Bag.BagTypeID)
-                           .Select(s => s.BagType)
-                           .ToListAsync();
-
-                        foreach (var x in bagBagsType)
-                        {
-                            bool add = true;
-                            for (int i = 0; i < bagType.Count; i++)
-                            {
-                                if (x.BagName == bagType[i].BagName)
-                                {
-                                    add = false;
-                                }
-                            }
-                            if (add)
-                            {
-                                bagType.Add(x);
-                            }
-                        }
-                    }
-
-
-                    List<Bags> final = new List<Bags>();
-                    var userBoughtBags = await _context.Purchases.Where(k => k.UserID == UserID).Include(k => k.Order).ThenInclude(n => n.OrderItems).ToListAsync();
-                    foreach (var item in bagType)
-                    {
-                        var bagsListBags = await _context.Bags
-                            .Where(s => s.BagTypeID == item.BagTypeID)
-                            .Include(i => i.User)
-                            .ToListAsync();
-
-                        foreach (var bag in bagsListBags)
-                        {
-                            bool add = true;
-                            var ifExists = userBoughtBags.Where(m => m.Order.OrderItems.Any(ns => ns.BagID == bag.BagID)).Any();
-                            if (ifExists == false)
-                            {
-                                for (int i = 0; i < final.Count; i++)
-                                {
-                                    if (bag.BagName == final[i].BagName)
-                                    {
-                                        add = false;
-                                    }
-                                }
-                                foreach (var rate in userRates)
-                                {
-                                    if (bag.BagName == rate.Bag.BagName)
-                                    {
-                                        add = false;
-                                    }
-                                }
-                                if (add)
-                                {
-                                    final.Add(bag);
-                                }
-                            }
-                        }
-                    }
-
-                    final = final.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
-
-                    return _mapper.Map<List<Bag>>(final);
-                }
-                throw new Exception();
+                favoriteBagTypeIds = ratedTypes;
             }
-            catch (Exception ex)
+
+            if (favoriteBagTypeIds.Count == 0)
             {
-                return _mapper.Map<List<Bag>>(null);
+                return new List<Bag>();
             }
+
+            var purchasedBagIds = await _context.Purchases
+                .Where(p => p.UserID == UserID)
+                .Include(p => p.Order)
+                .ThenInclude(o => o.OrderItems)
+                .SelectMany(p => p.Order.OrderItems)
+                .Where(oi => oi.BagID > 0)
+                .Select(oi => oi.BagID)
+                .Distinct()
+                .ToListAsync();
+
+            var favoritedBagIds = await _context.Favorites
+                .Where(f => f.UserID == UserID && f.BagID != 0)
+                .Select(f => f.BagID)
+                .Distinct()
+                .ToListAsync();
+
+            var candidateBags = await _context.Bags
+                .Where(b => favoriteBagTypeIds.Contains(b.BagTypeID ?? 0)
+                            && !purchasedBagIds.Contains(b.BagID ?? 0)
+                            && !favoritedBagIds.Contains(b.BagID ?? 0))
+                .Include(b => b.User)
+                .ToListAsync();
+
+            var selected = candidateBags
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(Math.Max(1, take))
+                .ToList();
+
+            return _mapper.Map<List<Bag>>(selected);
         }
     }
 }
