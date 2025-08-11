@@ -1,4 +1,4 @@
-﻿using CSBWebshopSeminarski.Database;
+using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -14,7 +14,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _emailService = emailService;
         }
 
-        public async Task NotifySubscribersAboutGiveaway(string subject, string message)
+        public async Task<int> NotifySubscribersAboutGiveaway(string subject, string message)
         {
             var subscribers = await _context.Subscribers
                 .Where(s => s.IsSubscribedToGiveaway)
@@ -24,9 +24,10 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 await _emailService.SendEmailAsync(subscriber.Email, subject, message);
             }
+            return subscribers.Count;
         }
 
-        public async Task NotifySubscribersAboutNewCollection(string subject, string message)
+        public async Task<int> NotifySubscribersAboutNewCollection(string subject, string message)
         {
             var subscribers = await _context.Subscribers
                 .Where(s => s.IsSubscribedToNewCollections)
@@ -36,6 +37,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 await _emailService.SendEmailAsync(subscriber.Email, subject, message);
             }
+            return subscribers.Count;
         }
     }
 }

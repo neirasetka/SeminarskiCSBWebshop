@@ -27,6 +27,7 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<Giveaways> Giveaways { get; set; }
         public DbSet<Subscribers> Subscribers { get; set; }
         public DbSet<TrackingEvents> TrackingEvents { get; set; }
+        public DbSet<AnnouncementAudit> AnnouncementAudits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
