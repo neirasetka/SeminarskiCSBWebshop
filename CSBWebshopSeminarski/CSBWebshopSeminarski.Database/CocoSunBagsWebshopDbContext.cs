@@ -45,6 +45,10 @@ namespace CSBWebshopSeminarski.Database
             modelBuilder.Entity<Participants>()
                 .HasIndex(p => new { p.GiveawayId, p.Email })
                 .IsUnique();
+
+            modelBuilder.Entity<Giveaways>()
+                .Property(g => g.RowVersion)
+                .IsRowVersion();
         }
     }
 }

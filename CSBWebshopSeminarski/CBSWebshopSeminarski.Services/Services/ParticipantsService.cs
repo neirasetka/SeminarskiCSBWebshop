@@ -2,6 +2,7 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using CBSWebshopSeminarski.Services.Interfaces;
+using System.Security.Cryptography;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -25,8 +26,8 @@ namespace CBSWebshopSeminarski.Services.Services
             // Kept for backward compatibility; not meaningful without giveaway context
             var participants = await _context.Participants.ToListAsync();
             if (participants.Count == 0) return null;
-            var random = new Random();
-            return participants[random.Next(participants.Count)];
+            var index = RandomNumberGenerator.GetInt32(participants.Count);
+            return participants[index];
         }
 
         public async Task<Participants?> GetRandomWinnerAsync(int giveawayId)
@@ -35,8 +36,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Where(p => p.GiveawayId == giveawayId)
                 .ToListAsync();
             if (participants.Count == 0) return null;
-            var random = new Random();
-            return participants[random.Next(participants.Count)];
+            var index = RandomNumberGenerator.GetInt32(participants.Count);
+            return participants[index];
         }
     }
 }

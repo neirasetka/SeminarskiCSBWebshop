@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.ComponentModel.DataAnnotations;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -22,15 +24,23 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Giveaways> CreateGiveawayAsync(string title, DateTime startDate, DateTime endDate)
         {
-            if (endDate <= startDate)
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                throw new ArgumentException("Title is required", nameof(title));
+            }
+            // Normalize to UTC
+            var startUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Utc).ToUniversalTime();
+            var endUtc = DateTime.SpecifyKind(endDate, DateTimeKind.Utc).ToUniversalTime();
+
+            if (endUtc <= startUtc)
             {
                 throw new ArgumentException("EndDate must be after StartDate");
             }
             var giveaway = new Giveaways
             {
-                Title = title,
-                StartDate = startDate,
-                EndDate = endDate,
+                Title = title.Trim(),
+                StartDate = startUtc,
+                EndDate = endUtc,
                 IsClosed = false
             };
 
@@ -42,6 +52,23 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Participants> RegisterParticipantAsync(int giveawayId, string name, string email)
         {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException("Email is required", nameof(email));
+            }
+            if (email.Length > 254)
+            {
+                throw new ArgumentException("Email too long", nameof(email));
+            }
+            try
+            {
+                var _ = new EmailAddressAttribute().IsValid(email) ? true : throw new ArgumentException("Invalid email format", nameof(email));
+            }
+            catch
+            {
+                throw new ArgumentException("Invalid email format", nameof(email));
+            }
+
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
                            ?? throw new InvalidOperationException("Giveaway not found");
             var now = DateTime.UtcNow;
@@ -57,8 +84,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var participant = new Participants
             {
-                Name = name,
-                Email = email,
+                Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
+                Email = email.Trim(),
                 GiveawayId = giveawayId,
                 EntryDate = DateTime.UtcNow
             };
@@ -85,8 +112,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 return null;
             }
 
-            var random = new Random();
-            int index = random.Next(participants.Count);
+            var index = RandomNumberGenerator.GetInt32(participants.Count);
             return participants[index];
         }
 
@@ -100,46 +126,73 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Participants?> DrawAndPersistWinnerAsync(int giveawayId)
         {
-            using var tx = await _context.Database.BeginTransactionAsync();
-
-            var giveaway = await _context.Giveaways
-                .Include(g => g.Participants)
-                .FirstOrDefaultAsync(g => g.Id == giveawayId)
-                ?? throw new InvalidOperationException("Giveaway not found");
-
-            if (giveaway.IsClosed)
+            // Use retry on concurrency conflict
+            const int maxRetries = 3;
+            int attempt = 0;
+            while (true)
             {
-                // Already closed: return existing winner if any
-                if (giveaway.WinnerParticipantId.HasValue)
+                attempt++;
+                using var tx = await _context.Database.BeginTransactionAsync();
+
+                var giveaway = await _context.Giveaways
+                    .Include(g => g.Participants)
+                    .FirstOrDefaultAsync(g => g.Id == giveawayId)
+                    ?? throw new InvalidOperationException("Giveaway not found");
+
+                if (giveaway.IsClosed)
                 {
-                    return await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value);
+                    if (giveaway.WinnerParticipantId.HasValue)
+                    {
+                        var existingWinner = await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value);
+                        await tx.CommitAsync();
+                        return existingWinner;
+                    }
+                    await tx.CommitAsync();
+                    return null;
                 }
-                return null;
-            }
 
-            if (DateTime.UtcNow < giveaway.EndDate)
-            {
-                throw new InvalidOperationException("Giveaway has not ended yet");
-            }
+                if (DateTime.UtcNow < giveaway.EndDate)
+                {
+                    await tx.RollbackAsync();
+                    throw new InvalidOperationException("Giveaway has not ended yet");
+                }
 
-            var participants = giveaway.Participants.ToList();
-            if (participants.Count == 0)
-            {
+                var participants = giveaway.Participants.ToList();
+                if (participants.Count == 0)
+                {
+                    giveaway.IsClosed = true;
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                        await tx.CommitAsync();
+                        return null;
+                    }
+                    catch (DbUpdateConcurrencyException) when (attempt < maxRetries)
+                    {
+                        await tx.RollbackAsync();
+                        _context.ChangeTracker.Clear();
+                        continue;
+                    }
+                }
+
+                var winner = participants[RandomNumberGenerator.GetInt32(participants.Count)];
+
+                giveaway.WinnerParticipantId = winner.Id;
                 giveaway.IsClosed = true;
-                await _context.SaveChangesAsync();
-                await tx.CommitAsync();
-                return null;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    await tx.CommitAsync();
+                    return winner;
+                }
+                catch (DbUpdateConcurrencyException) when (attempt < maxRetries)
+                {
+                    await tx.RollbackAsync();
+                    _context.ChangeTracker.Clear();
+                    continue;
+                }
             }
-
-            var random = new Random();
-            var winner = participants[random.Next(participants.Count)];
-
-            giveaway.WinnerParticipantId = winner.Id;
-            giveaway.IsClosed = true;
-            await _context.SaveChangesAsync();
-            await tx.CommitAsync();
-
-            return winner;
         }
     }
 }
