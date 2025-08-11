@@ -1,13 +1,16 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RecommendationController : ControllerBase
     {
         private readonly IRecommendationService _service;
@@ -17,15 +20,21 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("GetRecommendedBags")]
-        public Task<List<Bag>> GetRecommendedBags(int UserID)
+        public Task<List<Bag>> GetRecommendedBags([FromQuery] int? take)
         {
-            return _service.GetRecommendedBags(UserID);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+            var howMany = take.HasValue && take.Value > 0 ? take.Value : 3;
+            return _service.GetRecommendedBags(userId, howMany);
         }
 
         [HttpGet("GetRecommendedBelts")]
-        public Task<List<Belt>> GetRecommendedBelts(int UserID)
+        public Task<List<Belt>> GetRecommendedBelts([FromQuery] int? take)
         {
-            return _service.GetRecommendedBelts(UserID);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+            var howMany = take.HasValue && take.Value > 0 ? take.Value : 3;
+            return _service.GetRecommendedBelts(userId, howMany);
         }
     }
 }
