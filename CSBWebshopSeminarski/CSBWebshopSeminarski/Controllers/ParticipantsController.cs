@@ -28,23 +28,6 @@ namespace CSBWebshopSeminarski.Controllers
             _giveawaysService = giveawaysService;
         }
 
-        [HttpPost("{giveawayId:int}/participants")]
-        [AllowAnonymous]
-        [Obsolete("Use POST /api/giveaways/{id}/participants instead.")]
-        public async Task<IActionResult> RegisterParticipant(int giveawayId, [FromBody] RegisterParticipantRequest request)
-        {
-            var created = await _giveawaysService.RegisterParticipantAsync(giveawayId, request.Name, request.Email);
-            var dto = new ParticipantPublicDto
-            {
-                Id = created.Id,
-                Name = created.Name,
-                MaskedEmail = ObjectExtension.MaskEmail(created.Email ?? string.Empty),
-                EntryDate = created.EntryDate,
-                GiveawayId = created.GiveawayId
-            };
-            return Ok(dto);
-        }
-
         [HttpPost("winner")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinner([FromBody] Participants winner)
