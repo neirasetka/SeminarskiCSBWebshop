@@ -121,6 +121,11 @@ builder.Services.AddSingleton(provider =>
 // Register Lookbook service
 builder.Services.AddTransient<ILookbookService, LookbookService>();
 
+// RabbitMQ
+builder.Services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>();
+builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+builder.Services.AddHostedService<RabbitMqConsumerService>();
+
 // Authentication: JWT only
 var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;
 var jwtIssuer = builder.Configuration["JWTSettings:Issuer"] ?? string.Empty;
@@ -193,7 +198,8 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
     }
     catch (StripeException e)
     {
-        logger.LogError(e, "Stripe webhook error: {Message}", e.Message);
+        var logger2 = loggerFactory.CreateLogger("StripeWebhook");
+        logger2.LogError(e, "Stripe webhook error: {Message}", e.Message);
         return Results.BadRequest();
     }
 });
