@@ -25,36 +25,12 @@ namespace CSBWebshopSeminarski.Controllers
             _giveawaysService = giveawaysService;
         }
 
-        [HttpPost("participant")]
-        [Authorize(Roles = "Admin")] // legacy insert without validation
-        public async Task<IActionResult> AddParticipant(Participants participant)
-        {
-            var created = await _service.AddAsync(participant);
-            return Ok(created);
-        }
-
         [HttpPost("{giveawayId:int}/participants")]
         [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipant(int giveawayId, [FromBody] RegisterParticipantRequest request)
         {
             var created = await _giveawaysService.RegisterParticipantAsync(giveawayId, request.Name, request.Email);
             return Ok(created);
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Admin")] // ambiguous without giveaway; restrict usage
-        public async Task<Participants?> SelectRandomWinner()
-        {
-            return await _service.GetRandomWinnerAsync();
-        }
-
-        [HttpPost("{giveawayId:int}/draw")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DrawWinner(int giveawayId)
-        {
-            var winner = await _giveawaysService.DrawAndPersistWinnerAsync(giveawayId);
-            if (winner == null) return NotFound("No participants or giveaway closed without a winner");
-            return Ok(winner);
         }
 
         [HttpPost("winner")]

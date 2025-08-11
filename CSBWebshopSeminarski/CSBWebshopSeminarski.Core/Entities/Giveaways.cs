@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace CSBWebshopSeminarski.Core.Entities
 {
@@ -16,5 +17,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int? WinnerParticipantId { get; set; }
         public Participants? WinnerParticipant { get; set; }
         public ICollection<Participants> Participants { get; set; } = new List<Participants>();
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
     }
 }
