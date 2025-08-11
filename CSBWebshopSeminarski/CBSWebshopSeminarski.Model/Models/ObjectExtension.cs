@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace CBSWebshopSeminarski.Model.Models
 {
@@ -99,6 +100,21 @@ namespace CBSWebshopSeminarski.Model.Models
                 url += await metaToken.ToQueryString();
             }
             return url;
+        }
+
+        public static string MaskEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return string.Empty;
+            var parts = email.Split('@');
+            if (parts.Length != 2) return email;
+            var local = parts[0];
+            var domain = parts[1];
+            if (local.Length <= 2)
+            {
+                return local[0] + "***@" + domain;
+            }
+            var visible = local.Substring(0, 2);
+            return visible + new string('*', Math.Max(1, local.Length - 2)) + "@" + domain;
         }
     }
 }
