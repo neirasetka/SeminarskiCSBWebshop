@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Stripe;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -21,6 +23,25 @@ builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>());
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
+
+// Rate limiting policy for announcements
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("AnnouncementsPolicy", httpContext =>
+        RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: httpContext.User?.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 5,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = 5,
+                AutoReplenishment = true
+            }
+        ));
+});
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CocoSunBagsWebshop API", Version = "v1" });
@@ -71,6 +92,9 @@ builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
 builder.Services.AddTransient<GiveawaysService>();
 // Notifications service registration
 builder.Services.AddTransient<NotificationsService>();
+// Announcements support services
+builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.ITemplateRenderer, CBSWebshopSeminarski.Services.Services.TemplateRenderer>();
+builder.Services.AddTransient<AnnouncementAuditService>();
 // Shipping tracking service
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
 // Reports service registration
@@ -135,6 +159,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // Stripe recommends verifying webhook signatures using the endpoint secret from configuration
 var stripeWebhookSecret = builder.Configuration["Stripe:WebhookSecret"] ?? string.Empty;
