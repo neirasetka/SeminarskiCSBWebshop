@@ -48,6 +48,25 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(x => x.Title != null && x.Title.Contains(request.Title));
             }
 
+            // New filters
+            if (request?.Occasion.HasValue == true)
+            {
+                var occ = (CSBWebshopSeminarski.Core.Entities.OccasionType)request.Occasion.Value;
+                query = query.Where(x => x.Occasion == occ);
+            }
+
+            if (request?.Style.HasValue == true)
+            {
+                var st = (CSBWebshopSeminarski.Core.Entities.StyleType)request.Style.Value;
+                query = query.Where(x => x.Style == st);
+            }
+
+            if (request?.Season.HasValue == true)
+            {
+                var sn = (CSBWebshopSeminarski.Core.Entities.SeasonType)request.Season.Value;
+                query = query.Where(x => x.Season == sn);
+            }
+
             query = query.OrderBy(x => x.SortOrder).ThenByDescending(x => x.CreatedAt);
 
             var list = await query.ToListAsync();

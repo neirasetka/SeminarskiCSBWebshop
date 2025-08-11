@@ -12,5 +12,8 @@ namespace CBSWebshopSeminarski.Model.Models
         public byte[]? Image { get; set; }
         public int? BagID { get; set; }
         public int? BeltID { get; set; }
+        public OccasionType? Occasion { get; set; }
+        public StyleType? Style { get; set; }
+        public SeasonType? Season { get; set; }
     }
 }

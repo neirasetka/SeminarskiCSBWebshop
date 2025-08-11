@@ -7,5 +7,8 @@ namespace CBSWebshopSeminarski.Model.Requests
         public bool? IsFeatured { get; set; }
         public string? Tag { get; set; }
         public string? Title { get; set; }
+        public CBSWebshopSeminarski.Model.Models.OccasionType? Occasion { get; set; }
+        public CBSWebshopSeminarski.Model.Models.StyleType? Style { get; set; }
+        public CBSWebshopSeminarski.Model.Models.SeasonType? Season { get; set; }
     }
 }
