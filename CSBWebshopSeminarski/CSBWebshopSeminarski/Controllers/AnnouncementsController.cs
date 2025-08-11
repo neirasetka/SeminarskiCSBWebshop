@@ -1,10 +1,12 @@
 using CBSWebshopSeminarski.Services.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CSBWebshopSeminarski.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AnnouncementsController : ControllerBase
     {
         private readonly NotificationsService _notificationService;

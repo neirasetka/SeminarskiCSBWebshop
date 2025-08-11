@@ -5,6 +5,7 @@ using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using CBSWebshopSeminarski.Model.Requests;
+using Microsoft.Extensions.Logging;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -14,11 +15,13 @@ namespace CSBWebshopSeminarski.Controllers
     {
         private readonly GiveawaysService _giveawaysService;
         private readonly CSBWebshopSeminarski.Database.CocoSunBagsWebshopDbContext _context;
+        private readonly ILogger<GiveawaysController> _logger;
 
-        public GiveawaysController(GiveawaysService giveawaysService, CSBWebshopSeminarski.Database.CocoSunBagsWebshopDbContext context)
+        public GiveawaysController(GiveawaysService giveawaysService, CSBWebshopSeminarski.Database.CocoSunBagsWebshopDbContext context, ILogger<GiveawaysController> logger)
         {
             _giveawaysService = giveawaysService;
             _context = context;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -46,10 +49,19 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(participants);
         }
 
+        [HttpPost("{id:int}/participants")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterParticipantOnGiveaway(int id, [FromBody] RegisterParticipantRequest request)
+        {
+            var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
+            return Ok(created);
+        }
+
         [HttpPost("{id:int}/draw")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Draw(int id)
         {
+            _logger.LogInformation("Giveaway draw triggered by {User} for giveaway {GiveawayId} at {UtcNow}", User?.Identity?.Name ?? "unknown", id, DateTime.UtcNow);
             var winner = await _giveawaysService.DrawAndPersistWinnerAsync(id);
             if (winner == null) return NotFound("No participants or giveaway closed without a winner");
             return Ok(winner);

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using CBSWebshopSeminarski.Model.Requests;
+using System;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -27,6 +28,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost("{giveawayId:int}/participants")]
         [AllowAnonymous]
+        [Obsolete("Use POST /api/giveaways/{id}/participants instead.")]
         public async Task<IActionResult> RegisterParticipant(int giveawayId, [FromBody] RegisterParticipantRequest request)
         {
             var created = await _giveawaysService.RegisterParticipantAsync(giveawayId, request.Name, request.Email);
