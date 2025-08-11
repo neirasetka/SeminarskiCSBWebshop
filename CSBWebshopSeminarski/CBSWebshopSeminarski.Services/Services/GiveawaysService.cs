@@ -69,6 +69,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new ArgumentException("Invalid email format", nameof(email));
             }
 
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
                            ?? throw new InvalidOperationException("Giveaway not found");
             var now = DateTime.UtcNow;
@@ -76,7 +78,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new InvalidOperationException("Giveaway is not accepting entries");
             }
-            var alreadyExists = await _context.Participants.AnyAsync(p => p.GiveawayId == giveawayId && p.Email == email);
+            var alreadyExists = await _context.Participants.AnyAsync(p => p.GiveawayId == giveawayId && p.Email == normalizedEmail);
             if (alreadyExists)
             {
                 throw new InvalidOperationException("Participant with this email already registered for this giveaway");
@@ -85,7 +87,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var participant = new Participants
             {
                 Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
-                Email = email.Trim(),
+                Email = normalizedEmail,
                 GiveawayId = giveawayId,
                 EntryDate = DateTime.UtcNow
             };
