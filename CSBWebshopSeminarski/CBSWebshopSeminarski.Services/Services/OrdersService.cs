@@ -1,10 +1,11 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
+using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -98,6 +99,27 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new Exception("Order already exists!");
             }
+            return _mapper.Map<Order>(entity);
+        }
+
+        public async Task<Order?> GetActiveCartByUser(int userId)
+        {
+            var entity = await _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Bag)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Belt)
+                .Where(o => o.UserID == userId
+                    && o.PaymentStatus == PaymentStatus.Pending
+                    && o.ShippingStatus == ShippingStatusEntity.Pending)
+                .OrderByDescending(o => o.Date)
+                .FirstOrDefaultAsync();
+
+            if (entity == null)
+            {
+                return null;
+            }
+
             return _mapper.Map<Order>(entity);
         }
     }
