@@ -419,3 +419,7 @@ FodyWeavers.xsd
 
 # Local .NET SDK install (keep environment artifacts out of repo)
 .dotnet/
+
+# Flutter SDK and archives (local only, do not commit)
+/flutter/
+/flutter.tar.xz
