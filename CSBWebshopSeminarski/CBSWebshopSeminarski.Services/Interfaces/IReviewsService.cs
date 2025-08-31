@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 
 namespace CBSWebshopSeminarski.Services.Interfaces
@@ -10,5 +10,8 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task<Review> Insert(ReviewUpsertRequest request);
         Task<Review> Update(int ID, ReviewUpsertRequest request);
         Task<bool> Delete(int ID);
+        Task<Review> ApproveAsync(int id);
+        Task<Review> RejectAsync(int id, string? reason = null);
+        Task<Review> SetPendingAsync(int id);
     }
 }

@@ -1,8 +1,9 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -44,6 +45,27 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<bool> Delete(int ID)
         {
             return await _service.Delete(ID);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<Review> Approve(int id)
+        {
+            return await _service.ApproveAsync(id);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/reject")]
+        public async Task<Review> Reject(int id)
+        {
+            return await _service.RejectAsync(id);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/pending")]
+        public async Task<Review> SetPending(int id)
+        {
+            return await _service.SetPendingAsync(id);
         }
     }
 }

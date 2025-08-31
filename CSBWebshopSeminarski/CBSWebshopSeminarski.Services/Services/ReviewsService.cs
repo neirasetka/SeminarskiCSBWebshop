@@ -46,6 +46,16 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(i => i.Date.Date == search.Date.Date);
             }
 
+            if (search.Status.HasValue)
+            {
+                query = query.Where(i => i.Status == (CSBWebshopSeminarski.Core.Entities.ReviewStatus)search.Status.Value);
+            }
+            else
+            {
+                // Default to showing only approved reviews when status is not specified
+                query = query.Where(i => i.Status == CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved);
+            }
+
             var list = await query.ToListAsync();
             return _mapper.Map<List<Review>>(list);
         }
@@ -61,6 +71,11 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Review> Insert(ReviewUpsertRequest request)
         {
             var entity = _mapper.Map<Reviews>(request);
+            if (entity.Date == default)
+            {
+                entity.Date = DateTime.UtcNow;
+            }
+            entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Pending;
             _context.Set<Reviews>().Add(entity);
             await _context.SaveChangesAsync();
 
@@ -88,6 +103,42 @@ namespace CBSWebshopSeminarski.Services.Services
                 return true;
             }
             return false;
+        }
+
+        public async Task<Review> ApproveAsync(int id)
+        {
+            var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
+            if (entity == null)
+            {
+                throw new KeyNotFoundException($"Review {id} not found");
+            }
+            entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved;
+            await _context.SaveChangesAsync();
+            return _mapper.Map<Review>(entity);
+        }
+
+        public async Task<Review> RejectAsync(int id, string? reason = null)
+        {
+            var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
+            if (entity == null)
+            {
+                throw new KeyNotFoundException($"Review {id} not found");
+            }
+            entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected;
+            await _context.SaveChangesAsync();
+            return _mapper.Map<Review>(entity);
+        }
+
+        public async Task<Review> SetPendingAsync(int id)
+        {
+            var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
+            if (entity == null)
+            {
+                throw new KeyNotFoundException($"Review {id} not found");
+            }
+            entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Pending;
+            await _context.SaveChangesAsync();
+            return _mapper.Map<Review>(entity);
         }
     }
 }
