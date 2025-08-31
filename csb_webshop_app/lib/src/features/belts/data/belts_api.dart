@@ -26,5 +26,14 @@ class BeltsApi {
     }
     throw Exception('Failed to load belts: ${response.statusCode}');
   }
+
+  Future<Belt> getBeltById(int id) async {
+    final http.Response response = await _apiClient.get('$_beltsPath/$id');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Belt.fromJson(map);
+    }
+    throw Exception('Failed to load belt $id: ${response.statusCode}');
+  }
 }
 

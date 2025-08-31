@@ -5,6 +5,7 @@ import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
+import 'belts_detail_screen.dart';
 
 class BeltsListScreen extends ConsumerStatefulWidget {
   const BeltsListScreen({super.key});
@@ -109,7 +110,11 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                           ],
                         ),
                         onTap: () {
-                          // Future: navigate to belt details
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (BuildContext context) => BeltDetailScreen(id: belt.id),
+                            ),
+                          );
                         },
                       );
                     },

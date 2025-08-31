@@ -38,3 +38,19 @@ class BagsListNotifier extends AsyncNotifier<List<Bag>> {
 final AsyncNotifierProvider<BagsListNotifier, List<Bag>> bagsListProvider =
     AsyncNotifierProvider<BagsListNotifier, List<Bag>>(BagsListNotifier.new);
 
+class BagDetailNotifier extends AutoDisposeAsyncNotifier<Bag> {
+  @override
+  Future<Bag> build() async {
+    throw UnimplementedError('Call fetch(id) first');
+  }
+
+  Future<void> fetch(int id) async {
+    final BagsApi api = ref.read(bagsApiProvider);
+    state = const AsyncLoading<Bag>();
+    state = await AsyncValue.guard(() => api.getBagById(id));
+  }
+}
+
+final AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag> bagDetailProvider =
+    AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag>(BagDetailNotifier.new);
+

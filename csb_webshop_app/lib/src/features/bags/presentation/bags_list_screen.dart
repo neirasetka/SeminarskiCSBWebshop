@@ -5,6 +5,7 @@ import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
+import 'bags_detail_screen.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
   const BagsListScreen({super.key});
@@ -123,7 +124,11 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                           ],
                         ),
                         onTap: () {
-                          // Future: navigate to bag details
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (BuildContext context) => BagDetailScreen(id: bag.id),
+                            ),
+                          );
                         },
                       );
                     },
