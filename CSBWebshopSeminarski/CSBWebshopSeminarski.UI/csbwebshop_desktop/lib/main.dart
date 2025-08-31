@@ -7,7 +7,10 @@ import 'env.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Env.load();
-  runApp(ProviderScope(observers: [AppProviderObserver()], child: const MyApp()));
+  await SharedBootstrap.runWithSentryIfConfigured(
+    dsn: Env.sentryDsn,
+    app: ProviderScope(observers: [AppProviderObserver()], child: const MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
