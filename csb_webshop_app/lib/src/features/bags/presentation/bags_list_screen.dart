@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/bags_provider.dart';
+import '../../bags/application/bag_types_provider.dart';
+import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
@@ -14,6 +16,7 @@ class BagsListScreen extends ConsumerStatefulWidget {
 class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  int? _selectedBagTypeId;
 
   @override
   void initState() {
@@ -29,23 +32,19 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final double threshold = 200;
-    final double maxScroll = _scrollController.position.maxScrollExtent;
-    final double current = _scrollController.position.pixels;
-    if (maxScroll - current <= threshold) {
-      ref.read(bagsListProvider.notifier).loadMore();
-    }
+    // pagination removed for simplicity; no-op
   }
 
   Future<void> _onRefresh() async {
-    await ref.read(bagsListProvider.notifier).refresh(query: _searchController.text.trim());
+    await ref
+        .read(bagsListProvider.notifier)
+        .refresh(bagTypeId: _selectedBagTypeId, query: _searchController.text.trim());
   }
 
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
-    final bool hasMore = ref.read(bagsListProvider.notifier).hasMore;
+    // no pagination
 
     return Scaffold(
       appBar: AppBar(
@@ -57,6 +56,14 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: <Widget>[
+                _BagTypeFilter(
+                  onChanged: (int? value) {
+                    setState(() => _selectedBagTypeId = value);
+                    _onRefresh();
+                  },
+                  selectedId: _selectedBagTypeId,
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _searchController,
@@ -88,15 +95,9 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                   }
                   return ListView.separated(
                     controller: _scrollController,
-                    itemCount: bags.length + (hasMore ? 1 : 0),
+                    itemCount: bags.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
-                      if (index >= bags.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
                       final Bag bag = bags[index];
                       return ListTile(
                         leading: _BagThumbnail(imageUrl: bag.imageUrl),
@@ -151,6 +152,34 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BagTypeFilter extends ConsumerWidget {
+  const _BagTypeFilter({required this.onChanged, required this.selectedId});
+
+  final ValueChanged<int?> onChanged;
+  final int? selectedId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
+    return typesAsync.when(
+      data: (List<BagType> types) {
+        final List<DropdownMenuItem<int?>> items = <DropdownMenuItem<int?>>[
+          const DropdownMenuItem<int?>(value: null, child: Text('Sve vrste')),
+          ...types.map((BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
+        ];
+        return DropdownButton<int?>(
+          value: selectedId,
+          items: items,
+          onChanged: onChanged,
+          hint: const Text('Vrsta'),
+        );
+      },
+      loading: () => const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2)),
+      error: (Object e, StackTrace st) => const SizedBox(),
     );
   }
 }
