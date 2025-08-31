@@ -46,6 +46,32 @@ class CartScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final Map<String, String> res = await ref.read(cartProvider.notifier).startCheckout();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Payment intent kreiran. ClientSecret: ${res['clientSecret']?.substring(0, 8)}...')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Greška pri plaćanju: $e')),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.payment),
+                    label: const Text('Nastavi na plaćanje'),
+                  ),
+                ),
+              ),
             ],
           );
         },

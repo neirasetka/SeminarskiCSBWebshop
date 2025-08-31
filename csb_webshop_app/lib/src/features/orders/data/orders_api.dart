@@ -11,6 +11,7 @@ class OrdersApi {
 
   static const String _ordersPath = '/api/Orders';
   static const String _orderItemsPath = '/api/OrderItems';
+  static const String _paymentsPath = '/api/Payments';
 
   Future<Map<String, dynamic>?> getActiveCart({required int userId}) async {
     final http.Response response = await _apiClient.get('$_ordersPath/Active?userId=$userId');
@@ -62,6 +63,25 @@ class OrdersApi {
       return json.decode(response.body) as Map<String, dynamic>;
     }
     throw Exception('Failed to add item: ${response.statusCode}');
+  }
+
+  Future<Map<String, dynamic>> createPaymentIntent({
+    required int orderId,
+    required int amountInCents,
+    String currency = 'eur',
+    String? receiptEmail,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'OrderID': orderId,
+      'AmountInCents': amountInCents,
+      'Currency': currency,
+      if (receiptEmail != null) 'ReceiptEmail': receiptEmail,
+    };
+    final http.Response response = await _apiClient.post('$_paymentsPath/create-payment-intent', body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to create payment intent: ${response.statusCode}');
   }
 }
 

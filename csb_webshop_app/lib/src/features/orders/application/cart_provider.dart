@@ -45,6 +45,24 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await _api.addItem(orderId: order.id, bagId: bagId, quantity: quantity, price: price);
     await refresh();
   }
+
+  Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
+    final OrderModel? order = state.value ?? await _loadActiveCart();
+    if (order == null) {
+      throw Exception('Nema korpe za plaćanje');
+    }
+    final int amountInCents = (order.amount * 100).round();
+    final Map<String, dynamic> resp = await _api.createPaymentIntent(
+      orderId: order.id,
+      amountInCents: amountInCents,
+      currency: currency,
+      receiptEmail: email,
+    );
+    return <String, String>{
+      'clientSecret': (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString(),
+      'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
+    };
+  }
 }
 
 final AsyncNotifierProvider<CartNotifier, OrderModel?> cartProvider =
