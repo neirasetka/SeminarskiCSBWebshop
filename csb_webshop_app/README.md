@@ -17,7 +17,7 @@ samples, guidance on mobile development, and a full API reference.
 
 ## Flavors and Environment Config
 
-Android product flavors are configured: `dev`, `staging`, `prod`.
+Android product flavors are configured: `dev`, `prod`.
 
 Runtime configuration is passed via `--dart-define` and consumed by `lib/environment.dart`.
 
@@ -25,8 +25,6 @@ Runtime configuration is passed via `--dart-define` and consumed by `lib/environ
 
 - Dev:
   - Android: `flutter run --flavor dev -t lib/main.dart --dart-define=FLAVOR=dev --dart-define=API_BASE_URL=https://dev.api.example.com --dart-define=ENABLE_LOGGING=true`
-- Staging:
-  - Android: `flutter run --flavor staging -t lib/main.dart --dart-define=FLAVOR=staging --dart-define=API_BASE_URL=https://staging.api.example.com --dart-define=ENABLE_LOGGING=true`
 - Prod:
   - Android: `flutter run --flavor prod -t lib/main.dart --dart-define=FLAVOR=prod --dart-define=API_BASE_URL=https://api.example.com --dart-define=ENABLE_LOGGING=false`
 

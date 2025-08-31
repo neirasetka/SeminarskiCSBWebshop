@@ -49,12 +49,6 @@ android {
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "CSB Webshop Dev")
         }
-        create("staging") {
-            dimension = "env"
-            applicationIdSuffix = ".staging"
-            versionNameSuffix = "-staging"
-            resValue("string", "app_name", "CSB Webshop Staging")
-        }
         create("prod") {
             dimension = "env"
             // No suffix for production
