@@ -1,4 +1,25 @@
 class UserProfile {
+  const UserProfile({required this.id, required this.username, this.email});
+
+  final int id;
+  final String username;
+  final String? email;
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: _toInt(json['UserID'] ?? json['id'] ?? json['ID'] ?? 0),
+      username: (json['UserName'] ?? json['username'] ?? '').toString(),
+      email: (json['Email'] ?? json['email'])?.toString(),
+    );
+  }
+
+  static int _toInt(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+}
+
+class UserProfile {
   const UserProfile({
     required this.id,
     required this.firstName,

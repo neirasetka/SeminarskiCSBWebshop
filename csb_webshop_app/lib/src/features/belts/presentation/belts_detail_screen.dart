@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
+import '../../orders/application/cart_provider.dart';
 
 class BeltDetailScreen extends ConsumerStatefulWidget {
   const BeltDetailScreen({super.key, required this.id});
@@ -52,13 +53,13 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
   }
 }
 
-class _BeltDetailBody extends StatelessWidget {
+class _BeltDetailBody extends ConsumerWidget {
   const _BeltDetailBody({required this.belt});
 
   final Belt belt;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -89,6 +90,20 @@ class _BeltDetailBody extends StatelessWidget {
           const Text('Opis', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(belt.description),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await ref.read(cartProvider.notifier).addBagToCart(bagId: belt.id, price: belt.price);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u korpu')));
+                }
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: const Text('Dodaj u korpu'),
+            ),
+          ),
         ],
       ),
     );

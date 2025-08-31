@@ -8,6 +8,7 @@ import '../domain/bag.dart';
 import 'bags_detail_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
+import '../../orders/application/cart_provider.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
   const BagsListScreen({super.key});
@@ -135,6 +136,18 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                               icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
                               tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
                               onPressed: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add_shopping_cart),
+                              tooltip: 'Dodaj u korpu',
+                              onPressed: () async {
+                                await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Dodano u korpu')),
+                                  );
+                                }
+                              },
                             ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,

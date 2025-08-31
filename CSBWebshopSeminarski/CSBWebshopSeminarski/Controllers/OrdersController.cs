@@ -17,6 +17,13 @@ namespace CSBWebshopSeminarski.Controllers
             _service = service;
         }
 
+        [HttpPost("Create")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<Order> Create([FromBody] OrderUpsertRequest request)
+        {
+            return await _service.Insert(request);
+        }
+
         [HttpGet("GetByOrderNumber")]
         public Order GetByOrderNumber([FromQuery] string name)
         {

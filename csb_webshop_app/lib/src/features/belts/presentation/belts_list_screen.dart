@@ -7,6 +7,7 @@ import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import 'belts_detail_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../orders/application/cart_provider.dart';
 
 class BeltsListScreen extends ConsumerStatefulWidget {
   const BeltsListScreen({super.key});
@@ -114,6 +115,18 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
+                            IconButton(
+                              icon: const Icon(Icons.add_shopping_cart),
+                              tooltip: 'Dodaj u korpu',
+                              onPressed: () async {
+                                await ref.read(cartProvider.notifier).addBagToCart(bagId: belt.id, price: belt.price);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Dodano u korpu')),
+                                  );
+                                }
+                              },
+                            ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
