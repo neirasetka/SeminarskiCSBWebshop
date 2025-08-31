@@ -7,6 +7,7 @@ import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
 import 'bags_detail_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../favorites/application/favorites_provider.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
   const BagsListScreen({super.key});
@@ -46,6 +47,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
     final bool isAdmin = isAdminAsync.value ?? false;
     // no pagination
@@ -117,6 +119,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
                       final Bag bag = bags[index];
+                      final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
                       return ListTile(
                         leading: _BagThumbnail(imageUrl: bag.imageUrl),
                         title: Text(bag.name),
@@ -128,6 +131,11 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
+                            IconButton(
+                              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
+                              tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                              onPressed: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+                            ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,

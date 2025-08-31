@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
+import '../../favorites/application/favorites_provider.dart';
 
 class BagDetailScreen extends ConsumerStatefulWidget {
   const BagDetailScreen({super.key, required this.id});
@@ -25,10 +26,20 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalji torbe')),
+      appBar: AppBar(
+        title: const Text('Detalji torbe'),
+      ),
       body: bagAsync.when(
-        data: (Bag bag) => _BagDetailBody(bag: bag),
+        data: (Bag bag) {
+          final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
+          return _BagDetailBody(
+            bag: bag,
+            isFavorite: isFav,
+            onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace st) => Padding(
           padding: const EdgeInsets.all(16),
@@ -53,9 +64,11 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
 }
 
 class _BagDetailBody extends StatelessWidget {
-  const _BagDetailBody({required this.bag});
+  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite});
 
   final Bag bag;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +93,12 @@ class _BagDetailBody extends StatelessWidget {
                     Text(bag.averageRating!.toStringAsFixed(1)),
                   ],
                 ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: isFavorite ? Colors.red : null),
+                tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                onPressed: onToggleFavorite,
+              ),
             ],
           ),
           const SizedBox(height: 16),
