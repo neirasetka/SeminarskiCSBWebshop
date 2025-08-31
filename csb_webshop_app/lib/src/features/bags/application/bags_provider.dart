@@ -33,6 +33,57 @@ class BagsListNotifier extends AsyncNotifier<List<Bag>> {
     state = const AsyncLoading<List<Bag>>();
     state = await AsyncValue.guard(_load);
   }
+
+  Future<Bag> create({
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? bagTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Bag created = await _api.createBag(
+      name: name,
+      code: code,
+      price: price,
+      description: description,
+      bagTypeId: bagTypeId,
+      imageBase64: imageBase64,
+      userId: userId,
+    );
+    await refresh(bagTypeId: _bagTypeId, query: _query);
+    return created;
+  }
+
+  Future<Bag> update({
+    required int id,
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? bagTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Bag updated = await _api.updateBag(
+      id: id,
+      name: name,
+      code: code,
+      price: price,
+      description: description,
+      bagTypeId: bagTypeId,
+      imageBase64: imageBase64,
+      userId: userId,
+    );
+    await refresh(bagTypeId: _bagTypeId, query: _query);
+    return updated;
+  }
+
+  Future<void> remove(int id) async {
+    await _api.deleteBag(id);
+    await refresh(bagTypeId: _bagTypeId, query: _query);
+  }
 }
 
 final AsyncNotifierProvider<BagsListNotifier, List<Bag>> bagsListProvider =

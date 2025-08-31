@@ -35,5 +35,66 @@ class BagsApi {
     }
     throw Exception('Failed to load bag $id: ${response.statusCode}');
   }
+
+  Future<Bag> createBag({
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? bagTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'BagName': name,
+      'Code': code,
+      'Price': price,
+      'Description': description,
+      if (bagTypeId != null) 'BagTypeID': bagTypeId,
+      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
+      if (userId != null) 'UserID': userId,
+    };
+    final http.Response response = await _apiClient.post(_bagsPath, body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Bag.fromJson(map);
+    }
+    throw Exception('Failed to create bag: ${response.statusCode}');
+  }
+
+  Future<Bag> updateBag({
+    required int id,
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? bagTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'BagName': name,
+      'Code': code,
+      'Price': price,
+      'Description': description,
+      if (bagTypeId != null) 'BagTypeID': bagTypeId,
+      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
+      if (userId != null) 'UserID': userId,
+    };
+    final http.Response response = await _apiClient.put('$_bagsPath/$id', body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Bag.fromJson(map);
+    }
+    throw Exception('Failed to update bag $id: ${response.statusCode}');
+  }
+
+  Future<void> deleteBag(int id) async {
+    final http.Response response = await _apiClient.delete('$_bagsPath/$id');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+    throw Exception('Failed to delete bag $id: ${response.statusCode}');
+  }
 }
 

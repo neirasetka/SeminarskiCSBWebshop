@@ -6,6 +6,7 @@ import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
 import 'bags_detail_screen.dart';
+import '../../auth/application/admin_role_provider.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
   const BagsListScreen({super.key});
@@ -45,12 +46,28 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
+    final bool isAdmin = isAdminAsync.value ?? false;
     // no pagination
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Katalog torbi'),
+        actions: <Widget>[
+          if (isAdmin)
+            IconButton(
+              onPressed: () => _showManageBagTypesDialog(context, ref),
+              icon: const Icon(Icons.category),
+              tooltip: 'Upravljanje tipovima',
+            ),
+        ],
       ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () => _showBagFormDialog(context, ref),
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: Column(
         children: <Widget>[
           Padding(
@@ -108,17 +125,43 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            Text('${bag.price.toStringAsFixed(2)} KM'),
-                            if (bag.averageRating != null)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  const Icon(Icons.star, color: Colors.amber, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(bag.averageRating!.toStringAsFixed(1)),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: <Widget>[
+                                Text('${bag.price.toStringAsFixed(2)} KM'),
+                                if (bag.averageRating != null)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(bag.averageRating!.toStringAsFixed(1)),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                            if (isAdmin)
+                              PopupMenuButton<String>(
+                                onSelected: (String value) async {
+                                  if (value == 'edit') {
+                                    await _showBagFormDialog(context, ref, existing: bag);
+                                  } else if (value == 'delete') {
+                                    final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${bag.name}"?');
+                                    if (ok == true) {
+                                      await ref.read(bagsListProvider.notifier).remove(bag.id);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proizvod obrisan')));
+                                      }
+                                    }
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                  const PopupMenuItem<String>(value: 'edit', child: Text('Uredi')),
+                                  const PopupMenuItem<String>(value: 'delete', child: Text('Obriši')),
                                 ],
                               ),
                           ],
@@ -217,5 +260,207 @@ class _BagThumbnail extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<bool?> _confirm(BuildContext context, String title, String message) {
+  return showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Odustani')),
+        ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Potvrdi')),
+      ],
+    ),
+  );
+}
+
+Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? existing}) async {
+  final TextEditingController nameController = TextEditingController(text: existing?.name ?? '');
+  final TextEditingController codeController = TextEditingController(text: existing?.code ?? '');
+  final TextEditingController priceController = TextEditingController(text: existing?.price.toStringAsFixed(2) ?? '');
+  final TextEditingController descController = TextEditingController(text: existing?.description ?? '');
+  int? selectedTypeId = existing?.bagTypeId;
+
+  await showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return Consumer(builder: (BuildContext context, WidgetRef ref, _) {
+        final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
+        return AlertDialog(
+          title: Text(existing == null ? 'Novi proizvod' : 'Uredi proizvod'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Naziv'),
+                ),
+                TextField(
+                  controller: codeController,
+                  decoration: const InputDecoration(labelText: 'Šifra'),
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: 'Cijena'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Opis'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 8),
+                typesAsync.when(
+                  data: (List<BagType> types) {
+                    return DropdownButtonFormField<int?>(
+                      value: selectedTypeId,
+                      items: <DropdownMenuItem<int?>>[
+                        const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
+                        ...types.map((BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
+                      ],
+                      onChanged: (int? v) => selectedTypeId = v,
+                      decoration: const InputDecoration(labelText: 'Tip'),
+                    );
+                  },
+                  loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                  error: (Object e, StackTrace st) => const SizedBox(),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
+            ElevatedButton(
+              onPressed: () async {
+                final String name = nameController.text.trim();
+                final String code = codeController.text.trim();
+                final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+                final String desc = descController.text.trim();
+                if (name.isEmpty || code.isEmpty || price == null) return;
+                if (existing == null) {
+                  await ref.read(bagsListProvider.notifier).create(
+                        name: name,
+                        code: code,
+                        price: price,
+                        description: desc,
+                        bagTypeId: selectedTypeId,
+                      );
+                } else {
+                  await ref.read(bagsListProvider.notifier).update(
+                        id: existing.id,
+                        name: name,
+                        code: code,
+                        price: price,
+                        description: desc,
+                        bagTypeId: selectedTypeId,
+                      );
+                }
+                if (context.mounted) Navigator.of(context).pop();
+              },
+              child: const Text('Sačuvaj'),
+            ),
+          ],
+        );
+      });
+    },
+  );
+}
+
+Future<void> _showManageBagTypesDialog(BuildContext context, WidgetRef ref) async {
+  final TextEditingController nameController = TextEditingController();
+  await showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return Consumer(builder: (BuildContext context, WidgetRef ref, _) {
+        final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
+        return AlertDialog(
+          title: const Text('Tipovi torbi'),
+          content: SizedBox(
+            width: 400,
+            child: typesAsync.when(
+              data: (List<BagType> types) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(labelText: 'Novi tip'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            final String name = nameController.text.trim();
+                            if (name.isEmpty) return;
+                            await ref.read(bagTypesProvider.notifier).create(name);
+                            nameController.clear();
+                          },
+                          child: const Text('Dodaj'),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    for (final BagType t in types)
+                      ListTile(
+                        title: Text(t.name),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () async {
+                                final String? newName = await _promptText(context, 'Uredi tip', 'Naziv', t.name);
+                                if (newName != null && newName.trim().isNotEmpty) {
+                                  await ref.read(bagTypesProvider.notifier).update(t.id, newName.trim());
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () async {
+                                final bool? ok = await _confirm(context, 'Obriši tip', 'Obrisati "${t.name}"?');
+                                if (ok == true) {
+                                  await ref.read(bagTypesProvider.notifier).remove(t.id);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+              error: (Object e, StackTrace st) => Text(e.toString()),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Zatvori')),
+          ],
+        );
+      });
+    },
+  );
+}
+
+Future<String?> _promptText(BuildContext context, String title, String label, String initial) async {
+  final TextEditingController ctrl = TextEditingController(text: initial);
+  return showDialog<String>(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      title: Text(title),
+      content: TextField(controller: ctrl, decoration: InputDecoration(labelText: label)),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
+        ElevatedButton(onPressed: () => Navigator.of(context).pop(ctrl.text), child: const Text('Sačuvaj')),
+      ],
+    ),
+  );
 }
 
