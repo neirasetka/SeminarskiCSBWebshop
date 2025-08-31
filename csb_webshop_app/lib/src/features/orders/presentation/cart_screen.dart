@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/cart_provider.dart';
 import '../domain/order_models.dart';
+import 'order_success_screen.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -55,8 +56,8 @@ class CartScreen extends ConsumerWidget {
                       try {
                         await ref.read(cartProvider.notifier).startCheckout();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Plaćanje uspješno. Hvala!')),
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(builder: (_) => const OrderSuccessScreen()),
                           );
                         }
                       } catch (e) {

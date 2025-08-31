@@ -68,12 +68,19 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     if (order == null) {
       throw Exception('Nema korpe za plaćanje');
     }
+    // Use profile email if not provided
+    String? receiptEmail = email;
+    try {
+      if (receiptEmail == null || receiptEmail.isEmpty) {
+        receiptEmail = (await _profileApi.getMe()).email;
+      }
+    } catch (_) {}
     final int amountInCents = (order.amount * 100).round();
     final Map<String, dynamic> resp = await _api.createPaymentIntent(
       orderId: order.id,
       amountInCents: amountInCents,
       currency: currency,
-      receiptEmail: email,
+      receiptEmail: receiptEmail,
     );
     final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
     // Prepare and present PaymentSheet
@@ -86,6 +93,8 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await Stripe.instance.presentPaymentSheet();
     // Mark as paid
     await _api.updatePaymentStatus(orderId: order.id, status: 'Paid');
+    // Refresh cart (should be empty/none if you move order out of Pending). For now reload state.
+    await refresh();
     return <String, String>{
       'clientSecret': clientSecret,
       'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
