@@ -58,6 +58,29 @@ class ApiClient {
     return response;
   }
 
+  Future<http.Response> post(String path, {Object? body}) async {
+    final Uri url = _uri(path);
+    final Map<String, String> headers = await _defaultHeaders();
+    if (EnvironmentConfig.enableLogging) {
+      debugPrint('POST $url');
+      debugPrint('Body: ${_formatBodyForLog(body)}');
+    }
+    final http.Response response = await _httpClient.post(url, headers: headers, body: body);
+    _logResponse(response);
+    return response;
+  }
+
+  Future<http.Response> delete(String path) async {
+    final Uri url = _uri(path);
+    final Map<String, String> headers = await _defaultHeaders();
+    if (EnvironmentConfig.enableLogging) {
+      debugPrint('DELETE $url');
+    }
+    final http.Response response = await _httpClient.delete(url, headers: headers);
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> putWithUserId(String pathTemplate, {required int userId, Object? body}) async {
     final String path = pathTemplate.replaceAll('{ID}', userId.toString());
     return put(path, body: body);

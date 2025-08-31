@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,14 +16,14 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin, Buyer")]
+        [Authorize(Roles = "Admin")]
         public async Task<T> Insert(TInsert request)
         {
             return await _service.Insert(request);
         }
 
         [HttpPut("{ID}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<T> Update(int ID, TUpdate request)
         {
             return await _service.Update(ID, request);

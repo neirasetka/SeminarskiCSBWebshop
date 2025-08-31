@@ -31,6 +31,57 @@ class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
     state = const AsyncLoading<List<Belt>>();
     state = await AsyncValue.guard(_load);
   }
+
+  Future<Belt> create({
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? beltTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Belt created = await _api.createBelt(
+      name: name,
+      code: code,
+      price: price,
+      description: description,
+      beltTypeId: beltTypeId,
+      imageBase64: imageBase64,
+      userId: userId,
+    );
+    await refresh(beltTypeId: _beltTypeId, query: _query);
+    return created;
+  }
+
+  Future<Belt> update({
+    required int id,
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? beltTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Belt updated = await _api.updateBelt(
+      id: id,
+      name: name,
+      code: code,
+      price: price,
+      description: description,
+      beltTypeId: beltTypeId,
+      imageBase64: imageBase64,
+      userId: userId,
+    );
+    await refresh(beltTypeId: _beltTypeId, query: _query);
+    return updated;
+  }
+
+  Future<void> remove(int id) async {
+    await _api.deleteBelt(id);
+    await refresh(beltTypeId: _beltTypeId, query: _query);
+  }
 }
 
 final AsyncNotifierProvider<BeltsListNotifier, List<Belt>> beltsListProvider =

@@ -15,6 +15,28 @@ class BeltTypesNotifier extends AsyncNotifier<List<BeltType>> {
     _api = ref.read(beltTypesApiProvider);
     return _api.getBeltTypes();
   }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading<List<BeltType>>();
+    state = await AsyncValue.guard(() => _api.getBeltTypes());
+  }
+
+  Future<BeltType> create(String name) async {
+    final BeltType created = await _api.createBeltType(name: name);
+    await refresh();
+    return created;
+  }
+
+  Future<BeltType> update(int id, String name) async {
+    final BeltType updated = await _api.updateBeltType(id: id, name: name);
+    await refresh();
+    return updated;
+  }
+
+  Future<void> remove(int id) async {
+    await _api.deleteBeltType(id);
+    await refresh();
+  }
 }
 
 final AsyncNotifierProvider<BeltTypesNotifier, List<BeltType>> beltTypesProvider =

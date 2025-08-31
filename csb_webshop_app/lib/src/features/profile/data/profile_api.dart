@@ -54,6 +54,40 @@ class ProfileApi {
     }
     throw Exception('Failed to update profile: ${response.statusCode}');
   }
+
+  Future<bool> isAdmin() async {
+    final String? token = await _secureStorage.getToken();
+    if (token == null || token.isEmpty) return false;
+    try {
+      final Map<String, dynamic> decoded = JwtDecoder.decode(token);
+      final List<String> roles = _extractRoles(decoded);
+      return roles.map((String r) => r.toLowerCase()).contains('admin');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  List<String> _extractRoles(Map<String, dynamic> decoded) {
+    final List<String> roles = <String>[];
+    void addRoleValue(Object? value) {
+      if (value == null) return;
+      if (value is List) {
+        for (final Object e in value) {
+          final String v = e.toString();
+          if (v.isNotEmpty) roles.add(v);
+        }
+      } else {
+        final String v = value.toString();
+        if (v.isNotEmpty) roles.add(v);
+      }
+    }
+
+    addRoleValue(decoded['role']);
+    addRoleValue(decoded['roles']);
+    addRoleValue(decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
+    addRoleValue(decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role']);
+    return roles;
+  }
   Future<int?> _getUserIdFromToken() async {
     final String? token = await _secureStorage.getToken();
     if (token == null || token.isEmpty) return null;

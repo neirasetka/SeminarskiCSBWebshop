@@ -35,5 +35,66 @@ class BeltsApi {
     }
     throw Exception('Failed to load belt $id: ${response.statusCode}');
   }
+
+  Future<Belt> createBelt({
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? beltTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'BeltName': name,
+      'Code': code,
+      'Price': price,
+      'Description': description,
+      if (beltTypeId != null) 'BeltTypeID': beltTypeId,
+      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
+      if (userId != null) 'UserID': userId,
+    };
+    final http.Response response = await _apiClient.post(_beltsPath, body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Belt.fromJson(map);
+    }
+    throw Exception('Failed to create belt: ${response.statusCode}');
+  }
+
+  Future<Belt> updateBelt({
+    required int id,
+    required String name,
+    required String code,
+    required double price,
+    String description = '',
+    int? beltTypeId,
+    String? imageBase64,
+    int? userId,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'BeltName': name,
+      'Code': code,
+      'Price': price,
+      'Description': description,
+      if (beltTypeId != null) 'BeltTypeID': beltTypeId,
+      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
+      if (userId != null) 'UserID': userId,
+    };
+    final http.Response response = await _apiClient.put('$_beltsPath/$id', body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Belt.fromJson(map);
+    }
+    throw Exception('Failed to update belt $id: ${response.statusCode}');
+  }
+
+  Future<void> deleteBelt(int id) async {
+    final http.Response response = await _apiClient.delete('$_beltsPath/$id');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+    throw Exception('Failed to delete belt $id: ${response.statusCode}');
+  }
 }
 
