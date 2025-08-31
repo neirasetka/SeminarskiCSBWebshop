@@ -26,5 +26,14 @@ class BagsApi {
     }
     throw Exception('Failed to load bags: ${response.statusCode}');
   }
+
+  Future<Bag> getBagById(int id) async {
+    final http.Response response = await _apiClient.get('$_bagsPath/$id');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Bag.fromJson(map);
+    }
+    throw Exception('Failed to load bag $id: ${response.statusCode}');
+  }
 }
 
