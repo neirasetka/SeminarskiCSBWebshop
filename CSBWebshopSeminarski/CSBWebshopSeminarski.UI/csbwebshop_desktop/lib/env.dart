@@ -36,5 +36,6 @@ class Env {
   }
 
   static String get apiBaseUrl => dotenv.get('API_BASE_URL');
+  static String get sentryDsn => dotenv.maybeGet('SENTRY_DSN') ?? '';
 }
 
