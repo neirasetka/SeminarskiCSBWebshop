@@ -21,7 +21,9 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Trigger auth state initialization on startup
     ref.watch(authProvider);
-    final router = AppRouter.createRouter();
+    final router = AppRouter.createRouter(
+      isAuthenticated: () => ref.read(authProvider).isAuthenticated,
+    );
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'CSB Webshop',
