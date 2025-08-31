@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
+import '../application/belt_types_provider.dart';
+import '../domain/belt_type.dart';
 
 class BeltsListScreen extends ConsumerStatefulWidget {
   const BeltsListScreen({super.key});
@@ -13,6 +15,7 @@ class BeltsListScreen extends ConsumerStatefulWidget {
 
 class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  int? _selectedBeltTypeId;
 
   @override
   void dispose() {
@@ -21,7 +24,9 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await ref.read(beltsListProvider.notifier).refresh(query: _searchController.text.trim());
+    await ref
+        .read(beltsListProvider.notifier)
+        .refresh(beltTypeId: _selectedBeltTypeId, query: _searchController.text.trim());
   }
 
   @override
@@ -38,6 +43,14 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: <Widget>[
+                _BeltTypeFilter(
+                  selectedId: _selectedBeltTypeId,
+                  onChanged: (int? value) {
+                    setState(() => _selectedBeltTypeId = value);
+                    _onRefresh();
+                  },
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _searchController,
@@ -125,6 +138,34 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BeltTypeFilter extends ConsumerWidget {
+  const _BeltTypeFilter({required this.onChanged, required this.selectedId});
+
+  final ValueChanged<int?> onChanged;
+  final int? selectedId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<BeltType>> typesAsync = ref.watch(beltTypesProvider);
+    return typesAsync.when(
+      data: (List<BeltType> types) {
+        final List<DropdownMenuItem<int?>> items = <DropdownMenuItem<int?>>[
+          const DropdownMenuItem<int?>(value: null, child: Text('Sve vrste')),
+          ...types.map((BeltType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
+        ];
+        return DropdownButton<int?>(
+          value: selectedId,
+          items: items,
+          onChanged: onChanged,
+          hint: const Text('Vrsta'),
+        );
+      },
+      loading: () => const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2)),
+      error: (Object e, StackTrace st) => const SizedBox(),
     );
   }
 }

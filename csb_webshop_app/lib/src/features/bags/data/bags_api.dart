@@ -12,14 +12,13 @@ class BagsApi {
 
   static const String _bagsPath = '/api/Bags';
 
-  Future<List<Bag>> getBags({int page = 1, int pageSize = 20, String? query}) async {
+  Future<List<Bag>> getBags({int? bagTypeId, String? query}) async {
     final Map<String, String> params = <String, String>{
-      'Page': page.toString(),
-      'PageSize': pageSize.toString(),
-      if (query != null && query.isNotEmpty) 'Name': query,
+      if (bagTypeId != null) 'BagTypeID': bagTypeId.toString(),
+      if (query != null && query.isNotEmpty) 'BagName': query,
     };
     final String queryString = Uri(queryParameters: params).query;
-    final String pathWithQuery = '$_bagsPath?$queryString';
+    final String pathWithQuery = params.isEmpty ? _bagsPath : '$_bagsPath?$queryString';
     final http.Response response = await _apiClient.get(pathWithQuery);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final List<dynamic> list = json.decode(response.body) as List<dynamic>;
