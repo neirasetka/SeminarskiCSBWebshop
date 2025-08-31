@@ -17,19 +17,18 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      id: json['id'].toString(),
-      firstName: (json['firstName'] ?? json['ime'] ?? '').toString(),
-      lastName: (json['lastName'] ?? json['prezime'] ?? '').toString(),
-      email: (json['email'] ?? '').toString(),
-      avatarUrl: json['avatar']?.toString() ?? json['avatarUrl']?.toString(),
+      id: (json['UserID'] ?? json['id'] ?? '').toString(),
+      firstName: (json['Name'] ?? '').toString(),
+      lastName: (json['Surname'] ?? '').toString(),
+      email: (json['Email'] ?? '').toString(),
+      avatarUrl: null,
     );
   }
 
   Map<String, dynamic> toUpdateJson() {
     return <String, dynamic>{
-      'firstName': firstName,
-      'lastName': lastName,
-      'avatar': avatarUrl,
+      'Name': firstName,
+      'Surname': lastName,
     };
   }
 

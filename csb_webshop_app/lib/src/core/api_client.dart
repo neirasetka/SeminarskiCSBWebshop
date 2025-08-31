@@ -58,6 +58,11 @@ class ApiClient {
     return response;
   }
 
+  Future<http.Response> putWithUserId(String pathTemplate, {required int userId, Object? body}) async {
+    final String path = pathTemplate.replaceAll('{ID}', userId.toString());
+    return put(path, body: body);
+  }
+
   String _formatBodyForLog(Object? body) {
     if (body is String) return body;
     try {
