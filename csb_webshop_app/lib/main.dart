@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'environment.dart';
-import 'src/features/root/presentation/root_screen.dart';
+import 'src/features/profile/presentation/profile_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: RootScreen(title: 'CSB Webshop (${flavor.toUpperCase()})'),
+      home: ProfileScreen(title: 'CSB Webshop (${flavor.toUpperCase()})'),
     );
   }
 }
