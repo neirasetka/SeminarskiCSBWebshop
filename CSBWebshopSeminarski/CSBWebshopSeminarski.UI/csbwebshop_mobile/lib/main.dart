@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:csb_shared/csb_shared.dart';
+import 'env.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Env.load();
   runApp(const MyApp());
 }
 
