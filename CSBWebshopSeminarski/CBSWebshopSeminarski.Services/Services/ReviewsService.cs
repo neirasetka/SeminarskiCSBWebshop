@@ -1,8 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
+using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -20,6 +21,31 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var query = _context.Reviews.AsQueryable();
 
+            if (search.UserID != 0)
+            {
+                query = query.Where(i => i.UserID == search.UserID);
+            }
+
+            if (search.BagID != 0)
+            {
+                query = query.Where(i => i.BagID == search.BagID);
+            }
+
+            if (search.BeltID != 0)
+            {
+                query = query.Where(i => i.BeltID == search.BeltID);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.Comment))
+            {
+                query = query.Where(i => i.Comment.Contains(search.Comment));
+            }
+
+            if (search.Date != default)
+            {
+                query = query.Where(i => i.Date.Date == search.Date.Date);
+            }
+
             var list = await query.ToListAsync();
             return _mapper.Map<List<Review>>(list);
         }
@@ -34,17 +60,17 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public async Task<Review> Insert(ReviewUpsertRequest request)
         {
-            var entity = _mapper.Map<Review>(request);
-            _context.Set<Review>().Add(entity);
+            var entity = _mapper.Map<Reviews>(request);
+            _context.Set<Reviews>().Add(entity);
             await _context.SaveChangesAsync();
 
             return _mapper.Map<Review>(entity);
         }
         public async Task<Review> Update(int ID, ReviewUpsertRequest request)
         {
-            var entity = _context.Set<Review>().Find(ID);
-            _context.Set<Review>().Attach(entity);
-            _context.Set<Review>().Update(entity);
+            var entity = _context.Set<Reviews>().Find(ID);
+            _context.Set<Reviews>().Attach(entity);
+            _context.Set<Reviews>().Update(entity);
 
             _mapper.Map(request, entity);
 

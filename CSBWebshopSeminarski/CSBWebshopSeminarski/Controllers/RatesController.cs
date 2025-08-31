@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
@@ -12,7 +12,7 @@ namespace CSBWebshopSeminarski.Controllers
     public class RatesController : Controller
     {
         private readonly IRatesService _service;
-        public RatesController(RatesService service)
+        public RatesController(IRatesService service)
         {
             _service = service;
         }
