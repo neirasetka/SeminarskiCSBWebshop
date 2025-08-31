@@ -17,15 +17,18 @@ class Bag {
 
   factory Bag.fromJson(Map<String, dynamic> json) {
     return Bag(
-      id: (json['ID'] ?? json['id'] ?? 0) is int
-          ? (json['ID'] ?? json['id'] ?? 0) as int
-          : int.tryParse((json['ID'] ?? json['id'] ?? '0').toString()) ?? 0,
-      name: (json['Name'] ?? json['name'] ?? '').toString(),
+      id: _toInt(json['BagID'] ?? json['bagID'] ?? json['ID'] ?? json['id'] ?? 0),
+      name: (json['BagName'] ?? json['bagName'] ?? json['Name'] ?? json['name'] ?? '').toString(),
       description: (json['Description'] ?? json['description'] ?? '').toString(),
       price: _toDouble(json['Price'] ?? json['price'] ?? 0),
       imageUrl: (json['ImageUrl'] ?? json['imageUrl'])?.toString(),
       averageRating: _toNullableDouble(json['AverageRating'] ?? json['averageRating']),
     );
+  }
+
+  static int _toInt(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
 
   static double _toDouble(Object? value) {
