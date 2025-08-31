@@ -8,5 +8,6 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Order GetByOrderNumber(string orderNumber);
         Task<Order?> GetActiveCartByUser(int userId);
         Task<Order> Insert(OrderUpsertRequest request);
+        Task<bool> SetPaymentStatusAsync(int orderId, Core.Entities.PaymentStatus status);
     }
 }

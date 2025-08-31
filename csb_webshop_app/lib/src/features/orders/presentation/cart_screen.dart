@@ -60,6 +60,12 @@ class CartScreen extends ConsumerWidget {
                           );
                         }
                       } catch (e) {
+                        try {
+                          final order = ref.read(cartProvider).value;
+                          if (order != null) {
+                            await ref.read(ordersApiProvider).updatePaymentStatus(orderId: order.id, status: 'Failed');
+                          }
+                        } catch (_) {}
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Greška pri plaćanju: $e')),

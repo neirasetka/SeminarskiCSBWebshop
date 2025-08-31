@@ -161,5 +161,14 @@ namespace CBSWebshopSeminarski.Services.Services
             var rand = Random.Shared.Next(10000, 99999);
             return $"ORD-{now:yyyyMMdd}-{rand}";
         }
+
+        public async Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null) return false;
+            order.PaymentStatus = status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

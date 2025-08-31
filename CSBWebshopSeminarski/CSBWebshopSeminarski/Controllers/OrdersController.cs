@@ -41,5 +41,19 @@ namespace CSBWebshopSeminarski.Controllers
             }
             return Ok(order);
         }
+
+        public class UpdatePaymentStatusRequest
+        {
+            public PaymentStatus Status { get; set; }
+        }
+
+        [HttpPatch("{orderId:int}/payment-status")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)
+        {
+            var ok = await _service.SetPaymentStatusAsync(orderId, request.Status);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
     }
 }

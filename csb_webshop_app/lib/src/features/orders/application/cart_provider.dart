@@ -84,6 +84,8 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       ),
     );
     await Stripe.instance.presentPaymentSheet();
+    // Mark as paid
+    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid');
     return <String, String>{
       'clientSecret': clientSecret,
       'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
