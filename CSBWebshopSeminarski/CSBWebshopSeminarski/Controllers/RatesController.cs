@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
@@ -12,7 +12,7 @@ namespace CSBWebshopSeminarski.Controllers
     public class RatesController : Controller
     {
         private readonly IRatesService _service;
-        public RatesController(RatesService service)
+        public RatesController(IRatesService service)
         {
             _service = service;
         }
@@ -20,6 +20,13 @@ namespace CSBWebshopSeminarski.Controllers
         [HttpGet]
         public async Task<List<Rate>> Get([FromQuery] RateSearchRequest search)
         {
+            return await _service.Get(search);
+        }
+
+        [HttpGet("by-user/{userId}")]
+        public async Task<List<Rate>> GetByUser(int userId)
+        {
+            var search = new RateSearchRequest { UserID = userId };
             return await _service.Get(search);
         }
 

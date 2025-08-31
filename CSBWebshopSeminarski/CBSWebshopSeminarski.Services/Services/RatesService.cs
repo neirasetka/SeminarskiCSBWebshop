@@ -1,8 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
+using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -48,9 +49,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Rate> GetById(int ID)
         {
             var entity = await _context.Rates
-               .Include(i => i.BagID)
-               .Include(i => i.BeltID)
-               .Where(i => i.UserID == ID)
+               .Where(i => i.RateID == ID)
                .SingleOrDefaultAsync();
 
             return _mapper.Map<Rate>(entity);
@@ -58,8 +57,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Rate> Insert(RateUpsertRequest request)
         {
-            var entity = _mapper.Map<Rate>(request);
-            _context.Set<Rate>().Add(entity);
+            var entity = _mapper.Map<Rates>(request);
+            _context.Set<Rates>().Add(entity);
             await _context.SaveChangesAsync();
 
             return _mapper.Map<Rate>(entity);
@@ -67,9 +66,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Rate> Update(int ID, RateUpsertRequest request)
         {
-            var entity = _context.Set<Rate>().Find(ID);
-            _context.Set<Rate>().Attach(entity);
-            _context.Set<Rate>().Update(entity);
+            var entity = _context.Set<Rates>().Find(ID);
+            _context.Set<Rates>().Attach(entity);
+            _context.Set<Rates>().Update(entity);
 
             _mapper.Map(request, entity);
 
@@ -80,7 +79,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<bool> Delete(int ID)
         {
-            var rate = await _context.Rates.Where(i => i.UserID == ID).Include(i => i.BagID).FirstOrDefaultAsync();
+            var rate = await _context.Rates.Where(i => i.RateID == ID).FirstOrDefaultAsync();
             if (rate != null)
             {
                 _context.Rates.Remove(rate);
