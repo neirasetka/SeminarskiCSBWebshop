@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../bags/presentation/bags_list_screen.dart';
+import '../../belts/presentation/belts_list_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 
 class RootScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _RootScreenState extends State<RootScreen> {
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
       const BagsListScreen(),
+      const BeltsListScreen(),
       ProfileScreen(title: widget.title),
     ];
     return Scaffold(
@@ -30,7 +32,8 @@ class _RootScreenState extends State<RootScreen> {
         currentIndex: _index,
         onTap: (int i) => setState(() => _index = i),
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Katalog'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Torbe'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Kaiševi'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
