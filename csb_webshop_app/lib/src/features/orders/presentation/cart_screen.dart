@@ -53,10 +53,10 @@ class CartScreen extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       try {
-                        final Map<String, String> res = await ref.read(cartProvider.notifier).startCheckout();
+                        await ref.read(cartProvider.notifier).startCheckout();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Payment intent kreiran. ClientSecret: ${res['clientSecret']?.substring(0, 8)}...')),
+                            const SnackBar(content: Text('Plaćanje uspješno. Hvala!')),
                           );
                         }
                       } catch (e) {

@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'environment.dart';
 import 'src/features/root/presentation/root_screen.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (EnvironmentConfig.stripePublishableKey.isNotEmpty) {
+    Stripe.publishableKey = EnvironmentConfig.stripePublishableKey;
+  }
   runApp(const ProviderScope(child: MyApp()));
 }
 

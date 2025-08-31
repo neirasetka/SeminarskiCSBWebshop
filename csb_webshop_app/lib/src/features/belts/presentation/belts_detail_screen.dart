@@ -95,7 +95,7 @@ class _BeltDetailBody extends ConsumerWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () async {
-                await ref.read(cartProvider.notifier).addBagToCart(bagId: belt.id, price: belt.price);
+                await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u korpu')));
                 }

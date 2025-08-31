@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../profile/data/profile_api.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
@@ -46,6 +47,22 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
+  Future<void> addBeltToCart({required int beltId, required double price, int quantity = 1}) async {
+    OrderModel? order = state.value;
+    if (order == null) {
+      final int userId = (await _profileApi.getMe()).id;
+      final created = await _api.createOrder(
+        userId: userId,
+        orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
+        date: DateTime.now(),
+        price: 0,
+      );
+      order = OrderModel.fromJson(created);
+    }
+    await _api.addItem(orderId: order.id, beltId: beltId, quantity: quantity, price: price);
+    await refresh();
+  }
+
   Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
     final OrderModel? order = state.value ?? await _loadActiveCart();
     if (order == null) {
@@ -58,8 +75,17 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       currency: currency,
       receiptEmail: email,
     );
+    final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
+    // Prepare and present PaymentSheet
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'CSB Webshop',
+      ),
+    );
+    await Stripe.instance.presentPaymentSheet();
     return <String, String>{
-      'clientSecret': (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString(),
+      'clientSecret': clientSecret,
       'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
     };
   }
