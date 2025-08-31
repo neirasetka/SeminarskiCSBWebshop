@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -16,6 +16,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int UserID { get; set; }
         public int BagID { get; set; }
         public int BeltID { get; set; }
+        public ReviewStatus Status { get; set; }
         public virtual Users User { get; set; }
         public virtual Bags Bag { get; set; }
         public virtual Belts Belt { get; set; }
