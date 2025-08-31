@@ -42,6 +42,15 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(order);
         }
 
+        [HttpGet("ByUser")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult<List<Order>>> GetByUser([FromQuery] int userId)
+        {
+            var orders = await _service.Get(new OrderSearchRequest());
+            var result = orders.Where(o => o.UserID == userId).OrderByDescending(o => o.Date).ToList();
+            return Ok(result);
+        }
+
         public class UpdatePaymentStatusRequest
         {
             public PaymentStatus Status { get; set; }

@@ -22,6 +22,15 @@ class OrdersApi {
     throw Exception('Failed to get active cart: ${response.statusCode}');
   }
 
+  Future<List<Map<String, dynamic>>> getOrdersByUser({required int userId}) async {
+    final http.Response response = await _apiClient.get('$_ordersPath/ByUser?userId=$userId');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
+      return jsonList.cast<Map<String, dynamic>>();
+    }
+    throw Exception('Failed to load orders: ${response.statusCode}');
+  }
+
   Future<Map<String, dynamic>> createOrder({
     required int userId,
     required String orderNumber,
