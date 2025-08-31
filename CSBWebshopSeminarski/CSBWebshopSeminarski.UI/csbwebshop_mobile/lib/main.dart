@@ -3,6 +3,7 @@ import 'package:csb_shared/csb_shared.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'env.dart';
+import 'auth_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +14,13 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Trigger auth state initialization on startup
+    ref.watch(authProvider);
     final router = AppRouter.createRouter();
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
