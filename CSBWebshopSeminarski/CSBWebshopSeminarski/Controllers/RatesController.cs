@@ -23,6 +23,13 @@ namespace CSBWebshopSeminarski.Controllers
             return await _service.Get(search);
         }
 
+        [HttpGet("by-user/{userId}")]
+        public async Task<List<Rate>> GetByUser(int userId)
+        {
+            var search = new RateSearchRequest { UserID = userId };
+            return await _service.Get(search);
+        }
+
         [HttpGet("{ID}")]
         public async Task<Rate> GetById(int ID)
         {
