@@ -6,6 +6,8 @@ import '../domain/user_profile.dart';
 import 'profile_update_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
+import '../../giveaways/presentation/giveaways_list_screen.dart';
+import '../../auth/application/admin_role_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, required this.title});
@@ -80,6 +82,7 @@ class _ProfileDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget adminSection = _AdminActions();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
@@ -116,6 +119,8 @@ class _ProfileDetails extends StatelessWidget {
           icon: const Icon(Icons.campaign_outlined),
           label: const Text('Najave i obavijesti'),
         ),
+        const SizedBox(height: 8),
+        adminSection,
       ],
     );
   }
@@ -132,6 +137,35 @@ class _ProfileDetails extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: Text(title, style: const TextStyle(color: Colors.grey)),
       subtitle: Text(value, style: const TextStyle(fontSize: 16)),
+    );
+  }
+}
+
+class _AdminActions extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
+    return isAdminAsync.when(
+      data: (bool isAdmin) {
+        if (!isAdmin) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Divider(height: 24),
+            const Text('Admin', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen(forAdmin: true)),
+              ),
+              icon: const Icon(Icons.celebration_outlined),
+              label: const Text('Upravljanje giveawayima'),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

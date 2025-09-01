@@ -26,6 +26,46 @@ namespace CSBWebshopSeminarski.Controllers
             _logger = logger;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult GetAll([FromQuery] string? status)
+        {
+            var now = DateTime.UtcNow;
+            var query = _context.Giveaways.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                switch (status.Trim().ToLowerInvariant())
+                {
+                    case "active":
+                        query = query.Where(g => !g.IsClosed && g.StartDate <= now && g.EndDate >= now);
+                        break;
+                    case "closed":
+                        query = query.Where(g => g.IsClosed || g.EndDate < now);
+                        break;
+                    case "all":
+                        break;
+                    default:
+                        return BadRequest("Invalid status. Use one of: active, closed, all");
+                }
+            }
+
+            var dto = query
+                .OrderByDescending(g => g.StartDate)
+                .Select(g => new GiveawayDto
+                {
+                    Id = g.Id,
+                    Title = g.Title,
+                    StartDate = g.StartDate,
+                    EndDate = g.EndDate,
+                    IsClosed = g.IsClosed,
+                    WinnerParticipantId = g.WinnerParticipantId
+                })
+                .ToList();
+
+            return Ok(dto);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateGiveawayRequest request)

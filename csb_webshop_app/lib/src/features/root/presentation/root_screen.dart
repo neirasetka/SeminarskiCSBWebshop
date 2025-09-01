@@ -6,6 +6,7 @@ import '../../profile/presentation/profile_screen.dart';
 import '../../orders/presentation/cart_screen.dart';
 // import '../../../core/notification_service.dart';
 import 'package:go_router/go_router.dart';
+import '../../giveaways/presentation/giveaways_list_screen.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key, required this.title});
@@ -34,10 +35,11 @@ class _RootScreenState extends State<RootScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Demo: navigate to Event 1
-          context.pushNamed('eventDetail', pathParameters: <String, String>{'id': '1'});
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
+          );
         },
-        label: const Text('Demo event'),
+        label: const Text('Giveawayi'),
         icon: const Icon(Icons.celebration_outlined),
       ),
       bottomNavigationBar: BottomNavigationBar(
