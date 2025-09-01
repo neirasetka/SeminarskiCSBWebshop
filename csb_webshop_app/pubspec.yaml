@@ -40,6 +40,8 @@ dependencies:
   jwt_decoder: ^2.0.1
   shared_preferences: ^2.3.2
   flutter_stripe: ^11.0.0
+  go_router: ^14.2.7
+  flutter_local_notifications: ^17.2.3
 
 dev_dependencies:
   flutter_test:
