@@ -5,6 +5,7 @@ import '../features/orders/domain/order_models.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
+import '../features/giveaways/presentation/giveaways_list_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -45,6 +46,11 @@ final GoRouter appRouter = GoRouter(
             final int eventId = int.tryParse(idParam ?? '') ?? 1;
             return EventDetailScreen(eventId: eventId);
           },
+        ),
+        GoRoute(
+          path: 'giveaways',
+          name: 'giveaways',
+          builder: (BuildContext context, GoRouterState state) => const GiveawaysListScreen(),
         ),
       ],
     ),
