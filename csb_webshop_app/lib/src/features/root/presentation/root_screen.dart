@@ -29,6 +29,16 @@ class _RootScreenState extends State<RootScreen> {
       ProfileScreen(title: widget.title),
     ];
     return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Izvještaji',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => context.go('/reports'),
+          ),
+        ],
+      ),
       body: IndexedStack(
         index: _index,
         children: pages,

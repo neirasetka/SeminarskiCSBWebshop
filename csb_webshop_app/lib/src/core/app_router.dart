@@ -6,6 +6,7 @@ import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
+import '../features/reports/presentation/reports_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -18,6 +19,11 @@ final GoRouter appRouter = GoRouter(
       name: 'root',
       builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop'),
       routes: <RouteBase>[
+        GoRoute(
+          path: 'reports',
+          name: 'reports',
+          builder: (BuildContext context, GoRouterState state) => const ReportsScreen(),
+        ),
         GoRoute(
           path: 'orders/:id',
           name: 'orderDetail',
