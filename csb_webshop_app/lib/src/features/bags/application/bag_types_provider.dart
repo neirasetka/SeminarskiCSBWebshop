@@ -27,7 +27,7 @@ class BagTypesNotifier extends AsyncNotifier<List<BagType>> {
     return created;
   }
 
-  Future<BagType> update(int id, String name) async {
+  Future<BagType> rename(int id, String name) async {
     final BagType updated = await _api.updateBagType(id: id, name: name);
     await refresh();
     return updated;

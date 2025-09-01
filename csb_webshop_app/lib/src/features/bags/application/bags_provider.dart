@@ -56,7 +56,7 @@ class BagsListNotifier extends AsyncNotifier<List<Bag>> {
     return created;
   }
 
-  Future<Bag> update({
+  Future<Bag> edit({
     required int id,
     required String name,
     required String code,
