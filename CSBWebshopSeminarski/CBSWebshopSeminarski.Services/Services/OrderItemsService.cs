@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
@@ -38,7 +38,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _context.Set<OrderItems>().Add(entity);
             await _context.SaveChangesAsync();
-
+            await RecalculateOrderTotal(entity.OrderID);
             return _mapper.Map<OrderItem>(entity);
         }
 
@@ -52,22 +52,36 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper.Map(request, entity);
 
             await _context.SaveChangesAsync();
-
+            await RecalculateOrderTotal(entity.OrderID);
             return _mapper.Map<OrderItem>(entity);
         }
 
         public override async Task<bool> Delete(int ID)
         {
-            var orderItem = await _context.OrderItems.Where(c => c.OrderID == ID).FirstOrDefaultAsync();
+            var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
+            if (entity == null) return false;
+            var orderId = entity.OrderID;
+            _context.OrderItems.Remove(entity);
+            await _context.SaveChangesAsync();
+            await RecalculateOrderTotal(orderId);
+            return true;
+        }
 
-            if (orderItem != null)
+        private async Task RecalculateOrderTotal(int orderId)
+        {
+            var order = await _context.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null) return;
+            decimal total = 0m;
+            foreach (var item in order.OrderItems)
             {
-                var orders = await _context.OrderItems.Where(i => i.OrderID == ID).ToListAsync();
-                if (orders != null)
-                    _context.OrderItems.RemoveRange(orders);
-                return true;
+                var price = (decimal)(item.Price ?? 0f);
+                var qty = item.Quantity ?? 1;
+                var line = price * qty;
+                if (item.Discount.HasValue) line -= item.Discount.Value;
+                total += line;
             }
-            return false;
+            order.Price = (float)total;
+            await _context.SaveChangesAsync();
         }
     }
 }

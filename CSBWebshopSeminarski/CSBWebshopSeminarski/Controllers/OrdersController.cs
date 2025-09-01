@@ -17,6 +17,13 @@ namespace CSBWebshopSeminarski.Controllers
             _service = service;
         }
 
+        [HttpPost("Create")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<Order> Create([FromBody] OrderUpsertRequest request)
+        {
+            return await _service.Insert(request);
+        }
+
         [HttpGet("GetByOrderNumber")]
         public Order GetByOrderNumber([FromQuery] string name)
         {
@@ -33,6 +40,29 @@ namespace CSBWebshopSeminarski.Controllers
                 return NoContent();
             }
             return Ok(order);
+        }
+
+        [HttpGet("ByUser")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult<List<Order>>> GetByUser([FromQuery] int userId)
+        {
+            var orders = await _service.Get(new OrderSearchRequest());
+            var result = orders.Where(o => o.UserID == userId).OrderByDescending(o => o.Date).ToList();
+            return Ok(result);
+        }
+
+        public class UpdatePaymentStatusRequest
+        {
+            public PaymentStatus Status { get; set; }
+        }
+
+        [HttpPatch("{orderId:int}/payment-status")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)
+        {
+            var ok = await _service.SetPaymentStatusAsync(orderId, request.Status);
+            if (!ok) return NotFound();
+            return NoContent();
         }
     }
 }

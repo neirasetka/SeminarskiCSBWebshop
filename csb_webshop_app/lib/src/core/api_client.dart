@@ -70,6 +70,18 @@ class ApiClient {
     return response;
   }
 
+  Future<http.Response> patch(String path, {Object? body}) async {
+    final Uri url = _uri(path);
+    final Map<String, String> headers = await _defaultHeaders();
+    if (EnvironmentConfig.enableLogging) {
+      debugPrint('PATCH $url');
+      debugPrint('Body: ${_formatBodyForLog(body)}');
+    }
+    final http.Response response = await _httpClient.patch(url, headers: headers, body: body);
+    _logResponse(response);
+    return response;
+  }
+
   Future<http.Response> delete(String path) async {
     final Uri url = _uri(path);
     final Map<String, String> headers = await _defaultHeaders();

@@ -1,5 +1,6 @@
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CSBWebshopSeminarski.Core.Entities;
 
 namespace CBSWebshopSeminarski.Services.Interfaces
 {
@@ -7,5 +8,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
     {
         Order GetByOrderNumber(string orderNumber);
         Task<Order?> GetActiveCartByUser(int userId);
+        Task<Order> Insert(OrderUpsertRequest request);
+        Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status);
     }
 }

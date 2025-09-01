@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../favorites/application/favorites_provider.dart';
+import '../../orders/application/cart_provider.dart';
 
 class BagDetailScreen extends ConsumerStatefulWidget {
   const BagDetailScreen({super.key, required this.id});
@@ -38,6 +39,12 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
             bag: bag,
             isFavorite: isFav,
             onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+            onAddToCart: () async {
+              await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u korpu')));
+              }
+            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -64,11 +71,12 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
 }
 
 class _BagDetailBody extends StatelessWidget {
-  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite});
+  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite, required this.onAddToCart});
 
   final Bag bag;
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
+  final VoidCallback onAddToCart;
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +116,15 @@ class _BagDetailBody extends StatelessWidget {
           const Text('Opis', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(bag.description),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onAddToCart,
+              icon: const Icon(Icons.add_shopping_cart),
+              label: const Text('Dodaj u korpu'),
+            ),
+          ),
         ],
       ),
     );

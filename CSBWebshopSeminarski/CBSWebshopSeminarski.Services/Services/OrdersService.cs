@@ -57,6 +57,16 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _mapper.Map<Orders>(request);
 
+            // Ensure defaults
+            if (string.IsNullOrWhiteSpace(entity.OrderNumber))
+            {
+                entity.OrderNumber = GenerateOrderNumber();
+            }
+            if (entity.Date == default)
+            {
+                entity.Date = DateTime.UtcNow;
+            }
+
             _context.Set<Orders>().Add(entity);
             await _context.SaveChangesAsync();
 
@@ -143,6 +153,22 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             return _mapper.Map<Order>(entity);
+        }
+
+        private static string GenerateOrderNumber()
+        {
+            var now = DateTime.UtcNow;
+            var rand = Random.Shared.Next(10000, 99999);
+            return $"ORD-{now:yyyyMMdd}-{rand}";
+        }
+
+        public async Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null) return false;
+            order.PaymentStatus = status;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
