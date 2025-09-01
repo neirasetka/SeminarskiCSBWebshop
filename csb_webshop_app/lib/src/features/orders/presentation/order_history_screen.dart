@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/order_history_provider.dart';
 import '../domain/order_models.dart';
+import 'order_detail_screen.dart';
 
 class OrderHistoryScreen extends ConsumerWidget {
   const OrderHistoryScreen({super.key});
@@ -24,6 +25,13 @@ class OrderHistoryScreen extends ConsumerWidget {
                 title: Text(o.orderNumber),
                 subtitle: Text('${o.date.toLocal()} · ${o.paymentStatus ?? 'N/A'}'),
                 trailing: Text('${o.amount.toStringAsFixed(2)} KM'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => OrderDetailScreen(order: o),
+                    ),
+                  );
+                },
               );
             },
           );
