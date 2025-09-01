@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../domain/order_models.dart';
+import 'shipping_status_timeline.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key, required this.order});
@@ -18,6 +19,10 @@ class OrderDetailScreen extends StatelessWidget {
           _kv('Datum', order.date.toLocal().toString()),
           _kv('Status plaćanja', order.paymentStatus ?? 'N/A'),
           _kv('Status isporuke', order.shippingStatus ?? 'N/A'),
+          const SizedBox(height: 8),
+          const Divider(),
+          _sectionHeader('Praćenje dostave'),
+          ShippingStatusTimeline(status: order.shippingStatus),
           const SizedBox(height: 16),
           _sectionHeader('Stavke'),
           ...order.items.map((OrderItemModel item) => _itemTile(item)).toList(),
