@@ -4,7 +4,8 @@ import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../orders/presentation/cart_screen.dart';
-import '../../../core/notification_service.dart';
+// import '../../../core/notification_service.dart';
+import 'package:go_router/go_router.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key, required this.title});
@@ -33,15 +34,11 @@ class _RootScreenState extends State<RootScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Demo: show a local notification that navigates to order 123 on tap
-          NotificationService.instance.showOrderNotification(
-            orderId: 123,
-            title: 'Narudžba #123',
-            body: 'Dodirnite za detalje narudžbe',
-          );
+          // Demo: navigate to Event 1
+          context.pushNamed('eventDetail', pathParameters: <String, String>{'id': '1'});
         },
-        label: const Text('Test notifikacija'),
-        icon: const Icon(Icons.notifications_active_outlined),
+        label: const Text('Demo event'),
+        icon: const Icon(Icons.celebration_outlined),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,

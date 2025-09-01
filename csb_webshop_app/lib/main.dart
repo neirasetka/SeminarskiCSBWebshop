@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String flavor = EnvironmentConfig.flavor;
+    // final String flavor = EnvironmentConfig.flavor;
     return MaterialApp.router(
       title: 'CSB Webshop',
       theme: ThemeData(
