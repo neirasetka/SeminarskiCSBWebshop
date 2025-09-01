@@ -370,7 +370,7 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                         bagTypeId: selectedTypeId,
                       );
                 } else {
-                  await ref.read(bagsListProvider.notifier).update(
+                  await ref.read(bagsListProvider.notifier).edit(
                         id: existing.id,
                         name: name,
                         code: code,
@@ -438,7 +438,7 @@ Future<void> _showManageBagTypesDialog(BuildContext context, WidgetRef ref) asyn
                               onPressed: () async {
                                 final String? newName = await _promptText(context, 'Uredi tip', 'Naziv', t.name);
                                 if (newName != null && newName.trim().isNotEmpty) {
-                                  await ref.read(bagTypesProvider.notifier).update(t.id, newName.trim());
+                                  await ref.read(bagTypesProvider.notifier).rename(t.id, newName.trim());
                                 }
                               },
                             ),

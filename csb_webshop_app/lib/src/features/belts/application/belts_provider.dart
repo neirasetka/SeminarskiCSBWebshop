@@ -54,7 +54,7 @@ class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
     return created;
   }
 
-  Future<Belt> update({
+  Future<Belt> edit({
     required int id,
     required String name,
     required String code,

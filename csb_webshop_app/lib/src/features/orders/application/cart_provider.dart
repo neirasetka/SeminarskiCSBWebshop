@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile/data/profile_api.dart';
+import '../../profile/application/user_profile_provider.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';

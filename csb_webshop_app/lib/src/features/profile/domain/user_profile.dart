@@ -4,7 +4,7 @@ class UserProfile {
     required this.username,
     required this.firstName,
     required this.lastName,
-    this.email = '',
+    required this.email,
     this.avatarUrl,
   });
 
@@ -35,39 +35,6 @@ class UserProfile {
     );
   }
 
-  static int _toInt(Object? value) {
-    if (value is int) return value;
-    return int.tryParse(value?.toString() ?? '0') ?? 0;
-  }
-}
-
-class UserProfile {
-  const UserProfile({
-    required this.id,
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-    this.avatarUrl,
-  });
-
-  final String id;
-  final String firstName;
-  final String lastName;
-  final String email;
-  final String? avatarUrl;
-
-  String get fullName => '$firstName $lastName'.trim();
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      id: (json['UserID'] ?? json['id'] ?? '').toString(),
-      firstName: (json['Name'] ?? '').toString(),
-      lastName: (json['Surname'] ?? '').toString(),
-      email: (json['Email'] ?? '').toString(),
-      avatarUrl: null,
-    );
-  }
-
   Map<String, dynamic> toUpdateJson() {
     return <String, dynamic>{
       'Name': firstName,
@@ -83,11 +50,17 @@ class UserProfile {
   }) {
     return UserProfile(
       id: id,
+      username: username,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
     );
+  }
+
+  static int _toInt(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
 }
 

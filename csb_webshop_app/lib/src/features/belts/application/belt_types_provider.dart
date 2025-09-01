@@ -27,7 +27,7 @@ class BeltTypesNotifier extends AsyncNotifier<List<BeltType>> {
     return created;
   }
 
-  Future<BeltType> update(int id, String name) async {
+  Future<BeltType> rename(int id, String name) async {
     final BeltType updated = await _api.updateBeltType(id: id, name: name);
     await refresh();
     return updated;

@@ -348,7 +348,7 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
                         beltTypeId: selectedTypeId,
                       );
                 } else {
-                  await ref.read(beltsListProvider.notifier).update(
+                  await ref.read(beltsListProvider.notifier).edit(
                         id: existing.id,
                         name: name,
                         code: code,
@@ -416,7 +416,7 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                               onPressed: () async {
                                 final String? newName = await _promptText(context, 'Uredi tip', 'Naziv', t.name);
                                 if (newName != null && newName.trim().isNotEmpty) {
-                                  await ref.read(beltTypesProvider.notifier).update(t.id, newName.trim());
+                                  await ref.read(beltTypesProvider.notifier).rename(t.id, newName.trim());
                                 }
                               },
                             ),
