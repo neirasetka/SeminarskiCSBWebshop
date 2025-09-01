@@ -5,6 +5,7 @@ import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 import 'profile_update_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
+import '../../announcements/presentation/announcements_list_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, required this.title});
@@ -106,6 +107,14 @@ class _ProfileDetails extends StatelessWidget {
           ),
           icon: const Icon(Icons.receipt_long),
           label: const Text('Moje narudžbe'),
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+          ),
+          icon: const Icon(Icons.campaign_outlined),
+          label: const Text('Najave i obavijesti'),
         ),
       ],
     );
