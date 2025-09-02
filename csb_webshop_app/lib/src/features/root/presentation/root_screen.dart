@@ -38,6 +38,11 @@ class _RootScreenState extends State<RootScreen> {
             onPressed: () => context.go('/reports'),
           ),
           IconButton(
+            tooltip: 'Checkout demo',
+            icon: const Icon(Icons.payment_outlined),
+            onPressed: () => context.go('/checkout'),
+          ),
+          IconButton(
             tooltip: 'Lookbook',
             icon: const Icon(Icons.grid_view_outlined),
             onPressed: () => context.go('/lookbook'),
