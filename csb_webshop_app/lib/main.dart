@@ -16,8 +16,8 @@ Future<void> main() async {
 
   NotificationService.instance.initialize();
 
-  // Initialize desktop window management when running on desktop platforms
-  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux || defaultTargetPlatform == TargetPlatform.macOS)) {
+  // Initialize desktop window management for Windows only
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     await windowManager.ensureInitialized();
 
     const WindowOptions windowOptions = WindowOptions(
