@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../profile/data/profile_api.dart';
+import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
