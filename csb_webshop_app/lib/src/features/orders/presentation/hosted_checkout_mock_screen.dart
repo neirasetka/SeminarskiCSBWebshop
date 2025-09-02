@@ -5,8 +5,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/cart_provider.dart';
-import '../../data/orders_api.dart';
+import '../application/cart_provider.dart';
+import '../data/orders_api.dart';
 
 class HostedCheckoutMockScreen extends ConsumerStatefulWidget {
   const HostedCheckoutMockScreen({super.key});
