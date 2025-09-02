@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSWebshopSeminarski.Servic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski.Notifications", "CSBWebshopSeminarski.Notifications\CSBWebshopSeminarski.Notifications.csproj", "{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSBWebshopSeminarski.Tests", "CSBWebshopSeminarski.Tests\CSBWebshopSeminarski.Tests.csproj", "{8D208DA1-6C57-4A5F-8F46-9A4CA3D9D90B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E67B077-0D67-4E19-9E3B-61D5265C1B4B}.Release|Any CPU.Build.0 = Release|Any CPU
+        {8D208DA1-6C57-4A5F-8F46-9A4CA3D9D90B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {8D208DA1-6C57-4A5F-8F46-9A4CA3D9D90B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {8D208DA1-6C57-4A5F-8F46-9A4CA3D9D90B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {8D208DA1-6C57-4A5F-8F46-9A4CA3D9D90B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

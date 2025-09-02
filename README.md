@@ -49,3 +49,45 @@ API koristi ove vrijednosti u `Program.cs`:
 - Webhook je izvor istine za finansijski status; ne oslanjati se na klijentske callback-e.
 - Za web aplikaciju možete koristiti Stripe Elements (Checkout ili custom UI) uz `client_secret` iz PaymentIntent-a.
 - Za mobilne aplikacije preporučen je Stripe PaymentSheet (koristeći isti `client_secret`).
+
+## Flutter aplikacija (csb_webshop_app) — Testiranje
+
+### Pokretanje testova
+1) Pređite u direktorij projekta:
+   - `cd csb_webshop_app`
+
+2) Preuzmite zavisnosti:
+   - `flutter pub get`
+
+3) Pokrenite sve testove:
+   - `flutter test`
+
+4) Pokrenite jedan fajl testa (primjer):
+   - `flutter test test/local_favorites_storage_test.dart`
+
+### Šta je pokriveno
+- Unit testovi:
+  - `LocalFavoritesStorage` (čitanje/spremanje/toggle favorita preko `SharedPreferences` mocka)
+  - `LocalCollectionsStorage` (dodavanje/uklanjanje, preimenovanje i brisanje kolekcija)
+- Widget testovi:
+  - `AnnouncementsListScreen` prazan state (`Nema obavijesti.`)
+  - `AnnouncementsListScreen` sa mock podacima (render naslova)
+
+Napomena: Testovi koriste `SharedPreferences.setMockInitialValues` i Riverpod override za API sloj, tako da ne rade stvarni IO/umrežavanje.
+
+## Backend (.NET) — Testiranje
+
+### Postavljanje i pokretanje
+1) Instalirajte .NET 8 SDK.
+2) Na nivou rješenja:
+   - `cd CSBWebshopSeminarski`
+   - `dotnet restore`
+3) Pokretanje svih testova:
+   - `dotnet test CSBWebshopSeminarski.sln`
+
+### Šta je pokriveno
+- `PaymentsService` unit testovi: idempotentna obrada Stripe payment-a i update statusa narudžbe.
+- `ShipmentTrackingService` unit testovi: promjena statusa, dodavanje tracking event-ova i mapiranje eksternih statusa.
+- `PaymentsController` negativan slučaj: 404 kada narudžba ne postoji za kreiranje PaymentIntent-a.
+
+Napomena: Testovi koriste EF Core InMemory provider; nema spajanja na pravu bazu niti Stripe API.
