@@ -99,5 +99,14 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to update payment status: ${response.statusCode}');
   }
+
+  Future<Map<String, dynamic>> confirmMockCheckout() async {
+    // Calls the mock node server running on localhost:4242
+    final http.Response response = await _apiClient.post('http://localhost:4242/checkout/confirm');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to confirm mock checkout: ${response.statusCode}');
+  }
 }
 

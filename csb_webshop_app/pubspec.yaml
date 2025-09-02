@@ -43,6 +43,7 @@ dependencies:
   go_router: ^14.2.7
   flutter_local_notifications: ^17.2.3
   fl_chart: ^0.69.0
+  flutter_inappwebview: ^6.0.0
 
 dev_dependencies:
   flutter_test:
