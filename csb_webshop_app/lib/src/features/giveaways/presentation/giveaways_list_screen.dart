@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
+import '../../giveaways/domain/participant.dart';
+import '../../giveaways/data/giveaways_api.dart';
 
 class GiveawaysListScreen extends ConsumerWidget {
   const GiveawaysListScreen({super.key, this.forAdmin = false});
