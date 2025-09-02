@@ -45,6 +45,7 @@ dependencies:
   fl_chart: ^0.69.0
   flutter_inappwebview: ^6.0.0
   window_manager: ^0.4.2
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:
