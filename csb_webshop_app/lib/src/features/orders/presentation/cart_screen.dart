@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/cart_provider.dart';
+import 'package:go_router/go_router.dart';
 import '../domain/order_models.dart';
-import 'order_success_screen.dart';
+// import 'order_success_screen.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -52,28 +53,7 @@ class CartScreen extends ConsumerWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () async {
-                      try {
-                        await ref.read(cartProvider.notifier).startCheckout();
-                        if (context.mounted) {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(builder: (_) => const OrderSuccessScreen()),
-                          );
-                        }
-                      } catch (e) {
-                        try {
-                          final order = ref.read(cartProvider).value;
-                          if (order != null) {
-                            await ref.read(ordersApiProvider).updatePaymentStatus(orderId: order.id, status: 'Failed');
-                          }
-                        } catch (_) {}
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Greška pri plaćanju: $e')),
-                          );
-                        }
-                      }
-                    },
+                    onPressed: () => context.go('/checkout'),
                     icon: const Icon(Icons.payment),
                     label: const Text('Nastavi na plaćanje'),
                   ),
