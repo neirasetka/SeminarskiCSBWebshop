@@ -6,6 +6,8 @@ import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
+import '../features/lookbook/presentation/lookbook_screen.dart';
+import '../features/collections/presentation/collections_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -23,6 +25,16 @@ final GoRouter appRouter = GoRouter(
           path: 'reports',
           name: 'reports',
           builder: (BuildContext context, GoRouterState state) => const ReportsScreen(),
+        ),
+        GoRoute(
+          path: 'lookbook',
+          name: 'lookbook',
+          builder: (BuildContext context, GoRouterState state) => const LookbookScreen(),
+        ),
+        GoRoute(
+          path: 'collections',
+          name: 'collections',
+          builder: (BuildContext context, GoRouterState state) => const CollectionsScreen(),
         ),
         GoRoute(
           path: 'orders/:id',

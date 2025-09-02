@@ -37,6 +37,16 @@ class _RootScreenState extends State<RootScreen> {
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => context.go('/reports'),
           ),
+          IconButton(
+            tooltip: 'Lookbook',
+            icon: const Icon(Icons.grid_view_outlined),
+            onPressed: () => context.go('/lookbook'),
+          ),
+          IconButton(
+            tooltip: 'Kolekcije',
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            onPressed: () => context.go('/collections'),
+          ),
         ],
       ),
       body: IndexedStack(
