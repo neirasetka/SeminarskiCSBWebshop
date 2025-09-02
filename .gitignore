@@ -436,3 +436,10 @@ windows/
 *.iml
 .idea/
 .vscode/
+
+# SDKs and local tools (do not track)
+/android-sdk/
+/flutter/
+/flutter-3-35/
+/flutter-sdk/
+/dotnet-install.sh
