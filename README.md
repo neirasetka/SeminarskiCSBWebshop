@@ -74,3 +74,20 @@ API koristi ove vrijednosti u `Program.cs`:
   - `AnnouncementsListScreen` sa mock podacima (render naslova)
 
 Napomena: Testovi koriste `SharedPreferences.setMockInitialValues` i Riverpod override za API sloj, tako da ne rade stvarni IO/umrežavanje.
+
+## Backend (.NET) — Testiranje
+
+### Postavljanje i pokretanje
+1) Instalirajte .NET 8 SDK.
+2) Na nivou rješenja:
+   - `cd CSBWebshopSeminarski`
+   - `dotnet restore`
+3) Pokretanje svih testova:
+   - `dotnet test CSBWebshopSeminarski.sln`
+
+### Šta je pokriveno
+- `PaymentsService` unit testovi: idempotentna obrada Stripe payment-a i update statusa narudžbe.
+- `ShipmentTrackingService` unit testovi: promjena statusa, dodavanje tracking event-ova i mapiranje eksternih statusa.
+- `PaymentsController` negativan slučaj: 404 kada narudžba ne postoji za kreiranje PaymentIntent-a.
+
+Napomena: Testovi koriste EF Core InMemory provider; nema spajanja na pravu bazu niti Stripe API.
