@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../features/orders/domain/order_models.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
+import '../features/orders/presentation/checkout_demo_screen.dart';
+import '../features/orders/presentation/order_success_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
@@ -21,6 +23,18 @@ final GoRouter appRouter = GoRouter(
       name: 'root',
       builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop'),
       routes: <RouteBase>[
+        GoRoute(
+          path: 'checkout',
+          name: 'checkoutDemo',
+          builder: (BuildContext context, GoRouterState state) => const CheckoutDemoScreen(),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'success',
+              name: 'checkoutSuccess',
+              builder: (BuildContext context, GoRouterState state) => const OrderSuccessScreen(),
+            ),
+          ],
+        ),
         GoRoute(
           path: 'reports',
           name: 'reports',
