@@ -15,6 +15,39 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Flutter SDK setup
+
+Follow the official guide: [Install Flutter](https://docs.flutter.dev/get-started/install).
+
+- Linux/macOS (quick CLI example):
+
+```bash
+# Linux example (adjust versions/paths as needed)
+mkdir -p "$HOME/tools"
+cd "$HOME/tools"
+curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz
+tar xf flutter_linux_3.24.3-stable.tar.xz
+echo 'export PATH="$HOME/tools/flutter/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+flutter doctor
+# Android only: accept licenses
+flutter doctor --android-licenses
+```
+
+- Windows (high-level):
+  - Download Flutter SDK zip from the official site
+  - Extract to e.g. `C:\tools\flutter`
+  - Add `C:\tools\flutter\bin` to PATH
+  - Open a new terminal and run `flutter doctor`
+
+## Install dependencies and run (this project)
+
+```bash
+cd csb_webshop_app
+flutter pub get
+flutter run
+```
+
 ## Flavors and Environment Config
 
 Android product flavors are configured: `dev`, `prod`.
