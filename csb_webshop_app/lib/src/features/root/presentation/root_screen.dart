@@ -7,7 +7,6 @@ import '../../orders/presentation/cart_screen.dart';
 // import '../../../core/notification_service.dart';
 import 'package:go_router/go_router.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
-import '../../../core/app_router.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key, required this.title});
