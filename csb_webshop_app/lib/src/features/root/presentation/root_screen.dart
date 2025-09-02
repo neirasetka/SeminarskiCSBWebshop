@@ -7,6 +7,7 @@ import '../../orders/presentation/cart_screen.dart';
 // import '../../../core/notification_service.dart';
 import 'package:go_router/go_router.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
+import '../../../core/app_router.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key, required this.title});
@@ -36,6 +37,16 @@ class _RootScreenState extends State<RootScreen> {
             tooltip: 'Izvještaji',
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => context.go('/reports'),
+          ),
+          IconButton(
+            tooltip: 'Lookbook',
+            icon: const Icon(Icons.grid_view_outlined),
+            onPressed: () => context.go('/lookbook'),
+          ),
+          IconButton(
+            tooltip: 'Kolekcije',
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            onPressed: () => context.go('/collections'),
           ),
         ],
       ),

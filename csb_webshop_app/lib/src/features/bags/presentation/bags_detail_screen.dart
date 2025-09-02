@@ -5,6 +5,7 @@ import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
+import '../../collections/application/collections_provider.dart';
 
 class BagDetailScreen extends ConsumerStatefulWidget {
   const BagDetailScreen({super.key, required this.id});
@@ -45,6 +46,15 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u korpu')));
               }
             },
+            onAddToCollection: () async {
+              final String? name = await _promptText(context, 'Dodaj u kolekciju', 'Naziv kolekcije');
+              if (name != null && name.trim().isNotEmpty) {
+                await ref.read(collectionsProvider.notifier).addToCollection(collectionName: name.trim(), bagId: bag.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u kolekciju')));
+                }
+              }
+            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -71,12 +81,13 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
 }
 
 class _BagDetailBody extends StatelessWidget {
-  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite, required this.onAddToCart});
+  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite, required this.onAddToCart, required this.onAddToCollection});
 
   final Bag bag;
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
+  final VoidCallback onAddToCollection;
 
   @override
   Widget build(BuildContext context) {
@@ -125,11 +136,35 @@ class _BagDetailBody extends StatelessWidget {
               label: const Text('Dodaj u korpu'),
             ),
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onAddToCollection,
+              icon: const Icon(Icons.collections_bookmark_outlined),
+              label: const Text('Dodaj u kolekciju'),
+            ),
+          ),
         ],
       ),
     );
   }
 }
+Future<String?> _promptText(BuildContext context, String title, String label, [String initial = '']) async {
+  final TextEditingController ctrl = TextEditingController(text: initial);
+  return showDialog<String>(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      title: Text(title),
+      content: TextField(controller: ctrl, decoration: InputDecoration(labelText: label)),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
+        ElevatedButton(onPressed: () => Navigator.of(context).pop(ctrl.text), child: const Text('Sačuvaj')),
+      ],
+    ),
+  );
+}
+
 
 class _ImageHeader extends StatelessWidget {
   const _ImageHeader({this.imageUrl});
