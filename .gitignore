@@ -419,3 +419,20 @@ FodyWeavers.xsd
 
 # Local .NET SDK install (keep environment artifacts out of repo)
 .dotnet/
+
+# ---- Flutter / Frontend ignores (appended) ----
+.flutter/
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+.packages
+build/
+android/
+ios/
+web/
+linux/
+macos/
+windows/
+*.iml
+.idea/
+.vscode/
