@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 
 import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
@@ -303,6 +306,8 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
   final TextEditingController priceController = TextEditingController(text: existing?.price.toStringAsFixed(2) ?? '');
   final TextEditingController descController = TextEditingController(text: existing?.description ?? '');
   int? selectedTypeId = existing?.bagTypeId;
+  Uint8List? selectedImageBytes;
+  String? selectedImageBase64;
 
   await showDialog<void>(
     context: context,
@@ -312,7 +317,24 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
         return AlertDialog(
           title: Text(existing == null ? 'Novi proizvod' : 'Uredi proizvod'),
           content: SingleChildScrollView(
-            child: Column(
+            child: StatefulBuilder(
+              builder: (BuildContext context, void Function(void Function()) setState) {
+                Future<void> pickImage() async {
+                  final FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.image,
+                    allowMultiple: false,
+                    withData: true,
+                  );
+                  if (result != null && result.files.isNotEmpty && result.files.single.bytes != null) {
+                    final Uint8List bytes = result.files.single.bytes!;
+                    setState(() {
+                      selectedImageBytes = bytes;
+                      selectedImageBase64 = base64Encode(bytes);
+                    });
+                  }
+                }
+
+                return Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 TextField(
@@ -334,6 +356,55 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                   maxLines: 3,
                 ),
                 const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Slika', style: Theme.of(context).textTheme.titleSmall),
+                ),
+                const SizedBox(height: 6),
+                if (selectedImageBytes != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      selectedImageBytes!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: const Center(child: Icon(Icons.image, size: 40)),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: <Widget>[
+                    ElevatedButton.icon(
+                      onPressed: pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Odaberi sliku'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (selectedImageBytes != null)
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedImageBytes = null;
+                            selectedImageBase64 = null;
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                        child: const Text('Ukloni'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 typesAsync.when(
                   data: (List<BagType> types) {
                     return DropdownButtonFormField<int?>(
@@ -350,6 +421,8 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                   error: (Object e, StackTrace st) => const SizedBox(),
                 ),
               ],
+            );
+              },
             ),
           ),
           actions: <Widget>[
@@ -368,6 +441,7 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                         price: price,
                         description: desc,
                         bagTypeId: selectedTypeId,
+                        imageBase64: selectedImageBase64,
                       );
                 } else {
                   await ref.read(bagsListProvider.notifier).edit(
@@ -377,6 +451,7 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                         price: price,
                         description: desc,
                         bagTypeId: selectedTypeId,
+                        imageBase64: selectedImageBase64,
                       );
                 }
                 if (context.mounted) Navigator.of(context).pop();
