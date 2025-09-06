@@ -129,7 +129,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (entity == null)
             {
-                throw new Exception("Order already exists!");
+                throw new Exception("Order not found");
             }
             return _mapper.Map<Order>(entity);
         }
