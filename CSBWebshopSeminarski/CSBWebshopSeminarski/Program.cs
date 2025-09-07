@@ -26,6 +26,15 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
 
+// CORS: allow local dev from any origin (adjust in production)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 // Rate limiting policy for announcements
 builder.Services.AddRateLimiter(options =>
 {
@@ -171,6 +180,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
