@@ -117,6 +117,20 @@ namespace CSBWebshopSeminarski.Database
                     .HasForeignKey(p => p.UserID)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // Configure Transactions similarly: cascade from Orders, restrict from Users
+            modelBuilder.Entity<Transactions>(entity =>
+            {
+                entity.HasOne(t => t.Order)
+                    .WithMany()
+                    .HasForeignKey(t => t.OrderID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.User)
+                    .WithMany()
+                    .HasForeignKey(t => t.UserID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }
