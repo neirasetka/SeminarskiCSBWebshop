@@ -37,7 +37,6 @@ namespace CSBWebshopSeminarski.Database
             {
                 entity.HasKey(f => f.FavoriteID);
 
-                // Ensure optional FKs for product references
                 entity.Property(f => f.BagID).IsRequired(false);
                 entity.Property(f => f.BeltID).IsRequired(false);
 
@@ -57,13 +56,37 @@ namespace CSBWebshopSeminarski.Database
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Prevent multiple cascade paths: deleting a User should not cascade delete Belts
-            // so that there is only one cascade path to Favorites (directly from User -> Favorites).
             modelBuilder.Entity<Belts>(entity =>
             {
                 entity.HasOne(b => b.User)
                     .WithMany()
                     .HasForeignKey(b => b.UserID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Purchases>(entity =>
+            {
+                entity.HasOne(p => p.Order)
+                    .WithMany()
+                    .HasForeignKey(p => p.OrderID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(p => p.User)
+                    .WithMany()
+                    .HasForeignKey(p => p.UserID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Transactions>(entity =>
+            {
+                entity.HasOne(t => t.Order)
+                    .WithMany()
+                    .HasForeignKey(t => t.OrderID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.User)
+                    .WithMany()
+                    .HasForeignKey(t => t.UserID)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -102,35 +125,6 @@ namespace CSBWebshopSeminarski.Database
                 .WithMany()
                 .HasForeignKey(li => li.BeltID)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            // Configure Purchases relationships to avoid multiple cascade paths
-            // Keep cascade from Orders -> Purchases, but restrict delete from Users -> Purchases
-            modelBuilder.Entity<Purchases>(entity =>
-            {
-                entity.HasOne(p => p.Order)
-                    .WithMany()
-                    .HasForeignKey(p => p.OrderID)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(p => p.User)
-                    .WithMany()
-                    .HasForeignKey(p => p.UserID)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // Configure Transactions similarly: cascade from Orders, restrict from Users
-            modelBuilder.Entity<Transactions>(entity =>
-            {
-                entity.HasOne(t => t.Order)
-                    .WithMany()
-                    .HasForeignKey(t => t.OrderID)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(t => t.User)
-                    .WithMany()
-                    .HasForeignKey(t => t.UserID)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
         }
     }
 }
