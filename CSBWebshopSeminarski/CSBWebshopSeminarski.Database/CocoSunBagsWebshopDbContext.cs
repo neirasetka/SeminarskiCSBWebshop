@@ -37,6 +37,10 @@ namespace CSBWebshopSeminarski.Database
             {
                 entity.HasKey(f => f.FavoriteID);
 
+                // Ensure optional FKs for product references
+                entity.Property(f => f.BagID).IsRequired(false);
+                entity.Property(f => f.BeltID).IsRequired(false);
+
                 entity.HasOne(f => f.User)
                     .WithMany()
                     .HasForeignKey(f => f.UserID)
@@ -51,6 +55,16 @@ namespace CSBWebshopSeminarski.Database
                     .WithMany(b => b.Favorites)
                     .HasForeignKey(f => f.BeltID)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Prevent multiple cascade paths: deleting a User should not cascade delete Belts
+            // so that there is only one cascade path to Favorites (directly from User -> Favorites).
+            modelBuilder.Entity<Belts>(entity =>
+            {
+                entity.HasOne(b => b.User)
+                    .WithMany()
+                    .HasForeignKey(b => b.UserID)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<NewsItem>()
