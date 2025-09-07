@@ -11,9 +11,11 @@ namespace CSBWebshopSeminarski.Controllers
     public class ReviewsController : Controller
     {
         private readonly IReviewsService _service;
-        public ReviewsController(IReviewsService service)
+        private readonly IAuthorizationService _authorizationService;
+        public ReviewsController(IReviewsService service, IAuthorizationService authorizationService)
         {
             _service = service;
+            _authorizationService = authorizationService;
         }
 
         [HttpGet]
@@ -29,21 +31,38 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<Review> Insert(ReviewUpsertRequest request)
         {
             return await _service.Insert(request);
         }
 
         [HttpPut("{ID}")]
-        public async Task<Review> Update(int ID, ReviewUpsertRequest request)
+        [Authorize]
+        public async Task<ActionResult<Review>> Update(int ID, ReviewUpsertRequest request)
         {
-            return await _service.Update(ID, request);
+            var existing = await _service.GetById(ID);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyReview");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var updated = await _service.Update(ID, request);
+            return Ok(updated);
         }
 
         [HttpDelete("{ID}")]
-        public async Task<bool> Delete(int ID)
+        [Authorize]
+        public async Task<ActionResult<bool>> Delete(int ID)
         {
-            return await _service.Delete(ID);
+            var existing = await _service.GetById(ID);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyReview");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var result = await _service.Delete(ID);
+            return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]

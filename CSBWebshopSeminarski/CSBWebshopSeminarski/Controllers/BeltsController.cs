@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,14 +17,12 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<List<Belt>> Get([FromQuery] BeltSearchRequest search)
         {
             return await _service.Get(search);
         }
 
         [HttpGet("{ID}")]
-        [Authorize]
         public async Task<Belt> GetById(int ID)
         {
             return await _service.GetById(ID);
@@ -38,7 +36,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPut("{ID}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<Belt> Update(int ID, BeltUpsertRequest request)
         {
             return await _service.Update(ID, request);
