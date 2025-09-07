@@ -1,0 +1,15 @@
+**/bin
+**/obj
+.git
+.vs
+*.user
+*.suo
+*.swp
+*.log
+**/*.mdf
+**/*.ldf
+**/*.db
+**/*.sqlite
+**/*.nupkg
+**/*.snupkg
+

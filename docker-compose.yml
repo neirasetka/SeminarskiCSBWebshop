@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: csb_db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD:-YourStrong!Passw0rd}
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD:-YourStrong!Passw0rd}", "-Q", "SELECT 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: csb_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./CSBWebshopSeminarski
+      dockerfile: Dockerfile
+    container_name: csb_api
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__CocoSunBagsWebshop=Server=db,1433;Database=CocoSunBagsWebshop;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Exchange=webshop.events
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET:-}
+      - JWTSettings__Key=${JWT_KEY:-dev-secret-key-please-change}
+      - JWTSettings__Issuer=${JWT_ISSUER:-csb}
+      - JWTSettings__Audience=${JWT_AUDIENCE:-csb-users}
+      - Smtp__Host=${SMTP_HOST:-}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__User=${SMTP_USER:-}
+      - Smtp__Pass=${SMTP_PASS:-}
+      - AdminSeed__UserName=${ADMIN_USERNAME:-admin}
+      - AdminSeed__Email=${ADMIN_EMAIL:-admin@example.com}
+      - AdminSeed__Password=${ADMIN_PASSWORD:-Admin123!}
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./csb_webshop_app
+      dockerfile: Dockerfile
+      args:
+        - API_BASE_URL=http://localhost:8080
+        - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+        - FLAVOR=prod
+        - ENABLE_LOGGING=false
+    container_name: csb_web
+    depends_on:
+      - api
+    ports:
+      - "8081:80"
+
+volumes:
+  db_data:
+

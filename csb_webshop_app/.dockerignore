@@ -1,0 +1,16 @@
+.git
+.dart_tool
+build
+**/build
+**/.gradle
+**/ios/Pods
+**/android/.gradle
+**/android/local.properties
+**/*.iml
+**/.idea
+**/.vscode
+**/*.log
+**/*.lock
+**/__pycache__
+**/*.pyc
+
