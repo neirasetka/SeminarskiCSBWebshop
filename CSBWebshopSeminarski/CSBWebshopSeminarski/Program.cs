@@ -16,6 +16,7 @@ using Microsoft.OpenApi.Models;
 using Stripe;
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -225,6 +226,8 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<CocoSunBagsWebshopDbContext>();
         var config = services.GetRequiredService<IConfiguration>();
+        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("StartupSeeding");
 
         // Apply migrations
         await context.Database.MigrateAsync();
@@ -286,6 +289,9 @@ using (var scope = app.Services.CreateScope())
             });
             await context.SaveChangesAsync();
         }
+
+        // Run comprehensive data seeding covering all entities
+        await DatabaseSeeder.SeedAllAsync(context, logger);
     }
     catch (Exception seedingEx)
     {
