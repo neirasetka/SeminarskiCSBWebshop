@@ -91,10 +91,26 @@ class CollectionsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(title),
-        content: TextField(controller: ctrl, decoration: InputDecoration(labelText: label)),
+        content: Form(
+          child: TextFormField(
+            controller: ctrl,
+            decoration: InputDecoration(labelText: label),
+            autofocus: true,
+          ),
+        ),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(ctrl.text), child: const Text('Sačuvaj')),
+          ElevatedButton(
+            onPressed: () {
+              final String val = ctrl.text.trim();
+              if (val.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Naziv je obavezan')));
+                return;
+              }
+              Navigator.of(context).pop(val);
+            },
+            child: const Text('Sačuvaj'),
+          ),
         ],
       ),
     );

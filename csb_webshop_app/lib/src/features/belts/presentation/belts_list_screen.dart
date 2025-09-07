@@ -281,6 +281,7 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
   final TextEditingController priceController = TextEditingController(text: existing?.price.toStringAsFixed(2) ?? '');
   final TextEditingController descController = TextEditingController(text: existing?.description ?? '');
   int? selectedTypeId = existing?.beltTypeId;
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   await showDialog<void>(
     context: context,
@@ -290,27 +291,45 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
         return AlertDialog(
           title: Text(existing == null ? 'Novi proizvod' : 'Uredi proizvod'),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Naziv'),
-                ),
-                TextField(
-                  controller: codeController,
-                  decoration: const InputDecoration(labelText: 'Šifra'),
-                ),
-                TextField(
-                  controller: priceController,
-                  decoration: const InputDecoration(labelText: 'Cijena'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                ),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(labelText: 'Opis'),
-                  maxLines: 3,
-                ),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Naziv'),
+                    validator: (String? v) {
+                      if (v == null || v.trim().isEmpty) return 'Naziv je obavezan';
+                      if (v.trim().length < 2) return 'Naziv mora imati bar 2 znaka';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: codeController,
+                    decoration: const InputDecoration(labelText: 'Šifra'),
+                    validator: (String? v) {
+                      if (v == null || v.trim().isEmpty) return 'Šifra je obavezna';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: priceController,
+                    decoration: const InputDecoration(labelText: 'Cijena'),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (String? v) {
+                      if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
+                      final double? price = double.tryParse(v.replaceAll(',', '.'));
+                      if (price == null) return 'Unesite ispravan broj';
+                      if (price <= 0) return 'Cijena mora biti veća od 0';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: descController,
+                    decoration: const InputDecoration(labelText: 'Opis'),
+                    maxLines: 3,
+                  ),
                 const SizedBox(height: 8),
                 typesAsync.when(
                   data: (List<BeltType> types) {
@@ -327,18 +346,19 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
                   loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
                   error: (Object e, StackTrace st) => const SizedBox(),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: <Widget>[
             TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
             ElevatedButton(
               onPressed: () async {
+                if (!(formKey.currentState?.validate() ?? false)) return;
                 final String name = nameController.text.trim();
                 final String code = codeController.text.trim();
                 final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
                 final String desc = descController.text.trim();
-                if (name.isEmpty || code.isEmpty || price == null) return;
                 if (existing == null) {
                   await ref.read(beltsListProvider.notifier).create(
                         name: name,
@@ -387,16 +407,32 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                     Row(
                       children: <Widget>[
                         Expanded(
-                          child: TextField(
-                            controller: nameController,
-                            decoration: const InputDecoration(labelText: 'Novi tip'),
+                          child: Form(
+                            autovalidateMode: AutovalidateMode.disabled,
+                            child: TextFormField(
+                              controller: nameController,
+                              decoration: const InputDecoration(labelText: 'Novi tip'),
+                              validator: (String? v) {
+                                if (v == null || v.trim().isEmpty) return 'Naziv je obavezan';
+                                final bool exists = types.any((BeltType t) => t.name.toLowerCase().trim() == v.toLowerCase().trim());
+                                if (exists) return 'Tip sa ovim nazivom već postoji';
+                                return null;
+                              },
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
                             final String name = nameController.text.trim();
-                            if (name.isEmpty) return;
+                            if (name.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unesite naziv tipa')));
+                              return;
+                            }
+                            if (types.any((BeltType t) => t.name.toLowerCase().trim() == name.toLowerCase())) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tip već postoji')));
+                              return;
+                            }
                             await ref.read(beltTypesProvider.notifier).create(name);
                             nameController.clear();
                           },

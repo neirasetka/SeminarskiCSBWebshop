@@ -172,6 +172,7 @@ class _RegisterCard extends ConsumerWidget {
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController emailCtrl = TextEditingController();
     final GiveawaysApi api = ref.read(giveawaysApiProvider);
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     return Card(
       child: Padding(
@@ -181,14 +182,36 @@ class _RegisterCard extends ConsumerWidget {
           children: <Widget>[
             const Text('Prijavi se na giveaway'),
             const SizedBox(height: 8),
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Ime (opcionalno)')),
-            const SizedBox(height: 8),
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+            Form(
+              key: formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Ime (opcionalno)'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (String? v) {
+                      if (v == null || v.trim().isEmpty) return 'Email je obavezan';
+                      final String val = v.trim();
+                      final RegExp re = RegExp(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$");
+                      if (!re.hasMatch(val)) return 'Unesite ispravan email';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: !isActive
                   ? null
                   : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
                       try {
                         await api.registerParticipant(
                           giveawayId: giveawayId,
@@ -283,6 +306,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
   final TextEditingController _title = TextEditingController();
   DateTime _start = DateTime.now();
   DateTime _end = DateTime.now().add(const Duration(days: 7));
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +321,18 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             const Text('Novi giveaway', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextField(controller: _title, decoration: const InputDecoration(labelText: 'Naslov')),
+            Form(
+              key: _formKey,
+              child: TextFormField(
+                controller: _title,
+                decoration: const InputDecoration(labelText: 'Naslov'),
+                validator: (String? v) {
+                  if (v == null || v.trim().isEmpty) return 'Naslov je obavezan';
+                  if (v.trim().length < 3) return 'Naslov mora imati bar 3 znaka';
+                  return null;
+                },
+              ),
+            ),
             const SizedBox(height: 8),
             Row(children: <Widget>[
               Expanded(
@@ -335,6 +370,11 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
               alignment: Alignment.centerRight,
               child: FilledButton(
                 onPressed: () async {
+                  if (!(_formKey.currentState?.validate() ?? false)) return;
+                  if (!_end.isAfter(_start)) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kraj mora biti nakon starta')));
+                    return;
+                  }
                   try {
                     await api.createGiveaway(title: _title.text.trim(), startDate: _start, endDate: _end);
                     if (context.mounted) Navigator.of(context).pop();
