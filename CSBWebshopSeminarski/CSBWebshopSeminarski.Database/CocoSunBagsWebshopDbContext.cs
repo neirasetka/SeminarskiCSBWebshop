@@ -102,6 +102,21 @@ namespace CSBWebshopSeminarski.Database
                 .WithMany()
                 .HasForeignKey(li => li.BeltID)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure Purchases relationships to avoid multiple cascade paths
+            // Keep cascade from Orders -> Purchases, but restrict delete from Users -> Purchases
+            modelBuilder.Entity<Purchases>(entity =>
+            {
+                entity.HasOne(p => p.Order)
+                    .WithMany()
+                    .HasForeignKey(p => p.OrderID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(p => p.User)
+                    .WithMany()
+                    .HasForeignKey(p => p.UserID)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }
