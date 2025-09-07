@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,9 +10,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Favorites_Users_UserID",
-                table: "Favorites");
+            // Drop Favorites -> Users FK if it exists under any of the possible names, scoped to Favorites table
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_Users_UserID' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_Users_UserID];");
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_Users_UserID1' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_Users_UserID1];");
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_new_Users_UserID' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_new_Users_UserID];");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Purchases_Users_UserID",
@@ -38,9 +39,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Favorites_Users_UserID",
-                table: "Favorites");
+            // Drop Favorites -> Users FK if it exists under any of the possible names, scoped to Favorites table
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_Users_UserID' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_Users_UserID];");
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_Users_UserID1' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_Users_UserID1];");
+            migrationBuilder.Sql("IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Favorites_new_Users_UserID' AND parent_object_id = OBJECT_ID(N'[dbo].[Favorites]')) ALTER TABLE [Favorites] DROP CONSTRAINT [FK_Favorites_new_Users_UserID];");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Purchases_Users_UserID",
