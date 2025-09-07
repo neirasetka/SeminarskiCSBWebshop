@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,71 +10,74 @@ namespace CSBWebshopSeminarski.Database.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Ensure Belts -> Users delete behavior is Restrict
             migrationBuilder.DropForeignKey(
                 name: "FK_Belts_Users_UserID",
                 table: "Belts");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Favorites_Users_UserID1",
-                table: "Favorites");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Favorites",
-                table: "Favorites");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Favorites_UserID1",
-                table: "Favorites");
-
-            migrationBuilder.RenameColumn(
-                name: "UserID1",
-                table: "Favorites",
-                newName: "FavoriteID");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "BeltID",
-                table: "Favorites",
-                type: "int",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "int");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "BagID",
-                table: "Favorites",
-                type: "int",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "int");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "UserID",
-                table: "Favorites",
-                type: "int",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
-                .OldAnnotation("SqlServer:Identity", "1, 1");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "FavoriteID",
-                table: "Favorites",
-                type: "int",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
-                .Annotation("SqlServer:Identity", "1, 1");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Favorites",
-                table: "Favorites",
-                column: "FavoriteID");
+            // Build a new Favorites table with the desired schema (avoids altering IDENTITY)
+            migrationBuilder.CreateTable(
+                name: "Favorites_new",
+                columns: table => new
+                {
+                    FavoriteID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<int>(type: "int", nullable: false),
+                    BagID = table.Column<int>(type: "int", nullable: true),
+                    BeltID = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites_new", x => x.FavoriteID);
+                    table.ForeignKey(
+                        name: "FK_Favorites_new_Bags_BagID",
+                        column: x => x.BagID,
+                        principalTable: "Bags",
+                        principalColumn: "BagID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_new_Belts_BeltID",
+                        column: x => x.BeltID,
+                        principalTable: "Belts",
+                        principalColumn: "BeltID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_new_Users_UserID",
+                        column: x => x.UserID,
+                        principalTable: "Users",
+                        principalColumn: "UserID",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_UserID",
-                table: "Favorites",
+                name: "IX_Favorites_new_BagID",
+                table: "Favorites_new",
+                column: "BagID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_new_BeltID",
+                table: "Favorites_new",
+                column: "BeltID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_new_UserID",
+                table: "Favorites_new",
                 column: "UserID");
 
+            // Migrate data from old Favorites table to the new schema
+            migrationBuilder.Sql(
+                "INSERT INTO [Favorites_new] ([UserID], [BagID], [BeltID]) SELECT [UserID1], [BagID], [BeltID] FROM [Favorites];");
+
+            // Drop the old Favorites table (removes old FKs and PK)
+            migrationBuilder.DropTable(
+                name: "Favorites");
+
+            // Rename the new table to Favorites
+            migrationBuilder.RenameTable(
+                name: "Favorites_new",
+                newName: "Favorites");
+
+            // Re-add Belts -> Users with Restrict
             migrationBuilder.AddForeignKey(
                 name: "FK_Belts_Users_UserID",
                 table: "Belts",
@@ -82,82 +85,62 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 principalTable: "Users",
                 principalColumn: "UserID",
                 onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Favorites_Users_UserID",
-                table: "Favorites",
-                column: "UserID",
-                principalTable: "Users",
-                principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Revert Belts -> Users to Cascade
             migrationBuilder.DropForeignKey(
                 name: "FK_Belts_Users_UserID",
                 table: "Belts");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Favorites_Users_UserID",
-                table: "Favorites");
+            // Drop the new Favorites table and recreate the original schema
+            migrationBuilder.DropTable(
+                name: "Favorites");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Favorites",
-                table: "Favorites");
+            migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    UserID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID1 = table.Column<int>(type: "int", nullable: false),
+                    BagID = table.Column<int>(type: "int", nullable: false),
+                    BeltID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.UserID);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Bags_BagID",
+                        column: x => x.BagID,
+                        principalTable: "Bags",
+                        principalColumn: "BagID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Belts_BeltID",
+                        column: x => x.BeltID,
+                        principalTable: "Belts",
+                        principalColumn: "BeltID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Users_UserID1",
+                        column: x => x.UserID1,
+                        principalTable: "Users",
+                        principalColumn: "UserID",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
-            migrationBuilder.DropIndex(
-                name: "IX_Favorites_UserID",
-                table: "Favorites");
-
-            migrationBuilder.RenameColumn(
-                name: "FavoriteID",
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_BagID",
                 table: "Favorites",
-                newName: "UserID1");
+                column: "BagID");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "UserID",
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_BeltID",
                 table: "Favorites",
-                type: "int",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
-                .Annotation("SqlServer:Identity", "1, 1");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "BeltID",
-                table: "Favorites",
-                type: "int",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "int",
-                oldNullable: true);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "BagID",
-                table: "Favorites",
-                type: "int",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "int",
-                oldNullable: true);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "UserID1",
-                table: "Favorites",
-                type: "int",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
-                .OldAnnotation("SqlServer:Identity", "1, 1");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Favorites",
-                table: "Favorites",
-                column: "UserID");
+                column: "BeltID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Favorites_UserID1",
@@ -168,14 +151,6 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 name: "FK_Belts_Users_UserID",
                 table: "Belts",
                 column: "UserID",
-                principalTable: "Users",
-                principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Favorites_Users_UserID1",
-                table: "Favorites",
-                column: "UserID1",
                 principalTable: "Users",
                 principalColumn: "UserID",
                 onDelete: ReferentialAction.Cascade);
