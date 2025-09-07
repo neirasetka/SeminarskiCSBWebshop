@@ -1,44 +1,10 @@
 # csb_webshop_app
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Flutter klijent za CSB Webshop.
 
 ## Flutter SDK setup
 
-Follow the official guide: [Install Flutter](https://docs.flutter.dev/get-started/install).
-
-- Linux/macOS (quick CLI example):
-
-```bash
-# Linux example (adjust versions/paths as needed)
-mkdir -p "$HOME/tools"
-cd "$HOME/tools"
-curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz
-tar xf flutter_linux_3.24.3-stable.tar.xz
-echo 'export PATH="$HOME/tools/flutter/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-flutter doctor
-# Android only: accept licenses
-flutter doctor --android-licenses
-```
-
-- Windows (high-level):
-  - Download Flutter SDK zip from the official site
-  - Extract to e.g. `C:\tools\flutter`
-  - Add `C:\tools\flutter\bin` to PATH
-  - Open a new terminal and run `flutter doctor`
+Instalacija: pogledati zvaničnu dokumentaciju: https://docs.flutter.dev/get-started/install
 
 ## Install dependencies and run (this project)
 
@@ -61,7 +27,7 @@ Runtime configuration is passed via `--dart-define` and consumed by `lib/environ
 - Prod:
   - Android: `flutter run --flavor prod -t lib/main.dart --dart-define=FLAVOR=prod --dart-define=API_BASE_URL=https://api.example.com --dart-define=ENABLE_LOGGING=false`
 
-Note: Building/running Android requires the Android SDK and accepting licenses.
+Napomena: Za Android je potrebna instalacija Android SDK-a i prihvatanje licenci.
 
 ## Windows build
 
