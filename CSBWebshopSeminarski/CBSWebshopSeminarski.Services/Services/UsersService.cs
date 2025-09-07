@@ -228,7 +228,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var query = _context.Favorites
                 .Include(i => i.Bag)
                 .ThenInclude(i => i.User)
-                .Where(i => i.UserID == ID)
+                .Where(i => i.UserID == ID && i.BagID.HasValue)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request?.BagName))
@@ -273,7 +273,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var query = _context.Favorites
                 .Include(i => i.Belt)
                 .ThenInclude(i => i.User)
-                .Where(i => i.UserID == ID)
+                .Where(i => i.UserID == ID && i.BeltID.HasValue)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request?.BeltName))
