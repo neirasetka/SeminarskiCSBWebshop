@@ -9,6 +9,8 @@ using CSBWebshopSeminarski.Filters;
 using CSBWebshopSeminarski.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using CSBWebshopSeminarski.Security;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
@@ -22,6 +24,16 @@ builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>());
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
+// Authorization policies and handlers
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanModifyReview", policy =>
+        policy.Requirements.Add(new CanModifyReviewRequirement()));
+    options.AddPolicy("CanModifyRate", policy =>
+        policy.Requirements.Add(new CanModifyRateRequirement()));
+});
+builder.Services.AddSingleton<IAuthorizationHandler, CanModifyReviewHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, CanModifyRateHandler>();
 
 // CORS: allow local dev from any origin (adjust in production)
 builder.Services.AddCors(options =>

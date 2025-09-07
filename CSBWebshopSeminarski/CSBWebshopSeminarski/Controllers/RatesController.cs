@@ -2,6 +2,7 @@ using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -10,9 +11,11 @@ namespace CSBWebshopSeminarski.Controllers
     public class RatesController : Controller
     {
         private readonly IRatesService _service;
-        public RatesController(IRatesService service)
+        private readonly IAuthorizationService _authorizationService;
+        public RatesController(IRatesService service, IAuthorizationService authorizationService)
         {
             _service = service;
+            _authorizationService = authorizationService;
         }
 
         [HttpGet]
@@ -35,21 +38,38 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<Rate> Insert(RateUpsertRequest request)
         {
             return await _service.Insert(request);
         }
 
         [HttpPut("{ID}")]
-        public async Task<Rate> Update(int ID, RateUpsertRequest request)
+        [Authorize]
+        public async Task<ActionResult<Rate>> Update(int ID, RateUpsertRequest request)
         {
-            return await _service.Update(ID, request);
+            var existing = await _service.GetById(ID);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyRate");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var updated = await _service.Update(ID, request);
+            return Ok(updated);
         }
 
         [HttpDelete("{ID}")]
-        public async Task<bool> Delete(int ID)
+        [Authorize]
+        public async Task<ActionResult<bool>> Delete(int ID)
         {
-            return await _service.Delete(ID);
+            var existing = await _service.GetById(ID);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyRate");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+            var result = await _service.Delete(ID);
+            return Ok(result);
         }
     }
 }
