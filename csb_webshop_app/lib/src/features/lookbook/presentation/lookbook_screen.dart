@@ -120,21 +120,34 @@ class _LookbookTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = bag.displayImageUrl;
-    final Widget image = ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: imageUrl == null || imageUrl.isEmpty
-          ? Container(
-              color: Colors.grey.shade200,
-              child: const Center(child: Icon(Icons.image)),
-            )
-          : Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey.shade200,
-                child: const Center(child: Icon(Icons.broken_image)),
-              ),
+    final Widget image = LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double imageWidth = constraints.maxWidth * 0.33;
+        final Widget placeholder = Container(
+          color: Colors.grey.shade200,
+          child: const Center(child: Icon(Icons.image)),
+        );
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: imageWidth,
+              height: constraints.maxHeight,
+              child: imageUrl == null || imageUrl.isEmpty
+                  ? placeholder
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(child: Icon(Icons.broken_image)),
+                      ),
+                    ),
             ),
+          ),
+        );
+      },
     );
 
     return InkWell(

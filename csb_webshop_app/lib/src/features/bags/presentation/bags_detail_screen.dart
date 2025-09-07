@@ -189,21 +189,36 @@ class _ImageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget placeholder = Container(
+    final Widget placeholderBox = Container(
       height: 240,
       decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
       child: const Center(child: Icon(Icons.image, size: 48)),
     );
-    if (imageUrl == null || imageUrl!.isEmpty) return placeholder;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        imageUrl!,
-        height: 240,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
-      ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double imageWidth = constraints.maxWidth * 0.33;
+        if (imageUrl == null || imageUrl!.isEmpty) {
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(width: imageWidth, child: placeholderBox),
+          );
+        }
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: imageWidth,
+              height: 240,
+              child: Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => placeholderBox,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
