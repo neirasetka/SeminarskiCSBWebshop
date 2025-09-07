@@ -39,7 +39,7 @@ namespace CSBWebshopSeminarski.Tests
 			var service = new ShipmentTrackingService(db, CreateMapper());
 			await service.UpdateStatusAsync(100, new UpdateShippingStatusRequest
 			{
-				Status = (int)CBSWebshopSeminarski.Model.Models.ShippingStatus.Shipped,
+				Status = CBSWebshopSeminarski.Model.Models.ShippingStatus.Shipped,
 				Message = "Package shipped",
 				Location = "Sarajevo",
 				OccurredAt = DateTime.UtcNow

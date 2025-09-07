@@ -20,6 +20,11 @@
     <ProjectReference Include="../CSBWebshopSeminarski.Database/CSBWebshopSeminarski.Database.csproj" />
     <ProjectReference Include="../CSBWebshopSeminarski.Core/CSBWebshopSeminarski.Core.csproj" />
     <ProjectReference Include="../CBSWebshopSeminarski.Model/CBSWebshopSeminarski.Model.csproj" />
+    <ProjectReference Include="../CSBWebshopSeminarski/CSBWebshopSeminarski.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
