@@ -380,27 +380,41 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                   child: Text('Slika', style: Theme.of(context).textTheme.titleSmall),
                 ),
                 const SizedBox(height: 6),
-                if (selectedImageBytes != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      selectedImageBytes!,
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                else
-                  Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: const Center(child: Icon(Icons.image, size: 40)),
-                  ),
+                LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final double previewWidth = constraints.maxWidth * 0.33;
+                    if (selectedImageBytes != null) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: previewWidth,
+                            height: 160,
+                            child: Image.memory(
+                              selectedImageBytes!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: previewWidth,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: const Center(child: Icon(Icons.image, size: 40)),
+                        ),
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: <Widget>[
