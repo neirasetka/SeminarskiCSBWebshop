@@ -33,6 +33,30 @@ namespace CSBWebshopSeminarski.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Favorites>(entity =>
+            {
+                entity.HasKey(f => f.FavoriteID);
+
+                entity.HasOne(f => f.User)
+                    .WithMany()
+                    .HasForeignKey(f => f.UserID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(f => f.Bag)
+                    .WithMany(b => b.Favorites)
+                    .HasForeignKey(f => f.BagID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(f => f.Belt)
+                    .WithMany(b => b.Favorites)
+                    .HasForeignKey(f => f.BeltID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<NewsItem>()
+                .Property(n => n.Price)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<Participants>()
                 .HasOne(p => p.Giveaway)
                 .WithMany(g => g.Participants)

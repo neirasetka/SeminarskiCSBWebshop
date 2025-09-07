@@ -25,7 +25,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             var favoriteBeltTypeIds = await _context.Favorites
-                .Where(f => f.UserID == UserID && f.BeltID != 0)
+                .Where(f => f.UserID == UserID && f.BeltID.HasValue)
                 .Include(f => f.Belt)
                 .Select(f => f.Belt.BeltTypeID)
                 .Distinct()
@@ -58,8 +58,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 .ToListAsync();
 
             var favoritedBeltIds = await _context.Favorites
-                .Where(f => f.UserID == UserID && f.BeltID != 0)
-                .Select(f => f.BeltID)
+                .Where(f => f.UserID == UserID && f.BeltID.HasValue)
+                .Select(f => f.BeltID!.Value)
                 .Distinct()
                 .ToListAsync();
 
@@ -86,7 +86,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             var favoriteBagTypeIds = await _context.Favorites
-                .Where(f => f.UserID == UserID && f.BagID != 0)
+                .Where(f => f.UserID == UserID && f.BagID.HasValue)
                 .Include(f => f.Bag)
                 .Select(f => f.Bag.BagTypeID ?? 0)
                 .Distinct()
@@ -119,8 +119,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 .ToListAsync();
 
             var favoritedBagIds = await _context.Favorites
-                .Where(f => f.UserID == UserID && f.BagID != 0)
-                .Select(f => f.BagID)
+                .Where(f => f.UserID == UserID && f.BagID.HasValue)
+                .Select(f => f.BagID!.Value)
                 .Distinct()
                 .ToListAsync();
 
