@@ -4,6 +4,7 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CSBWebshopSeminarski.Database.Migrations
 {
     [DbContext(typeof(CocoSunBagsWebshopDbContext))]
-    partial class CocoSunBagsWebshopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250907195117_PendingModelChanges")]
+    partial class PendingModelChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
