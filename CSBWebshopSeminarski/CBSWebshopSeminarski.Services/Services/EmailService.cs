@@ -39,6 +39,5 @@ namespace CBSWebshopSeminarski.Services.Services
                 await smtp.DisconnectAsync(true);
             }
         }
-
     }
 }

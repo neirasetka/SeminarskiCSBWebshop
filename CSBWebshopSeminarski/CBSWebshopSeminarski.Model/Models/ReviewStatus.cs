@@ -1,5 +1,3 @@
-using System;
-
 namespace CBSWebshopSeminarski.Model.Models
 {
     public enum ReviewStatus
@@ -9,4 +7,3 @@ namespace CBSWebshopSeminarski.Model.Models
         Rejected = 2
     }
 }
-

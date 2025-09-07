@@ -19,7 +19,6 @@ namespace CSBWebshopSeminarski
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // simple periodic loop
             while (!stoppingToken.IsCancellationRequested)
             {
                 try

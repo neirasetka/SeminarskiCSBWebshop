@@ -2,8 +2,8 @@ using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Database;
 using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services

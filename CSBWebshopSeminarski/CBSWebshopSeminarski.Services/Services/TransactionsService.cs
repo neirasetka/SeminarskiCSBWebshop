@@ -1,14 +1,13 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
-public class TransactionsService : CRUDService<Transaction, TransactionSearchRequest, Transactions, TransactionUpsertRequest, TransactionUpsertRequest>
+    public class TransactionsService : CRUDService<Transaction, TransactionSearchRequest, Transactions, TransactionUpsertRequest, TransactionUpsertRequest>
 {
     private readonly CocoSunBagsWebshopDbContext _context;
     private readonly IMapper _mapper;

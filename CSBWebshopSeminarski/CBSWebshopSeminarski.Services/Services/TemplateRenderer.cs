@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using CBSWebshopSeminarski.Services.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -36,7 +36,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 {
                     return value ?? string.Empty;
                 }
-                return match.Value; // leave placeholder if no value
+                return match.Value;
             });
         }
     }

@@ -1,9 +1,9 @@
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CSBWebshopSeminarski.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using CSBWebshopSeminarski.Security;
 
 namespace CSBWebshopSeminarski.Controllers
 {

@@ -1,14 +1,13 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CSBWebshopSeminarski.Tests
 {
-	public class PaymentsServiceTests
+    public class PaymentsServiceTests
 	{
 		private static CocoSunBagsWebshopDbContext CreateDbContext(string dbName)
 		{

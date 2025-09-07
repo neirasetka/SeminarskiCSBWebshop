@@ -1,11 +1,11 @@
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
+using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using CSBWebshopSeminarski.Database;
-using CSBWebshopSeminarski.Core.Entities;
 
 namespace CSBWebshopSeminarski.Controllers
 {

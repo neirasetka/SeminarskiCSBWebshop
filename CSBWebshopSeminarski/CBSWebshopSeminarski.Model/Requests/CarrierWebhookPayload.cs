@@ -1,5 +1,3 @@
-using System;
-
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class CarrierWebhookPayload

@@ -1,5 +1,3 @@
-using System;
-
 namespace CSBWebshopSeminarski.Core.Entities
 {
     public enum ShippingStatus

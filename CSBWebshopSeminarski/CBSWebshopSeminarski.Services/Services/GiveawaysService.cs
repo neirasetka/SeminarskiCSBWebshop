@@ -1,13 +1,8 @@
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -128,7 +123,6 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Participants?> DrawAndPersistWinnerAsync(int giveawayId)
         {
-            // Use retry on concurrency conflict
             const int maxRetries = 3;
             int attempt = 0;
             while (true)

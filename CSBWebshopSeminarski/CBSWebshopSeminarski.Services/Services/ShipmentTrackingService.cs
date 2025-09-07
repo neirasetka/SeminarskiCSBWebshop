@@ -87,8 +87,6 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<bool> RefreshFromCarrierAsync(int orderId)
         {
-            // Placeholder: here you would call the carrier API via injected ICarrierClient
-            // For now, this method is a no-op and returns false to indicate no change
             var orderExists = await _dbContext.Orders.AnyAsync(o => o.OrderID == orderId);
             if (!orderExists) throw new KeyNotFoundException($"Order {orderId} not found");
             return false;

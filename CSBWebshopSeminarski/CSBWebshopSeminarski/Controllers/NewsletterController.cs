@@ -1,6 +1,5 @@
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers

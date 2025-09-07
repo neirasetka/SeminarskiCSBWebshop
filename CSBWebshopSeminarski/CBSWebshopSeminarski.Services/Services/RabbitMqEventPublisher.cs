@@ -1,7 +1,7 @@
-using System.Text;
-using System.Text.Json;
 using CBSWebshopSeminarski.Services.Interfaces;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace CBSWebshopSeminarski.Services.Services
 {

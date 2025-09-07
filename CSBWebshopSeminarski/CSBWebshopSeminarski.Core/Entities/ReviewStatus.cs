@@ -1,5 +1,3 @@
-using System;
-
 namespace CSBWebshopSeminarski.Core.Entities
 {
     public enum ReviewStatus
@@ -9,4 +7,3 @@ namespace CSBWebshopSeminarski.Core.Entities
         Rejected = 2
     }
 }
-

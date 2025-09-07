@@ -1,4 +1,3 @@
-using AutoMapper;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -23,7 +22,6 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
-            // Idempotency: skip if we already recorded this payment
             var alreadyExists = await _db.Purchases.AnyAsync(p => p.StripeId == paymentIntentId);
             if (alreadyExists)
             {

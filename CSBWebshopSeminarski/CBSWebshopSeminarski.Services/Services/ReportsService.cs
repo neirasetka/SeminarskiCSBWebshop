@@ -1,8 +1,7 @@
 using CBSWebshopSeminarski.Model.ViewModels;
-using CSBWebshopSeminarski.Core.Entities;
+using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
-using CBSWebshopSeminarski.Services.Interfaces;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -40,7 +39,6 @@ namespace CBSWebshopSeminarski.Services.Services
             var totalPurchases = await purchasesQuery.CountAsync();
             var totalOrders = await ordersQuery.CountAsync();
 
-            // Use Purchases as revenue source; cast float to decimal safely
             var totalRevenue = await purchasesQuery
                 .Select(p => (decimal)p.Price)
                 .DefaultIfEmpty(0m)
@@ -91,7 +89,6 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<List<TopProductVM>> GetTopProducts(DateTime? fromDateUtc, DateTime? toDateUtc, int take = 10)
         {
-            // Join OrderItems with Orders to filter by date, then project Bag/Belt
             var orderItems = _dbContext.OrderItems
                 .Include(oi => oi.Bag)
                 .Include(oi => oi.Belt)

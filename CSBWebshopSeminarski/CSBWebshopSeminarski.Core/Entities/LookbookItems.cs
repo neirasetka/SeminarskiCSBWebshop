@@ -13,13 +13,10 @@ namespace CSBWebshopSeminarski.Core.Entities
         public bool IsFeatured { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public byte[]? Image { get; set; }
-
         public int? BagID { get; set; }
         public Bags? Bag { get; set; }
-
         public int? BeltID { get; set; }
         public Belts? Belt { get; set; }
-
         public OccasionType? Occasion { get; set; }
         public StyleType? Style { get; set; }
         public SeasonType? Season { get; set; }

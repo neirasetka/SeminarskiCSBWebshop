@@ -16,7 +16,6 @@ namespace CSBWebshopSeminarski.Controllers
             _trackingService = trackingService;
         }
 
-        // Allow anonymous; validate via signature header if needed
         [HttpPost("tracking")]
         [AllowAnonymous]
         public async Task<IActionResult> Tracking(string carrierCode, [FromBody] CarrierWebhookPayload payload)

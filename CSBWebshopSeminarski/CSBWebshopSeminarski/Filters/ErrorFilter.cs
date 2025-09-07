@@ -1,6 +1,6 @@
 ﻿using CSBWebshopSeminarski.Exceptions;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System.Net;
 
 namespace CSBWebshopSeminarski.Filters

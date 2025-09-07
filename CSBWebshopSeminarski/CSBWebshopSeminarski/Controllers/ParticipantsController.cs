@@ -1,14 +1,8 @@
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using CBSWebshopSeminarski.Model.Requests;
-using System;
-using CBSWebshopSeminarski.Model.DTOs;
-using CBSWebshopSeminarski.Model.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
 {

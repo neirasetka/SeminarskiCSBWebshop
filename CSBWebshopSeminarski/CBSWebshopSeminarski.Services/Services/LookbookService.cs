@@ -48,7 +48,6 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(x => x.Title != null && x.Title.Contains(request.Title));
             }
 
-            // New filters
             if (request?.Occasion.HasValue == true)
             {
                 var occ = (CSBWebshopSeminarski.Core.Entities.OccasionType)request.Occasion.Value;

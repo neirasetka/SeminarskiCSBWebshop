@@ -1,5 +1,3 @@
-using System;
-
 using CBSWebshopSeminarski.Model.Models;
 
 namespace CBSWebshopSeminarski.Model.Requests

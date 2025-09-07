@@ -2,15 +2,15 @@ using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
-using Transaction = CBSWebshopSeminarski.Model.Models.Transaction;
-using ShippingStatusModel = CBSWebshopSeminarski.Model.Models.ShippingStatus;
-using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
-using OccasionModel = CBSWebshopSeminarski.Model.Models.OccasionType;
 using OccasionEntity = CSBWebshopSeminarski.Core.Entities.OccasionType;
-using StyleModel = CBSWebshopSeminarski.Model.Models.StyleType;
-using StyleEntity = CSBWebshopSeminarski.Core.Entities.StyleType;
-using SeasonModel = CBSWebshopSeminarski.Model.Models.SeasonType;
+using OccasionModel = CBSWebshopSeminarski.Model.Models.OccasionType;
 using SeasonEntity = CSBWebshopSeminarski.Core.Entities.SeasonType;
+using SeasonModel = CBSWebshopSeminarski.Model.Models.SeasonType;
+using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
+using ShippingStatusModel = CBSWebshopSeminarski.Model.Models.ShippingStatus;
+using StyleEntity = CSBWebshopSeminarski.Core.Entities.StyleType;
+using StyleModel = CBSWebshopSeminarski.Model.Models.StyleType;
+using Transaction = CBSWebshopSeminarski.Model.Models.Transaction;
 
 namespace CSBWebshopSeminarski.Mapper
 {
@@ -72,11 +72,9 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<Favorites, Favorite>();
             CreateMap<Favorites, FavoriteUpsertRequest>().ReverseMap();
 
-            // Lookbook mappings
             CreateMap<LookbookItems, LookbookItem>().ReverseMap();
             CreateMap<LookbookItems, LookbookUpsertRequest>().ReverseMap();
 
-            // Lookbook enum conversions
             CreateMap<OccasionEntity, OccasionModel>()
                 .ConvertUsing(src => (OccasionModel)src);
             CreateMap<OccasionModel, OccasionEntity>()

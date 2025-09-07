@@ -1,11 +1,8 @@
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
-using Stripe.Checkout;
 
 namespace CSBWebshopSeminarski.Controllers
 {

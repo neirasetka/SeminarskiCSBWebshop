@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Services;
@@ -8,11 +5,13 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using CSBWebshopSeminarski.Mapper;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CSBWebshopSeminarski.Tests
 {
-	public class ShipmentTrackingServiceTests
+    public class ShipmentTrackingServiceTests
 	{
 		private static CocoSunBagsWebshopDbContext CreateDbContext(string dbName)
 		{
@@ -78,4 +77,3 @@ namespace CSBWebshopSeminarski.Tests
 		}
 	}
 }
-

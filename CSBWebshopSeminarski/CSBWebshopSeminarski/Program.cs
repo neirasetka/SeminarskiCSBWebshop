@@ -2,21 +2,18 @@ using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
+using CSBWebshopSeminarski;
+using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using CSBWebshopSeminarski.Filters;
 using CSBWebshopSeminarski.Security;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using CSBWebshopSeminarski;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.OpenApi.Models;
 using Stripe;
-using Microsoft.AspNetCore.RateLimiting;
+using System.Text;
 using System.Threading.RateLimiting;
-using Microsoft.Extensions.DependencyInjection;
-using CSBWebshopSeminarski.Core.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -79,7 +76,6 @@ builder.Services.AddSwaggerGen(c =>
            new string[]{}
        }
    });
-    //privremeno rjesenje
     c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 });
 builder.Services.AddTransient<ICRUDService<BagType, BagTypeSearchRequest, BagTypeUpsertRequest, BagTypeUpsertRequest>, BagTypesService>();
@@ -88,7 +84,6 @@ builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddTransient<IBagsService, BagsService>();
 builder.Services.AddTransient<IBeltsService, BeltsService>();
 builder.Services.AddTransient<IBaseService<Role, object>, RolesService>();
-// Correct registration for Transactions generic service
 builder.Services.AddTransient<ICRUDService<Transaction, TransactionSearchRequest, TransactionUpsertRequest, TransactionUpsertRequest>, TransactionsService>();
 builder.Services.AddTransient<ICRUDService<Favorite, FavoriteSearchRequest, FavoriteUpsertRequest, FavoriteUpsertRequest>, FavoritesService>();
 builder.Services.AddTransient<IReviewsService, ReviewsService>();
@@ -106,20 +101,13 @@ builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.IEventPub
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
-// Participants service registration
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
-// Giveaways service registration
 builder.Services.AddTransient<GiveawaysService>();
-// Notifications service registration
 builder.Services.AddTransient<NotificationsService>();
-// Announcements support services
 builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.ITemplateRenderer, CBSWebshopSeminarski.Services.Services.TemplateRenderer>();
 builder.Services.AddTransient<AnnouncementAuditService>();
-// Shipping tracking service
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
-// Reports service registration
 builder.Services.AddTransient<IReportsService, ReportsService>();
-        // JWT token generator
 builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
@@ -136,7 +124,6 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
-// Register Lookbook service
 builder.Services.AddTransient<ILookbookService, LookbookService>();
 
 // Authentication: JWT only
@@ -185,7 +172,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
-// Stripe recommends verifying webhook signatures using the endpoint secret from configuration
 var stripeWebhookSecret = builder.Configuration["Stripe:WebhookSecret"] ?? string.Empty;
 app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider sp, ILoggerFactory loggerFactory) =>
 {

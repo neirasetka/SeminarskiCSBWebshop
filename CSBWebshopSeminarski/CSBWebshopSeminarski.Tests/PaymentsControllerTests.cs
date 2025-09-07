@@ -1,17 +1,12 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using CSBWebshopSeminarski.Controllers;
-using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
-using Stripe;
+using System.Threading.Tasks;
 
 namespace CSBWebshopSeminarski.Tests
 {
-	public class PaymentsControllerTests
+    public class PaymentsControllerTests
 	{
 		private static CocoSunBagsWebshopDbContext CreateDbContext(string dbName)
 		{
@@ -31,4 +26,3 @@ namespace CSBWebshopSeminarski.Tests
 		}
 	}
 }
-

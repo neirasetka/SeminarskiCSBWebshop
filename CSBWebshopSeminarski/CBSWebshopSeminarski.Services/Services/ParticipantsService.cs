@@ -1,7 +1,7 @@
+using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
-using CBSWebshopSeminarski.Services.Interfaces;
 using System.Security.Cryptography;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -23,7 +23,6 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Participants?> GetRandomWinnerAsync()
         {
-            // Kept for backward compatibility; not meaningful without giveaway context
             var participants = await _context.Participants.ToListAsync();
             if (participants.Count == 0) return null;
             var index = RandomNumberGenerator.GetInt32(participants.Count);

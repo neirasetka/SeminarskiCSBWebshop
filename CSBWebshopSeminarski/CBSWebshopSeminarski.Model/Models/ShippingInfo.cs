@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace CBSWebshopSeminarski.Model.Models
 {
     public class ShippingInfo

@@ -1,6 +1,5 @@
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace CBSWebshopSeminarski.Services.Services

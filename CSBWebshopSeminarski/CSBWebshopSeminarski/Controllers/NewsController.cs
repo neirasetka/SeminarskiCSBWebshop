@@ -1,5 +1,4 @@
 using CBSWebshopSeminarski.Model.DTOs;
-using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
