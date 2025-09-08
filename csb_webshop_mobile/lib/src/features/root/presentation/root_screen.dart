@@ -9,9 +9,10 @@ import 'package:go_router/go_router.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 
 class RootScreen extends StatefulWidget {
-  const RootScreen({super.key, required this.title});
+  const RootScreen({super.key, required this.title, this.initialIndex = 0});
 
   final String title;
+  final int initialIndex;
 
   @override
   State<RootScreen> createState() => _RootScreenState();
@@ -19,6 +20,12 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +39,11 @@ class _RootScreenState extends State<RootScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: <Widget>[
+          IconButton(
+            tooltip: 'Kaiševi',
+            icon: const Icon(Icons.checkroom_outlined),
+            onPressed: () => context.go('/belts'),
+          ),
           IconButton(
             tooltip: 'Izvještaji',
             icon: const Icon(Icons.insights_outlined),
