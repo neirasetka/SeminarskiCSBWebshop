@@ -25,6 +25,16 @@ final GoRouter appRouter = GoRouter(
       builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop'),
       routes: <RouteBase>[
         GoRoute(
+          path: 'bags',
+          name: 'bags',
+          builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop', initialIndex: 0),
+        ),
+        GoRoute(
+          path: 'belts',
+          name: 'belts',
+          builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop', initialIndex: 1),
+        ),
+        GoRoute(
           path: 'checkout',
           name: 'checkoutDemo',
           builder: (BuildContext context, GoRouterState state) => const HostedCheckoutMockScreen(),
