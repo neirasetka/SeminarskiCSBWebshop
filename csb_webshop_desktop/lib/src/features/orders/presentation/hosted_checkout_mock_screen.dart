@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,7 +16,6 @@ class HostedCheckoutMockScreen extends ConsumerStatefulWidget {
 }
 
 class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScreen> {
-  InAppWebViewController? _controller;
   bool _confirming = false;
 
   Uri get _checkoutUrl {
@@ -24,24 +23,12 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
     return Uri.parse('http://localhost:$port/checkout.html');
   }
 
-  Future<void> _onPageLoaded(Uri? url) async {
-    if (url == null) return;
+  Future<void> _openInBrowser() async {
     if (_confirming) return;
-    final String path = url.path.toLowerCase();
-    if (path.endsWith('/success.html')) {
-      _confirming = true;
-      try {
-        final OrdersApi ordersApi = ref.read(ordersApiProvider);
-        final confirmation = await ordersApi.confirmMockCheckout();
-        if (mounted) {
-          context.go('/checkout/success', extra: confirmation);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gre61ka pri potvrdi: $e')));
-        }
-      } finally {
-        _confirming = false;
+    final Uri url = _checkoutUrl;
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ne mogu otvoriti preglednik.')));
       }
     }
   }
@@ -50,10 +37,18 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Hosted Checkout (Mock)')),
-      body: InAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri.uri(_checkoutUrl)),
-        onWebViewCreated: (InAppWebViewController controller) => _controller = controller,
-        onLoadStop: (InAppWebViewController controller, Uri? url) => _onPageLoaded(url),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Checkout će se otvoriti u vašem pregledniku.'),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _openInBrowser,
+              child: const Text('Otvori checkout'),
+            ),
+          ],
+        ),
       ),
     );
   }
