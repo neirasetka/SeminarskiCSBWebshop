@@ -17,7 +17,7 @@ docker-compose up
 - Pokretanje aplikacije:
 
 ```bash
-cd csb_webshop_app
+cd csb_webshop_mobile
 flutter pub get
 flutter run --dart-define=API_BASE_URL=http://localhost:7015/api/ -d windows
 ```
@@ -29,7 +29,7 @@ flutter run --dart-define=API_BASE_URL=http://localhost:7015/api/ -d windows
 - Pokretanje aplikacije:
 
 ```bash
-cd csb_webshop_app
+cd csb_webshop_mobile
 flutter pub get
 flutter emulators --launch "Pixel 2 API 35"
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:7015/api/
