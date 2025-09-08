@@ -433,7 +433,7 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                           });
                         },
                         icon: const Icon(Icons.delete_outline),
-                        child: const Text('Ukloni'),
+                        label: const Text('Ukloni'),
                       ),
                   ],
                 ),
@@ -466,7 +466,7 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                 if (!(formKey.currentState?.validate() ?? false)) return;
                 final String name = nameController.text.trim();
                 final String code = codeController.text.trim();
-                final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+                final double price = double.parse(priceController.text.replaceAll(',', '.'));
                 final String desc = descController.text.trim();
                 if (existing == null) {
                   await ref.read(bagsListProvider.notifier).create(
