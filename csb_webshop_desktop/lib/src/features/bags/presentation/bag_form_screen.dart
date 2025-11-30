@@ -76,12 +76,9 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     final FormState? form = _formKey.currentState;
     if (form == null || !form.validate()) return;
     final String name = _nameController.text.trim();
-    String code = _codeController.text.trim();
+    final String code = _codeController.text.trim();
     final double? price = double.tryParse(_priceController.text.replaceAll(',', '.'));
     if (price == null) return;
-    if (code.isEmpty) {
-      code = _generateCodeFromName(name);
-    }
     final String description = _descriptionController.text.trim();
 
     setState(() => _isSaving = true);
@@ -257,11 +254,6 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     );
   }
 
-  String _generateCodeFromName(String name) {
-    final String sanitized = name.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
-    if (sanitized.isEmpty) return 'BAG-${DateTime.now().millisecondsSinceEpoch}';
-    return sanitized.length <= 8 ? sanitized : sanitized.substring(0, 8);
-  }
 }
 
 class _ImagePreview extends StatelessWidget {
