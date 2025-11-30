@@ -11,13 +11,32 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
   Future<List<Announcement>> build() async {
     final AnnouncementsApi api = ref.read(announcementsApiProvider);
     return api.getAnnouncements();
-    
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading<List<Announcement>>();
     final AnnouncementsApi api = ref.read(announcementsApiProvider);
     state = await AsyncValue.guard(api.getAnnouncements);
+  }
+
+  Future<void> addBagAnnouncement({
+    required String bagName,
+    required double price,
+    required String color,
+  }) async {
+    final AnnouncementsApi api = ref.read(announcementsApiProvider);
+    final List<Announcement> currentItems = state.valueOrNull ?? <Announcement>[];
+    try {
+      final Announcement created = await api.createBagAnnouncement(
+        bagName: bagName,
+        price: price,
+        color: color,
+      );
+      state = AsyncValue<List<Announcement>>.data(<Announcement>[created, ...currentItems]);
+    } catch (Object error, StackTrace stackTrace) {
+      state = AsyncValue<List<Announcement>>.error(error, stackTrace);
+      rethrow;
+    }
   }
 }
 
