@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../announcements/presentation/add_announcement_screen.dart';
 import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
@@ -51,6 +52,15 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: <Widget>[
+          IconButton(
+            tooltip: 'Nova najava',
+            icon: const Icon(Icons.campaign_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AddAnnouncementScreen()),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Info panel',
             icon: const Icon(Icons.info_outline),
