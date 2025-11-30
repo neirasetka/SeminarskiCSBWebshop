@@ -25,14 +25,14 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
     required String color,
   }) async {
     final AnnouncementsApi api = ref.read(announcementsApiProvider);
-    final List<Announcement> currentItems = state.valueOrNull ?? <Announcement>[];
     try {
-      final Announcement created = await api.createBagAnnouncement(
+      await api.createBagAnnouncement(
         bagName: bagName,
         price: price,
         color: color,
       );
-      state = AsyncValue<List<Announcement>>.data(<Announcement>[created, ...currentItems]);
+      final List<Announcement> refreshed = await api.getAnnouncements();
+      state = AsyncValue<List<Announcement>>.data(refreshed);
     } catch (Object error, StackTrace stackTrace) {
       state = AsyncValue<List<Announcement>>.error(error, stackTrace);
       rethrow;

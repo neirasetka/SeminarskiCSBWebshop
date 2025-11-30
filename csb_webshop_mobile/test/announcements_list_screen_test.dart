@@ -40,6 +40,7 @@ void main() {
         title: 'Prva vijest',
         body: 'Detalji...',
         publishedAt: DateTime(2024, 5, 1, 10, 30),
+        segment: 'AllSubscribers',
         type: AnnouncementType.info,
       ),
       Announcement(
@@ -47,6 +48,7 @@ void main() {
         title: 'Druga vijest',
         body: 'Detalji 2',
         publishedAt: DateTime(2024, 5, 2, 12, 0),
+        segment: 'AllSubscribers',
         type: AnnouncementType.update,
       ),
     ];
