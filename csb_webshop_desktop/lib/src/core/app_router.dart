@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/auth/presentation/auth_gate.dart';
+import '../features/auth/presentation/login_screen.dart';
 import '../features/orders/domain/order_models.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
-// import '../features/orders/presentation/checkout_demo_screen.dart';
 import '../features/orders/presentation/hosted_checkout_mock_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
 import '../features/root/presentation/root_screen.dart';
@@ -20,46 +21,68 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: <RouteBase>[
     GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
+    ),
+    GoRoute(
       path: '/',
       name: 'root',
-      builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop'),
+      builder: (BuildContext context, GoRouterState state) => const AuthGate(
+        child: RootScreen(title: 'CSB Webshop'),
+      ),
       routes: <RouteBase>[
         GoRoute(
           path: 'bags',
           name: 'bags',
-          builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop', initialIndex: 0),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: RootScreen(title: 'CSB Webshop', initialIndex: 0),
+          ),
         ),
         GoRoute(
           path: 'belts',
           name: 'belts',
-          builder: (BuildContext context, GoRouterState state) => const RootScreen(title: 'CSB Webshop', initialIndex: 1),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: RootScreen(title: 'CSB Webshop', initialIndex: 1),
+          ),
         ),
         GoRoute(
           path: 'checkout',
           name: 'checkoutDemo',
-          builder: (BuildContext context, GoRouterState state) => const HostedCheckoutMockScreen(),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: HostedCheckoutMockScreen(),
+          ),
           routes: <RouteBase>[
             GoRoute(
               path: 'success',
               name: 'checkoutSuccess',
-              builder: (BuildContext context, GoRouterState state) => const OrderSuccessScreen(),
+              builder: (BuildContext context, GoRouterState state) => const AuthGate(
+                child: OrderSuccessScreen(),
+              ),
             ),
           ],
         ),
         GoRoute(
           path: 'reports',
           name: 'reports',
-          builder: (BuildContext context, GoRouterState state) => const ReportsScreen(),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            requiredRoles: <String>['Admin'],
+            child: ReportsScreen(),
+          ),
         ),
         GoRoute(
           path: 'lookbook',
           name: 'lookbook',
-          builder: (BuildContext context, GoRouterState state) => const LookbookScreen(),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: LookbookScreen(),
+          ),
         ),
         GoRoute(
           path: 'collections',
           name: 'collections',
-          builder: (BuildContext context, GoRouterState state) => const CollectionsScreen(),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: CollectionsScreen(),
+          ),
         ),
         GoRoute(
           path: 'orders/:id',
@@ -78,7 +101,7 @@ final GoRouter appRouter = GoRouter(
               paymentStatus: 'pending',
               shippingStatus: 'created',
             );
-            return OrderDetailScreen(order: order);
+            return AuthGate(child: OrderDetailScreen(order: order));
           },
         ),
         GoRoute(
@@ -87,13 +110,15 @@ final GoRouter appRouter = GoRouter(
           builder: (BuildContext context, GoRouterState state) {
             final String? idParam = state.pathParameters['id'];
             final int eventId = int.tryParse(idParam ?? '') ?? 1;
-            return EventDetailScreen(eventId: eventId);
+            return AuthGate(child: EventDetailScreen(eventId: eventId));
           },
         ),
         GoRoute(
           path: 'giveaways',
           name: 'giveaways',
-          builder: (BuildContext context, GoRouterState state) => const GiveawaysListScreen(),
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: GiveawaysListScreen(),
+          ),
         ),
       ],
     ),

@@ -8,6 +8,7 @@ import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../auth/application/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, required this.title});
@@ -24,6 +25,11 @@ class ProfileScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(userProfileProvider.notifier).refreshProfile(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Odjava',
+            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
           ),
         ],
       ),
