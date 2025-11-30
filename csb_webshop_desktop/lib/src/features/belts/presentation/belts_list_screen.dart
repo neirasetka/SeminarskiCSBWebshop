@@ -5,6 +5,7 @@ import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
+import 'belt_form_screen.dart';
 import 'belts_detail_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../orders/application/cart_provider.dart';
@@ -32,6 +33,18 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
         .refresh(beltTypeId: _selectedBeltTypeId, query: _searchController.text.trim());
   }
 
+  Future<void> _openBeltForm(BuildContext context, {Belt? existing}) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BeltFormScreen(existing: existing),
+      ),
+    );
+    if (saved == true && mounted) {
+      final String message = existing == null ? 'Kaiš dodan' : 'Kaiš ažuriran';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
@@ -52,7 +65,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
       ),
       floatingActionButton: isAdmin
           ? FloatingActionButton(
-              onPressed: () => _showBeltFormDialog(context, ref),
+              onPressed: () => _openBeltForm(context),
               child: const Icon(Icons.add),
             )
           : null,
@@ -147,7 +160,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                               PopupMenuButton<String>(
                                 onSelected: (String value) async {
                                   if (value == 'edit') {
-                                    await _showBeltFormDialog(context, ref, existing: belt);
+                                    await _openBeltForm(context, existing: belt);
                                   } else if (value == 'delete') {
                                     final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${belt.name}"?');
                                     if (ok == true) {
@@ -272,119 +285,6 @@ Future<bool?> _confirm(BuildContext context, String title, String message) {
         ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Potvrdi')),
       ],
     ),
-  );
-}
-
-Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? existing}) async {
-  final TextEditingController nameController = TextEditingController(text: existing?.name ?? '');
-  final TextEditingController codeController = TextEditingController(text: existing?.code ?? '');
-  final TextEditingController priceController = TextEditingController(text: existing?.price.toStringAsFixed(2) ?? '');
-  final TextEditingController descController = TextEditingController(text: existing?.description ?? '');
-  int? selectedTypeId = existing?.beltTypeId;
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return Consumer(builder: (BuildContext context, WidgetRef ref, _) {
-        final AsyncValue<List<BeltType>> typesAsync = ref.watch(beltTypesProvider);
-        return AlertDialog(
-          title: Text(existing == null ? 'Novi proizvod' : 'Uredi proizvod'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Naziv'),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Naziv je obavezan';
-                      if (v.trim().length < 2) return 'Naziv mora imati bar 2 znaka';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: codeController,
-                    decoration: const InputDecoration(labelText: 'Šifra'),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Šifra je obavezna';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: priceController,
-                    decoration: const InputDecoration(labelText: 'Cijena'),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
-                      final double? price = double.tryParse(v.replaceAll(',', '.'));
-                      if (price == null) return 'Unesite ispravan broj';
-                      if (price <= 0) return 'Cijena mora biti veća od 0';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: descController,
-                    decoration: const InputDecoration(labelText: 'Opis'),
-                    maxLines: 3,
-                  ),
-                const SizedBox(height: 8),
-                typesAsync.when(
-                  data: (List<BeltType> types) {
-                    return DropdownButtonFormField<int?>(
-                      value: selectedTypeId,
-                      items: <DropdownMenuItem<int?>>[
-                        const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
-                        ...types.map((BeltType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
-                      ],
-                      onChanged: (int? v) => selectedTypeId = v,
-                      decoration: const InputDecoration(labelText: 'Tip'),
-                    );
-                  },
-                  loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-                  error: (Object e, StackTrace st) => const SizedBox(),
-                ),
-                ],
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
-            ElevatedButton(
-              onPressed: () async {
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                final String name = nameController.text.trim();
-                final String code = codeController.text.trim();
-                final double price = double.parse(priceController.text.replaceAll(',', '.'));
-                final String desc = descController.text.trim();
-                if (existing == null) {
-                  await ref.read(beltsListProvider.notifier).create(
-                        name: name,
-                        code: code,
-                        price: price,
-                        description: desc,
-                        beltTypeId: selectedTypeId,
-                      );
-                } else {
-                  await ref.read(beltsListProvider.notifier).edit(
-                        id: existing.id,
-                        name: name,
-                        code: code,
-                        price: price,
-                        description: desc,
-                        beltTypeId: selectedTypeId,
-                      );
-                }
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              child: const Text('Sačuvaj'),
-            ),
-          ],
-        );
-      });
-    },
   );
 }
 
