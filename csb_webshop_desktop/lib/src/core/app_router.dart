@@ -8,6 +8,7 @@ import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/orders/presentation/hosted_checkout_mock_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
 import '../features/root/presentation/root_screen.dart';
+import '../features/root/presentation/home_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
 import '../features/lookbook/presentation/lookbook_screen.dart';
@@ -29,7 +30,7 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       name: 'root',
       builder: (BuildContext context, GoRouterState state) => const AuthGate(
-        child: RootScreen(title: 'CSB Webshop'),
+        child: HomeScreen(),
       ),
       routes: <RouteBase>[
         GoRoute(
