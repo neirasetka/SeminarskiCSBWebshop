@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 
 import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
+import 'bag_form_screen.dart';
 import 'bags_detail_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
@@ -42,6 +40,18 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
     // pagination removed for simplicity; no-op
   }
 
+  Future<void> _openBagForm(BuildContext context, {Bag? existing}) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BagFormScreen(existing: existing),
+      ),
+    );
+    if (saved == true && mounted) {
+      final String message = existing == null ? 'Torba dodana' : 'Torba ažurirana';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   Future<void> _onRefresh() async {
     await ref
         .read(bagsListProvider.notifier)
@@ -70,7 +80,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
       ),
       floatingActionButton: isAdmin
           ? FloatingActionButton(
-              onPressed: () => _showBagFormDialog(context, ref),
+              onPressed: () => _openBagForm(context),
               child: const Icon(Icons.add),
             )
           : null,
@@ -172,7 +182,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                               PopupMenuButton<String>(
                                 onSelected: (String value) async {
                                   if (value == 'edit') {
-                                    await _showBagFormDialog(context, ref, existing: bag);
+                                    await _openBagForm(context, existing: bag);
                                   } else if (value == 'delete') {
                                     final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${bag.name}"?');
                                     if (ok == true) {
@@ -297,205 +307,6 @@ Future<bool?> _confirm(BuildContext context, String title, String message) {
         ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Potvrdi')),
       ],
     ),
-  );
-}
-
-Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? existing}) async {
-  final TextEditingController nameController = TextEditingController(text: existing?.name ?? '');
-  final TextEditingController codeController = TextEditingController(text: existing?.code ?? '');
-  final TextEditingController priceController = TextEditingController(text: existing?.price.toStringAsFixed(2) ?? '');
-  final TextEditingController descController = TextEditingController(text: existing?.description ?? '');
-  int? selectedTypeId = existing?.bagTypeId;
-  Uint8List? selectedImageBytes;
-  String? selectedImageBase64;
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return Consumer(builder: (BuildContext context, WidgetRef ref, _) {
-        final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
-        return AlertDialog(
-          title: Text(existing == null ? 'Novi proizvod' : 'Uredi proizvod'),
-          content: SingleChildScrollView(
-            child: StatefulBuilder(
-              builder: (BuildContext context, void Function(void Function()) setState) {
-                Future<void> pickImage() async {
-                  final FilePickerResult? result = await FilePicker.platform.pickFiles(
-                    type: FileType.image,
-                    allowMultiple: false,
-                    withData: true,
-                  );
-                  if (result != null && result.files.isNotEmpty && result.files.single.bytes != null) {
-                    final Uint8List bytes = result.files.single.bytes!;
-                    setState(() {
-                      selectedImageBytes = bytes;
-                      selectedImageBase64 = base64Encode(bytes);
-                    });
-                  }
-                }
-
-                return Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Naziv'),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Naziv je obavezan';
-                      if (v.trim().length < 2) return 'Naziv mora imati bar 2 znaka';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: codeController,
-                    decoration: const InputDecoration(labelText: 'Šifra'),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Šifra je obavezna';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: priceController,
-                    decoration: const InputDecoration(labelText: 'Cijena'),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
-                      final double? price = double.tryParse(v.replaceAll(',', '.'));
-                      if (price == null) return 'Unesite ispravan broj';
-                      if (price <= 0) return 'Cijena mora biti veća od 0';
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: descController,
-                    decoration: const InputDecoration(labelText: 'Opis'),
-                    maxLines: 3,
-                  ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Slika', style: Theme.of(context).textTheme.titleSmall),
-                ),
-                const SizedBox(height: 6),
-                LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    final double previewWidth = constraints.maxWidth * 0.33;
-                    if (selectedImageBytes != null) {
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: previewWidth,
-                            height: 160,
-                            child: Image.memory(
-                              selectedImageBytes!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: previewWidth,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: const Center(child: Icon(Icons.image, size: 40)),
-                        ),
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: <Widget>[
-                    ElevatedButton.icon(
-                      onPressed: pickImage,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Odaberi sliku'),
-                    ),
-                    const SizedBox(width: 8),
-                    if (selectedImageBytes != null)
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            selectedImageBytes = null;
-                            selectedImageBase64 = null;
-                          });
-                        },
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Ukloni'),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                typesAsync.when(
-                  data: (List<BagType> types) {
-                    return DropdownButtonFormField<int?>(
-                      value: selectedTypeId,
-                      items: <DropdownMenuItem<int?>>[
-                        const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
-                        ...types.map((BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
-                      ],
-                      onChanged: (int? v) => selectedTypeId = v,
-                      decoration: const InputDecoration(labelText: 'Tip'),
-                    );
-                  },
-                  loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-                  error: (Object e, StackTrace st) => const SizedBox(),
-                ),
-                ],
-              ),
-            );
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
-            ElevatedButton(
-              onPressed: () async {
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                final String name = nameController.text.trim();
-                final String code = codeController.text.trim();
-                final double price = double.parse(priceController.text.replaceAll(',', '.'));
-                final String desc = descController.text.trim();
-                if (existing == null) {
-                  await ref.read(bagsListProvider.notifier).create(
-                        name: name,
-                        code: code,
-                        price: price,
-                        description: desc,
-                        bagTypeId: selectedTypeId,
-                        imageBase64: selectedImageBase64,
-                      );
-                } else {
-                  await ref.read(bagsListProvider.notifier).edit(
-                        id: existing.id,
-                        name: name,
-                        code: code,
-                        price: price,
-                        description: desc,
-                        bagTypeId: selectedTypeId,
-                        imageBase64: selectedImageBase64,
-                      );
-                }
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              child: const Text('Sačuvaj'),
-            ),
-          ],
-        );
-      });
-    },
   );
 }
 
