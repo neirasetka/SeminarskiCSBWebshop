@@ -41,7 +41,6 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
       ref.invalidate(adminRoleProvider);
     } catch (e, st) {
       state = AsyncError<AuthSession?>(e, st);
-      rethrow;
     } finally {
       _notify();
     }
