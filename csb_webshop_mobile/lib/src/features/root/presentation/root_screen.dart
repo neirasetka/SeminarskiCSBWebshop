@@ -52,6 +52,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         title: Text(widget.title),
         actions: <Widget>[
           IconButton(
+            tooltip: 'Info panel',
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => context.go('/info-panel'),
+          ),
+          IconButton(
             tooltip: 'Kaiševi',
             icon: const Icon(Icons.checkroom_outlined),
             onPressed: () => context.go('/belts'),
