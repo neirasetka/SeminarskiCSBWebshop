@@ -12,7 +12,6 @@ import '../features/root/presentation/home_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
 import '../features/lookbook/presentation/lookbook_screen.dart';
-import '../features/collections/presentation/collections_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
@@ -90,13 +89,6 @@ final GoRouter appRouter = GoRouter(
               },
             ),
           ],
-        ),
-        GoRoute(
-          path: 'collections',
-          name: 'collections',
-          builder: (BuildContext context, GoRouterState state) => const AuthGate(
-            child: CollectionsScreen(),
-          ),
         ),
         GoRoute(
           path: 'orders/:id',

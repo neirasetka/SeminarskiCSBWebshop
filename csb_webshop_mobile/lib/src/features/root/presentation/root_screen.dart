@@ -86,11 +86,6 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             icon: const Icon(Icons.grid_view_outlined),
             onPressed: () => context.go('/lookbook'),
           ),
-          IconButton(
-            tooltip: 'Kolekcije',
-            icon: const Icon(Icons.collections_bookmark_outlined),
-            onPressed: () => context.go('/collections'),
-          ),
           if (sessionAsync.isLoading && session == null)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),

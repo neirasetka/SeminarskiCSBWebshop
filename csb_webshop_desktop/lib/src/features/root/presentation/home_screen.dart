@@ -13,7 +13,6 @@ class HomeScreen extends StatelessWidget {
       _NavShortcut(icon: Icons.shopping_bag_outlined, label: 'Bags', route: '/bags'),
       _NavShortcut(icon: Icons.checkroom_outlined, label: 'Belts', route: '/belts'),
       _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
-      _NavShortcut(icon: Icons.collections_bookmark_outlined, label: 'Collections', route: '/collections'),
       _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
     ];
 
