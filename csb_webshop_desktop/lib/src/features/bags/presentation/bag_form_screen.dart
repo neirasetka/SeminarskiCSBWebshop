@@ -76,6 +76,11 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     if (_isSaving) return;
     final FormState? form = _formKey.currentState;
     if (form == null || !form.validate()) return;
+    
+    // Show confirmation dialog before saving
+    final bool confirmed = await showSaveConfirmationDialog(context);
+    if (!confirmed || !mounted) return;
+    
     final String name = _nameController.text.trim();
     final String code = _codeController.text.trim();
     final double? price = double.tryParse(_priceController.text.replaceAll(',', '.'));

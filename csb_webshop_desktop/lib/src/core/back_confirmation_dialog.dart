@@ -64,3 +64,27 @@ Widget buildBackButtonWithConfirmation(BuildContext context) {
     onPressed: () => handleBackWithConfirmation(context),
   );
 }
+
+/// Shows a confirmation dialog when the user tries to save.
+/// Returns true if the user confirms they want to save, false otherwise.
+Future<bool> showSaveConfirmationDialog(BuildContext context) async {
+  final bool? result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) => AlertDialog(
+      title: const Text('Sačuvati promjene?'),
+      content: const Text('Jeste li sigurni da želite sačuvati?'),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Ne'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Da'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
