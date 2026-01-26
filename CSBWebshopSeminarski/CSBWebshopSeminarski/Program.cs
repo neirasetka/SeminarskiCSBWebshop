@@ -138,6 +138,7 @@ builder.Services.AddSingleton(provider =>
 );
 
 builder.Services.AddTransient<ILookbookService, LookbookService>();
+builder.Services.AddTransient<IOutfitIdeasService, OutfitIdeasService>();
 
 // Authentication: JWT only
 var jwtKey = builder.Configuration["JWTSettings:Key"] ?? string.Empty;

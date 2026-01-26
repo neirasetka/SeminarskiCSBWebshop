@@ -30,6 +30,8 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<AnnouncementAudit> AnnouncementAudits { get; set; }
         public DbSet<LookbookItems> LookbookItems { get; set; }
         public DbSet<NewsItem> News { get; set; }
+        public DbSet<OutfitIdeas> OutfitIdeas { get; set; }
+        public DbSet<OutfitIdeaImages> OutfitIdeaImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -125,6 +127,32 @@ namespace CSBWebshopSeminarski.Database
                 .WithMany()
                 .HasForeignKey(li => li.BeltID)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // OutfitIdeas configuration
+            modelBuilder.Entity<OutfitIdeas>(entity =>
+            {
+                entity.HasKey(o => o.OutfitIdeaID);
+
+                entity.HasOne(o => o.Bag)
+                    .WithMany()
+                    .HasForeignKey(o => o.BagID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(o => o.User)
+                    .WithMany()
+                    .HasForeignKey(o => o.UserID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(o => o.Images)
+                    .WithOne(i => i.OutfitIdea)
+                    .HasForeignKey(i => i.OutfitIdeaID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<OutfitIdeaImages>(entity =>
+            {
+                entity.HasKey(i => i.OutfitIdeaImageID);
+            });
         }
     }
 }

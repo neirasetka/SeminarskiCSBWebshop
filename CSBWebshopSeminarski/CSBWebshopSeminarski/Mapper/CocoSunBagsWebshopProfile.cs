@@ -89,6 +89,12 @@ namespace CSBWebshopSeminarski.Mapper
                 .ConvertUsing(src => (SeasonModel)src);
             CreateMap<SeasonModel, SeasonEntity>()
                 .ConvertUsing(src => (SeasonEntity)src);
+
+            // OutfitIdeas mappings
+            CreateMap<OutfitIdeas, OutfitIdea>().ReverseMap();
+            CreateMap<OutfitIdeas, OutfitIdeaUpsertRequest>().ReverseMap();
+            CreateMap<OutfitIdeaImages, OutfitIdeaImage>().ReverseMap();
+            CreateMap<OutfitIdeaImages, OutfitIdeaImageUpsertRequest>().ReverseMap();
         }
     }
 }
