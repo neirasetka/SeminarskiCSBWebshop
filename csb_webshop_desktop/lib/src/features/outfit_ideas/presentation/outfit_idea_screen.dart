@@ -206,12 +206,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-            )
-          else
-            TextButton.icon(
-              onPressed: _pickAndAddImages,
-              icon: const Icon(Icons.save),
-              label: const Text('Save'),
             ),
         ],
       ),
