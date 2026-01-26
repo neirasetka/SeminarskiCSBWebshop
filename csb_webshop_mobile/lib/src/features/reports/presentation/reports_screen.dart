@@ -1,8 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../application/bag_stock_provider.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -15,15 +12,15 @@ class ReportsScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          const _SectionTitle('Dostupnost torbi'),
-          const _StockAvailabilityChart(),
-          const SizedBox(height: 24),
-          const _SectionTitle('Najprodavanije torbice'),
-          const _TopBagsPieChart(),
-          const SizedBox(height: 24),
-          const _SectionTitle('Status narudžbi'),
-          const _OrderStatusPieChart(),
+        children: const <Widget>[
+          _SectionTitle('Prodaja po mjesecu'),
+          _SalesByMonthChart(),
+          SizedBox(height: 24),
+          _SectionTitle('Najprodavanije torbice'),
+          _TopBagsPieChart(),
+          SizedBox(height: 24),
+          _SectionTitle('Status narudžbi'),
+          _OrderStatusPieChart(),
         ],
       ),
     );
@@ -65,105 +62,49 @@ class _Card extends StatelessWidget {
   }
 }
 
-class _StockAvailabilityChart extends ConsumerWidget {
-  const _StockAvailabilityChart();
+class _SalesByMonthChart extends StatelessWidget {
+  const _SalesByMonthChart();
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<BagStockEntry>> stockAsync = ref.watch(bagStockProvider);
-
-    return _Card(
-      child: stockAsync.when(
-        data: (List<BagStockEntry> entries) {
-          if (entries.isEmpty) {
-            return const Center(child: Text('Trenutno nema dostupnih torbi.'));
-          }
-          return _BagAvailabilityBarChart(entries: entries);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object error, StackTrace stackTrace) => Center(
-          child: Text(
-            'Greška pri učitavanju: ${error.toString()}',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
-          ),
+  List<BarChartGroupData> _buildBarGroups() {
+    // Mock data: month index (1-12) -> total sales amount
+    const List<double> monthlySales = <double>[1200, 1500, 1800, 1300, 2200, 2700, 3000, 2800, 2600, 2400, 2000, 1900];
+    return List<BarChartGroupData>.generate(monthlySales.length, (int i) {
+      final double value = monthlySales[i];
+      return BarChartGroupData(x: i + 1, barRods: <BarChartRodData>[
+        BarChartRodData(toY: value, borderRadius: BorderRadius.circular(4), width: 14,
+          gradient: const LinearGradient(colors: <Color>[Color(0xFF7C4DFF), Color(0xFF536DFE)]),
         ),
-      ),
-    );
+      ]);
+    });
   }
-}
-
-class _BagAvailabilityBarChart extends StatelessWidget {
-  const _BagAvailabilityBarChart({required this.entries});
-
-  final List<BagStockEntry> entries;
 
   @override
   Widget build(BuildContext context) {
-    final double baseMax =
-        entries.fold<double>(0, (double maxValue, BagStockEntry e) => e.count > maxValue ? e.count.toDouble() : maxValue);
-    final double maxY = baseMax == 0 ? 1 : baseMax * 1.2;
-    final double interval = baseMax <= 4 ? 1 : (baseMax / 4).ceilToDouble();
-    final TextStyle labelStyle = Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        borderData: FlBorderData(show: false),
-        gridData: const FlGridData(show: false),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 36,
-              interval: interval,
-              getTitlesWidget: (double value, TitleMeta meta) {
-                if (value < 0) return const SizedBox.shrink();
-                return Text(value.toInt().toString(), style: labelStyle);
-              },
-            ),
-          ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 64,
-              getTitlesWidget: (double value, TitleMeta meta) {
-                final int index = value.toInt();
-                if (index < 0 || index >= entries.length) return const SizedBox.shrink();
-                final BagStockEntry entry = entries[index];
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: SizedBox(
-                    width: 68,
-                    child: Text(
-                      entry.label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: labelStyle,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        barGroups: List<BarChartGroupData>.generate(entries.length, (int index) {
-          final BagStockEntry entry = entries[index];
-          return BarChartGroupData(
-            x: index,
-            barRods: <BarChartRodData>[
-              BarChartRodData(
-                toY: entry.count.toDouble(),
-                width: 18,
-                borderRadius: BorderRadius.circular(6),
-                gradient: const LinearGradient(colors: <Color>[Color(0xFF7C4DFF), Color(0xFF536DFE)]),
+    return _Card(
+      child: BarChart(
+        BarChartData(
+          borderData: FlBorderData(show: false),
+          gridData: const FlGridData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 36)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  final int month = value.toInt();
+                  const List<String> labels = <String>['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+                  if (month >= 1 && month <= 12) {
+                    return Padding(padding: const EdgeInsets.only(top: 6), child: Text(labels[month - 1]));
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
-            ],
-          );
-        }),
+            ),
+          ),
+          barGroups: _buildBarGroups(),
+        ),
       ),
     );
   }
