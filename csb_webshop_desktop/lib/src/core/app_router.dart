@@ -15,6 +15,7 @@ import '../features/lookbook/presentation/lookbook_screen.dart';
 import '../features/collections/presentation/collections_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
+import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -132,6 +133,15 @@ final GoRouter appRouter = GoRouter(
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: GiveawaysListScreen(),
           ),
+        ),
+        GoRoute(
+          path: 'bags/:id/outfit-idea',
+          name: 'outfitIdea',
+          builder: (BuildContext context, GoRouterState state) {
+            final String? idParam = state.pathParameters['id'];
+            final int bagId = int.tryParse(idParam ?? '') ?? 0;
+            return AuthGate(child: OutfitIdeaScreen(bagId: bagId));
+          },
         ),
       ],
     ),
