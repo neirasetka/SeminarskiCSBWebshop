@@ -24,21 +24,36 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
   bool _hasChanges = false;
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadExistingImages();
-  }
+  /// Tracks whether we've initialized _imagePaths from the provider.
+  /// This prevents overwriting user's local edits after initial load.
+  bool _isInitializedFromProvider = false;
 
-  void _loadExistingImages() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final OutfitIdea? existing = ref.read(outfitIdeaForBagProvider(widget.bagId));
-      if (existing != null) {
-        setState(() {
-          _imagePaths = List<String>.from(existing.imagePaths);
-        });
-      }
-    });
+  /// Syncs _imagePaths from provider data when appropriate.
+  /// Only syncs if we haven't initialized yet and user hasn't made local changes.
+  /// [providerHasLoaded] indicates whether the async provider has finished loading.
+  void _syncFromProvider(OutfitIdea? existingIdea, {required bool providerHasLoaded}) {
+    if (_isInitializedFromProvider || _hasChanges) {
+      return;
+    }
+
+    if (!providerHasLoaded) {
+      // Provider is still loading, wait for it
+      return;
+    }
+
+    // Provider has loaded - mark as initialized regardless of whether there's data
+    _isInitializedFromProvider = true;
+
+    if (existingIdea != null && existingIdea.imagePaths.isNotEmpty) {
+      // Use addPostFrameCallback to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _imagePaths = List<String>.from(existingIdea.imagePaths);
+          });
+        }
+      });
+    }
   }
 
   Future<void> _pickImages() async {
@@ -138,8 +153,18 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the provider to react to external changes
-    ref.watch(outfitIdeasProvider);
+    // Watch the provider to react to async data loading and external changes
+    final AsyncValue<Map<int, OutfitIdea>> ideasAsync = ref.watch(outfitIdeasProvider);
+    final OutfitIdea? existingIdea = ref.watch(outfitIdeaForBagProvider(widget.bagId));
+
+    // Check if the provider has finished loading (has data, not loading)
+    final bool providerHasLoaded = ideasAsync.hasValue;
+
+    // Sync from provider when data loads (only if not already initialized and no local changes)
+    _syncFromProvider(existingIdea, providerHasLoaded: providerHasLoaded);
+
+    // Show loading indicator while provider is loading for the first time
+    final bool isProviderLoading = ideasAsync.isLoading && !_isInitializedFromProvider;
 
     return PopScope(
       canPop: !_hasChanges,
@@ -184,7 +209,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
               ),
           ],
         ),
-        body: _buildBody(),
+        body: _buildBody(isProviderLoading: isProviderLoading),
         floatingActionButton: FloatingActionButton(
           onPressed: _pickImages,
           tooltip: 'Dodaj slike',
@@ -194,7 +219,14 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody({required bool isProviderLoading}) {
+    // Show loading indicator while waiting for provider to load initial data
+    if (isProviderLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (_imagePaths.isEmpty) {
       return Center(
         child: Column(
