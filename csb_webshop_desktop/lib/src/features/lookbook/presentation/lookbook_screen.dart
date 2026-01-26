@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/domain/bag_type.dart';
-import '../../bags/presentation/bags_detail_screen.dart';
 
 class LookbookScreen extends ConsumerStatefulWidget {
   const LookbookScreen({super.key});
@@ -35,6 +35,41 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
       ),
       body: Column(
         children: <Widget>[
+          // Header section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: <Color>[
+                  Theme.of(context).colorScheme.primaryContainer,
+                  Theme.of(context).colorScheme.secondaryContainer,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              children: <Widget>[
+                Text(
+                  'How to style our bags',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Otkrijte inspiraciju za stiliziranje naših torbica',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -152,9 +187,7 @@ class _LookbookTile extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => BagDetailScreen(id: bag.id)),
-        );
+        context.go('/lookbook/${bag.id}');
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
