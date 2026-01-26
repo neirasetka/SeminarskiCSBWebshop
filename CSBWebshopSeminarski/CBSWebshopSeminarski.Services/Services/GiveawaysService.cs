@@ -6,6 +6,16 @@ using System.Security.Cryptography;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
+    public class AnnounceWinnerResult
+    {
+        public bool Success { get; set; }
+        public string? WinnerName { get; set; }
+        public string? WinnerEmail { get; set; }
+        public int SubscribersNotified { get; set; }
+        public int? NewsItemId { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
     public class GiveawaysService
     {
         private readonly CocoSunBagsWebshopDbContext _context;
@@ -189,6 +199,115 @@ namespace CBSWebshopSeminarski.Services.Services
                     continue;
                 }
             }
+        }
+
+        /// <summary>
+        /// Announces the giveaway winner by:
+        /// 1. Creating a news item on the info panel
+        /// 2. Sending email to the winner
+        /// 3. Sending email to all giveaway newsletter subscribers
+        /// </summary>
+        public async Task<AnnounceWinnerResult> AnnounceWinnerAsync(int giveawayId, string? initiatedBy = null)
+        {
+            var giveaway = await _context.Giveaways
+                .Include(g => g.WinnerParticipant)
+                .FirstOrDefaultAsync(g => g.Id == giveawayId);
+
+            if (giveaway == null)
+            {
+                return new AnnounceWinnerResult
+                {
+                    Success = false,
+                    ErrorMessage = "Giveaway not found"
+                };
+            }
+
+            if (!giveaway.WinnerParticipantId.HasValue || giveaway.WinnerParticipant == null)
+            {
+                return new AnnounceWinnerResult
+                {
+                    Success = false,
+                    ErrorMessage = "No winner has been selected for this giveaway. Please draw a winner first."
+                };
+            }
+
+            var winner = giveaway.WinnerParticipant;
+            var winnerDisplayName = !string.IsNullOrWhiteSpace(winner.Name) ? winner.Name : "Sretni pobjednik";
+
+            // 1. Create news item for info panel
+            var newsItem = new NewsItem
+            {
+                PublishedAtUtc = DateTime.UtcNow,
+                Title = $"Pobjednik giveaway-a: {giveaway.Title}",
+                Body = $"Čestitamo! Pobjednik našeg giveaway-a \"{giveaway.Title}\" je {winnerDisplayName}! " +
+                       $"Hvala svima na učešću. Pratite nas za nove prilike!",
+                Segment = "GiveawaySubscribers",
+                CreatedBy = initiatedBy
+            };
+
+            _context.News.Add(newsItem);
+            await _context.SaveChangesAsync();
+
+            // 2. Send email to winner
+            if (!string.IsNullOrWhiteSpace(winner.Email))
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(
+                        winner.Email,
+                        $"Čestitamo! Pobjednik ste giveaway-a \"{giveaway.Title}\"!",
+                        $"Dragi/a {winnerDisplayName},\n\n" +
+                        $"Sa zadovoljstvom Vam javljamo da ste izabrani kao pobjednik našeg giveaway-a \"{giveaway.Title}\"!\n\n" +
+                        $"Uskoro ćemo Vas kontaktirati sa detaljima o preuzimanju nagrade.\n\n" +
+                        $"Hvala što ste dio naše zajednice!\n\n" +
+                        $"S poštovanjem,\nVaš CocoSunBags tim"
+                    );
+                }
+                catch
+                {
+                    // Log but don't fail the entire operation
+                }
+            }
+
+            // 3. Send email to all giveaway newsletter subscribers
+            int subscribersNotified = 0;
+            var subscribers = await _context.Subscribers
+                .Where(s => s.IsSubscribedToGiveaway)
+                .ToListAsync();
+
+            foreach (var subscriber in subscribers)
+            {
+                // Don't send duplicate to winner if they're also a subscriber
+                if (subscriber.Email.Equals(winner.Email, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                try
+                {
+                    await _emailService.SendEmailAsync(
+                        subscriber.Email,
+                        $"Pobjednik giveaway-a \"{giveaway.Title}\" je izabran!",
+                        $"Poštovani,\n\n" +
+                        $"Imamo pobjednika! Giveaway \"{giveaway.Title}\" je završen, a sretni pobjednik je {winnerDisplayName}.\n\n" +
+                        $"Čestitamo pobjedniku i hvala svima na učešću!\n\n" +
+                        $"Pratite nas za nove giveaway-e i uzbudljive prilike.\n\n" +
+                        $"S poštovanjem,\nVaš CocoSunBags tim"
+                    );
+                    subscribersNotified++;
+                }
+                catch
+                {
+                    // Log but continue with other subscribers
+                }
+            }
+
+            return new AnnounceWinnerResult
+            {
+                Success = true,
+                WinnerName = winnerDisplayName,
+                WinnerEmail = winner.Email,
+                SubscribersNotified = subscribersNotified,
+                NewsItemId = newsItem.Id
+            };
         }
     }
 }

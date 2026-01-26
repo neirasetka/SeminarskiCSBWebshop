@@ -81,5 +81,41 @@ class GiveawaysApi {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to notify winner: ${response.statusCode}');
   }
+
+  /// Announces the giveaway winner by:
+  /// 1. Posting to info panel (news)
+  /// 2. Sending email to winner
+  /// 3. Sending email to giveaway newsletter subscribers
+  Future<AnnounceWinnerResult> announceWinner(int giveawayId) async {
+    final http.Response response = await _apiClient.post('$_basePath/$giveawayId/announce-winner');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return AnnounceWinnerResult.fromJson(map);
+    }
+    throw Exception('Failed to announce winner: ${response.statusCode}');
+  }
+}
+
+class AnnounceWinnerResult {
+  AnnounceWinnerResult({
+    required this.message,
+    this.winnerName,
+    required this.subscribersNotified,
+    this.newsItemId,
+  });
+
+  factory AnnounceWinnerResult.fromJson(Map<String, dynamic> json) {
+    return AnnounceWinnerResult(
+      message: json['message'] as String? ?? 'Success',
+      winnerName: json['winnerName'] as String?,
+      subscribersNotified: json['subscribersNotified'] as int? ?? 0,
+      newsItemId: json['newsItemId'] as int?,
+    );
+  }
+
+  final String message;
+  final String? winnerName;
+  final int subscribersNotified;
+  final int? newsItemId;
 }
 
