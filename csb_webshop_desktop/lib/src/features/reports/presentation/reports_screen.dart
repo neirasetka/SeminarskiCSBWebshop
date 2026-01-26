@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/bag_stock_provider.dart';
 
 class ReportsScreen extends StatelessWidget {
@@ -9,8 +10,10 @@ class ReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
         title: const Text('Izvještaji'),
       ),
       body: ListView(
@@ -26,6 +29,7 @@ class ReportsScreen extends StatelessWidget {
           _OrderStatusPieChart(),
         ],
       ),
+    ),
     );
   }
 }

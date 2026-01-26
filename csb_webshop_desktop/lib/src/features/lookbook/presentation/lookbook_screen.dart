@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -29,8 +30,10 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
 
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
         title: const Text('Lookbook'),
       ),
       body: Column(
@@ -143,6 +146,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

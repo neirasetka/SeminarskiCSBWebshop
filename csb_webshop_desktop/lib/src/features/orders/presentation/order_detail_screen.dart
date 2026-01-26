@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/back_confirmation_dialog.dart';
 import '../domain/order_models.dart';
 import 'shipping_status_timeline.dart';
 
@@ -9,8 +10,12 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Narudžba ${order.orderNumber}')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: Text('Narudžba ${order.orderNumber}'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
@@ -36,6 +41,7 @@ class OrderDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

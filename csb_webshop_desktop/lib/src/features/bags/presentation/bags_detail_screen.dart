@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../favorites/application/favorites_provider.dart';
@@ -30,8 +31,10 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
         title: const Text('Detalji torbe'),
       ),
       body: bagAsync.when(
@@ -83,6 +86,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
 
@@ -26,7 +27,8 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
 
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       body: bagAsync.when(
         data: (Bag bag) => _LookbookDetailContent(bag: bag),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -55,6 +57,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -75,6 +78,9 @@ class _LookbookDetailContent extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 400,
           pinned: true,
+          leading: Builder(
+            builder: (BuildContext context) => buildBackButtonWithConfirmation(context),
+          ),
           flexibleSpace: FlexibleSpaceBar(
             title: Text(
               bag.name,

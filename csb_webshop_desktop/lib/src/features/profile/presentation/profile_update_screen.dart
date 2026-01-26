@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 
@@ -61,8 +62,12 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Uredi profil')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Uredi profil'),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -106,6 +111,7 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

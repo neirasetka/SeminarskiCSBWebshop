@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../core/back_confirmation_dialog.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   const OrderSuccessScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Uspješno plaćeno')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Uspješno plaćeno'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -27,6 +32,7 @@ class OrderSuccessScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

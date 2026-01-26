@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/belt_types_provider.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
@@ -117,7 +118,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
 
   void _cancel() {
     if (_isSaving) return;
-    Navigator.of(context).pop(false);
+    handleBackWithConfirmation(context);
   }
 
   @override
@@ -125,8 +126,10 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
     final AsyncValue<List<BeltType>> typesAsync = ref.watch(beltTypesProvider);
     final Belt? existing = widget.existing;
 
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
         title: Text(existing == null ? 'Novi kaiš' : 'Uredi kaiš'),
       ),
       body: SafeArea(
@@ -254,6 +257,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

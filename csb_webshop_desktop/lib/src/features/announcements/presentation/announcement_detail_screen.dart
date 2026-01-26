@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 
@@ -23,8 +24,12 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalji obavijesti')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Detalji obavijesti'),
+      ),
       body: announcementAsync.when(
         data: (Announcement a) {
           return ListView(
@@ -69,6 +74,7 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
           ),
         ),
       ),
+    ),
     );
   }
 
