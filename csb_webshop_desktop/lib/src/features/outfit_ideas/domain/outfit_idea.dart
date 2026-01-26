@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Model representing outfit inspiration for a specific bag.
 class OutfitIdea {
   OutfitIdea({
@@ -98,8 +100,8 @@ class OutfitIdeaImage {
       if (json['image'] is List) {
         bytes = (json['image'] as List<dynamic>).cast<int>();
       } else if (json['image'] is String) {
-        // Handle base64 encoded string if needed
-        bytes = null;
+        // Decode base64 encoded string from .NET Newtonsoft.Json byte[] serialization
+        bytes = base64Decode(json['image'] as String);
       }
     }
 
