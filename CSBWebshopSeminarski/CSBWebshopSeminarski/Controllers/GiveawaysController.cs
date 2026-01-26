@@ -146,5 +146,30 @@ namespace CSBWebshopSeminarski.Controllers
             };
             return Ok(dto);
         }
+
+        /// <summary>
+        /// Announces the giveaway winner by posting to info panel and sending emails to winner + subscribers
+        /// </summary>
+        [HttpPost("{id:int}/announce-winner")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AnnounceWinner(int id)
+        {
+            _logger.LogInformation("Giveaway winner announcement triggered by {User} for giveaway {GiveawayId} at {UtcNow}", User?.Identity?.Name ?? "unknown", id, DateTime.UtcNow);
+            
+            var result = await _giveawaysService.AnnounceWinnerAsync(id, User?.Identity?.Name);
+            
+            if (!result.Success)
+            {
+                return BadRequest(new { error = result.ErrorMessage });
+            }
+
+            return Ok(new 
+            { 
+                message = "Winner announced successfully",
+                winnerName = result.WinnerName,
+                subscribersNotified = result.SubscribersNotified,
+                newsItemId = result.NewsItemId
+            });
+        }
     }
 }

@@ -258,7 +258,9 @@ class _AdminActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final GiveawaysApi api = ref.read(giveawaysApiProvider);
-    return Row(
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
       children: <Widget>[
         ElevatedButton.icon(
           onPressed: isClosed
@@ -272,6 +274,7 @@ class _AdminActions extends ConsumerWidget {
                     }
                     await ref.read(participantsProvider.notifier).load(giveawayId);
                     await ref.read(giveawaysListProvider.notifier).refresh();
+                    await ref.read(giveawayDetailProvider.notifier).fetch(giveawayId);
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
@@ -282,24 +285,81 @@ class _AdminActions extends ConsumerWidget {
           icon: const Icon(Icons.emoji_events_outlined),
           label: const Text('Izvuci pobjednika'),
         ),
-        const SizedBox(width: 12),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.green.shade600,
+          ),
+          onPressed: !isClosed
+              ? null
+              : () async {
+                  final bool? confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext ctx) => AlertDialog(
+                      title: const Text('Objavi pobjednika'),
+                      content: const Text(
+                        'Ova akcija će:\n'
+                        '• Objaviti pobjednika na Info Panel (novosti)\n'
+                        '• Poslati email pobjedniku\n'
+                        '• Poslati email svim pretplatnicima na giveaway newsletter\n\n'
+                        'Nastaviti?',
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Odustani'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Objavi'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm != true) return;
+                  
+                  try {
+                    final AnnounceWinnerResult result = await api.announceWinner(giveawayId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Pobjednik ${result.winnerName ?? ""} objavljen! '
+                            'Obaviješteno pretplatnika: ${result.subscribersNotified}',
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('Greška pri objavi: $e')));
+                    }
+                  }
+                },
+          icon: const Icon(Icons.campaign_outlined),
+          label: const Text('Objavi pobjednika'),
+        ),
         OutlinedButton.icon(
-          onPressed: () async {
-            try {
-              await api.notifyWinner(giveawayId);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(const SnackBar(content: Text('Pobjednik obaviješten emailom')));
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text('Greška pri slanju maila: $e')));
-              }
-            }
-          },
+          onPressed: !isClosed
+              ? null
+              : () async {
+                  try {
+                    await api.notifyWinner(giveawayId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(const SnackBar(content: Text('Pobjednik obaviješten emailom')));
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text('Greška pri slanju maila: $e')));
+                    }
+                  }
+                },
           icon: const Icon(Icons.mail_outline),
-          label: const Text('Pošalji email'),
+          label: const Text('Samo email pobjedniku'),
         ),
       ],
     );
