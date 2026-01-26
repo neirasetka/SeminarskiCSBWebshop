@@ -113,9 +113,10 @@ class OutfitIdeasApi {
     String? caption,
     int displayOrder = 0,
   }) async {
+    final String imageBase64 = base64Encode(imageBytes);
     final Map<String, dynamic> body = <String, dynamic>{
       'outfitIdeaID': outfitIdeaId,
-      'image': imageBytes.toList(),
+      'Image': imageBase64,
       'caption': caption,
       'displayOrder': displayOrder,
     };
