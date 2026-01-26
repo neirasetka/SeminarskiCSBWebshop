@@ -118,7 +118,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
 
   void _cancel() {
     if (_isSaving) return;
-    Navigator.of(context).pop(false);
+    handleBackWithConfirmation(context);
   }
 
   @override
@@ -232,7 +232,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
             children: <Widget>[
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _isSaving ? null : () => handleBackWithConfirmation(context),
+                  onPressed: _isSaving ? null : _cancel,
                   child: const Text('Cancel'),
                 ),
               ),
