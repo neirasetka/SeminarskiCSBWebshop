@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
@@ -55,6 +56,13 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                 }
               }
             },
+            onOutfitIdea: () {
+              context.pushNamed(
+                'outfitIdea',
+                pathParameters: <String, String>{'id': bag.id.toString()},
+                queryParameters: <String, String>{'name': bag.name},
+              );
+            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -81,13 +89,14 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
 }
 
 class _BagDetailBody extends StatelessWidget {
-  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite, required this.onAddToCart, required this.onAddToCollection});
+  const _BagDetailBody({required this.bag, required this.isFavorite, required this.onToggleFavorite, required this.onAddToCart, required this.onAddToCollection, required this.onOutfitIdea});
 
   final Bag bag;
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
   final VoidCallback onAddToCollection;
+  final VoidCallback onOutfitIdea;
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +152,15 @@ class _BagDetailBody extends StatelessWidget {
               onPressed: onAddToCollection,
               icon: const Icon(Icons.collections_bookmark_outlined),
               label: const Text('Dodaj u kolekciju'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onOutfitIdea,
+              icon: const Icon(Icons.style_outlined),
+              label: const Text('Outfit Idea'),
             ),
           ),
         ],
