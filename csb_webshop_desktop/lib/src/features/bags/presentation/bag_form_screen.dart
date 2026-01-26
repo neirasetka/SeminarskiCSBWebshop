@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/bag_types_provider.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
@@ -125,8 +126,10 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
     final Bag? existing = widget.existing;
 
-    return Scaffold(
+    return BackConfirmationWrapper(
+      child: Scaffold(
       appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
         title: Text(existing == null ? 'Nova torba' : 'Uredi torbu'),
       ),
       body: SafeArea(
@@ -229,7 +232,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
             children: <Widget>[
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _isSaving ? null : _cancel,
+                  onPressed: _isSaving ? null : () => handleBackWithConfirmation(context),
                   child: const Text('Cancel'),
                 ),
               ),
@@ -251,6 +254,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

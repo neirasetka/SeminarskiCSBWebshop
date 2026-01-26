@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
 import '../application/events_provider.dart';
@@ -26,8 +27,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<EventModel> eventAsync = ref.watch(eventDetailProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Event detalji')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Event detalji'),
+      ),
       body: eventAsync.when(
         data: (EventModel event) => _EventBody(event: event),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -49,6 +54,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/collections_provider.dart';
 
 class CollectionsScreen extends ConsumerWidget {
@@ -9,8 +10,12 @@ class CollectionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Map<String, Set<int>>> collectionsAsync = ref.watch(collectionsProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Moje kolekcije')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Moje kolekcije'),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final String? name = await _promptText(context, 'Nova kolekcija', 'Naziv kolekcije');
@@ -82,6 +87,7 @@ class CollectionsScreen extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

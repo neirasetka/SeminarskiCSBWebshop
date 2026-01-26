@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../../profile/data/profile_api.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
@@ -70,8 +71,12 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Checkout demo')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Checkout demo'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -99,6 +104,7 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

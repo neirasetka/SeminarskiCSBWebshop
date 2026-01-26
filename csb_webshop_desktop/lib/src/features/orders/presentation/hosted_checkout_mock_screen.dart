@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/cart_provider.dart';
 import '../data/orders_api.dart';
 
@@ -35,8 +36,12 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Hosted Checkout (Mock)')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Hosted Checkout (Mock)'),
+      ),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -50,6 +55,7 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
           ],
         ),
       ),
+    ),
     );
   }
 }

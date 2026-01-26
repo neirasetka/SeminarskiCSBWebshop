@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/order_history_provider.dart';
 import '../domain/order_models.dart';
 import 'order_detail_screen.dart';
@@ -11,8 +12,12 @@ class OrderHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(orderHistoryProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Moje narudžbe')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Moje narudžbe'),
+      ),
       body: ordersAsync.when(
         data: (List<OrderModel> orders) {
           if (orders.isEmpty) return const Center(child: Text('Još uvijek nemate narudžbi.'));
@@ -55,6 +60,7 @@ class OrderHistoryScreen extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

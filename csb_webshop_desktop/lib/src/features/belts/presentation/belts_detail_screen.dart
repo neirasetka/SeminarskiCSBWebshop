@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../../orders/application/cart_provider.dart';
@@ -26,8 +27,12 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalji kaiša')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Detalji kaiša'),
+      ),
       body: beltAsync.when(
         data: (Belt belt) => _BeltDetailBody(belt: belt),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -49,6 +54,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

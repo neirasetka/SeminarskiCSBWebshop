@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 import '../../giveaways/domain/participant.dart';
@@ -14,8 +15,12 @@ class GiveawaysListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Giveaway>> listAsync = ref.watch(giveawaysListProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(forAdmin ? 'Giveaway administracija' : 'Giveawayi')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: Text(forAdmin ? 'Giveaway administracija' : 'Giveawayi'),
+      ),
       body: Column(
         children: <Widget>[
           Padding(
@@ -87,6 +92,7 @@ class GiveawaysListScreen extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -116,8 +122,12 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
     final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider);
     final AsyncValue<List<GiveawayParticipant>> participantsAsync = ref.watch(participantsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Giveaway detalji')),
+    return BackConfirmationWrapper(
+      child: Scaffold(
+      appBar: AppBar(
+        leading: buildBackButtonWithConfirmation(context),
+        title: const Text('Giveaway detalji'),
+      ),
       body: giveawayAsync.when(
         data: (Giveaway g) => ListView(
           padding: const EdgeInsets.all(16),
@@ -157,6 +167,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace st) => Center(child: Text('Greška: $e')),
       ),
+    ),
     );
   }
 }
