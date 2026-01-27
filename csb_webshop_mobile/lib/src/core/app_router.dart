@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/auth_gate.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/register_screen.dart';
 import '../features/orders/domain/order_models.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/orders/presentation/hosted_checkout_mock_screen.dart';
@@ -25,6 +26,11 @@ final GoRouter appRouter = GoRouter(
       path: '/login',
       name: 'login',
       builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      builder: (BuildContext context, GoRouterState state) => const RegisterScreen(),
     ),
     GoRoute(
       path: '/',
