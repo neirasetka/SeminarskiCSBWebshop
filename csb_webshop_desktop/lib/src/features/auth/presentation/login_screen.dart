@@ -116,6 +116,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             : const Text('Prijavi se'),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Text('Nemate račun?'),
+                        TextButton(
+                          onPressed: () => context.go('/register'),
+                          child: const Text('Registrirajte se'),
+                        ),
+                      ],
+                    ),
                     if (!widget.embedded)
                       TextButton(
                         onPressed: () => context.go('/'),
