@@ -6,7 +6,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/orders/domain/order_models.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
-import '../features/orders/presentation/hosted_checkout_mock_screen.dart';
+import '../features/orders/presentation/payment_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/root/presentation/home_screen.dart';
@@ -64,9 +64,9 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: 'checkout',
-          name: 'checkoutDemo',
+          name: 'checkout',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
-            child: HostedCheckoutMockScreen(),
+            child: PaymentScreen(),
           ),
           routes: <RouteBase>[
             GoRoute(
