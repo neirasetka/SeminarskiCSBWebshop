@@ -5,6 +5,7 @@ class UserProfile {
     required this.firstName,
     required this.lastName,
     required this.email,
+    this.phone,
     this.avatarUrl,
   });
 
@@ -13,6 +14,7 @@ class UserProfile {
   final String firstName;
   final String lastName;
   final String email;
+  final String? phone;
   final String? avatarUrl;
 
   String get fullName {
@@ -31,6 +33,7 @@ class UserProfile {
       firstName: (json['Name'] ?? json['FirstName'] ?? json['firstName'] ?? '').toString(),
       lastName: (json['Surname'] ?? json['LastName'] ?? json['lastName'] ?? '').toString(),
       email: (json['Email'] ?? json['email'] ?? '').toString(),
+      phone: (json['Phone'] ?? json['phone'])?.toString(),
       avatarUrl: (json['AvatarUrl'] ?? json['avatarUrl'])?.toString(),
     );
   }
@@ -39,6 +42,7 @@ class UserProfile {
     return <String, dynamic>{
       'Name': firstName,
       'Surname': lastName,
+      if (phone != null) 'Phone': phone,
     };
   }
 
@@ -46,6 +50,7 @@ class UserProfile {
     String? firstName,
     String? lastName,
     String? email,
+    String? phone,
     String? avatarUrl,
   }) {
     return UserProfile(
@@ -54,6 +59,7 @@ class UserProfile {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }

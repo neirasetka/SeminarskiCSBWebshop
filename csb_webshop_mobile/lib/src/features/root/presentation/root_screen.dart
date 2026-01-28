@@ -242,8 +242,15 @@ class _RootScreenState extends ConsumerState<RootScreen> {
 
   Future<void> _showUserMenu(UserProfile? profile) async {
     if (!mounted) return;
+    final ThemeData theme = Theme.of(context);
+    final AsyncValue<AuthSession?> sessionAsync = ref.read(authControllerProvider);
+    final AuthSession? session = sessionAsync.valueOrNull;
+    
     await showModalBottomSheet<void>(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext sheetContext) {
         final String? fullName = profile?.fullName;
         final bool hasFullName = fullName != null && fullName.isNotEmpty;
@@ -251,28 +258,117 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Profile header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: <Widget>[
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage: _avatarImage(profile),
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      child: _shouldShowInitials(profile)
+                          ? Text(
+                              _avatarInitials(profile, session),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            hasFullName ? fullName! : 'Korisnik',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '@${profile?.username ?? session?.username ?? ''}',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          if (profile?.email != null && profile!.email.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 2),
+                            Text(
+                              profile.email,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(Icons.check_circle, size: 14, color: Colors.green.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Aktivan',
+                            style: TextStyle(fontSize: 11, color: Colors.green.shade700, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Menu items
               ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: Text(hasFullName ? fullName! : 'Moj profil'),
-                subtitle: Text(profile?.email ?? 'Pregled korisničkih podataka'),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.person_outline, size: 20, color: theme.colorScheme.onPrimaryContainer),
+                ),
+                title: const Text('Moj profil'),
+                subtitle: const Text('Pregled korisničkih podataka'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   setState(() => _index = 3);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.receipt_long_outlined),
-                title: const Text('Moje narudžbe'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: const Text('Uredi korisničke podatke'),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.edit_outlined, size: 20, color: theme.colorScheme.onSecondaryContainer),
+                ),
+                title: const Text('Uredi podatke'),
+                subtitle: const Text('Promijeni ime, telefon...'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
                 enabled: profile != null,
                 onTap: profile == null
                     ? null
@@ -286,6 +382,42 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                         await ref.read(userProfileProvider.notifier).refreshProfile();
                       },
               ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.receipt_long_outlined, size: 20, color: theme.colorScheme.onTertiaryContainer),
+                ),
+                title: const Text('Moje narudžbe'),
+                subtitle: const Text('Povijest kupovine'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.logout, size: 20, color: Colors.red.shade700),
+                ),
+                title: Text('Odjava', style: TextStyle(color: Colors.red.shade700)),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  ref.read(authControllerProvider.notifier).logout();
+                },
+              ),
+              const SizedBox(height: 8),
             ],
           ),
         );

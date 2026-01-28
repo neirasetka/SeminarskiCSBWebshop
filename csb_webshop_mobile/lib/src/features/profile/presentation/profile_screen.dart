@@ -88,42 +88,147 @@ class _ProfileDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     final Widget adminSection = _AdminActions();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        Center(
-          child: CircleAvatar(
-            radius: 48,
-            backgroundImage: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
-                ? NetworkImage(profile.avatarUrl!)
-                : null,
-            child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
-                ? Text(
-                    _initials(profile.fullName),
-                    style: const TextStyle(fontSize: 24),
-                  )
-                : null,
+        // Profile header card
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: <Widget>[
+                Stack(
+                  children: <Widget>[
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      backgroundImage: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
+                          ? NetworkImage(profile.avatarUrl!)
+                          : null,
+                      child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
+                          ? Text(
+                              _initials(profile.fullName),
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onPrimaryContainer,
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.cardColor, width: 2),
+                        ),
+                        child: const Icon(Icons.check, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  profile.fullName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '@${profile.username}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 24),
-        _infoTile(title: 'Ime i prezime', value: profile.fullName),
-        _infoTile(title: 'Email', value: profile.email),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+        const SizedBox(height: 16),
+        // Contact info card
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Kontakt informacije',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              _InfoTile(
+                icon: Icons.email_outlined,
+                title: 'Email',
+                value: profile.email,
+              ),
+              if (profile.phone != null && profile.phone!.isNotEmpty)
+                _InfoTile(
+                  icon: Icons.phone_outlined,
+                  title: 'Telefon',
+                  value: profile.phone!,
+                ),
+              const SizedBox(height: 8),
+            ],
           ),
-          icon: const Icon(Icons.receipt_long),
-          label: const Text('Moje narudžbe'),
         ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+        const SizedBox(height: 16),
+        // Quick actions card
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Brze akcije',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.receipt_long, color: theme.colorScheme.onPrimaryContainer),
+                ),
+                title: const Text('Moje narudžbe'),
+                subtitle: const Text('Pogledajte povijest narudžbi'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                ),
+              ),
+              const Divider(height: 1, indent: 72),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.campaign_outlined, color: theme.colorScheme.onSecondaryContainer),
+                ),
+                title: const Text('Najave i obavijesti'),
+                subtitle: const Text('Pratite novosti'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+                ),
+              ),
+            ],
           ),
-          icon: const Icon(Icons.campaign_outlined),
-          label: const Text('Najave i obavijesti'),
         ),
         const SizedBox(height: 8),
         adminSection,
@@ -137,12 +242,25 @@ class _ProfileDetails extends StatelessWidget {
     final String last = parts.length > 1 ? parts.last : '';
     return (first.isNotEmpty ? first[0] : '') + (last.isNotEmpty ? last[0] : '');
   }
+}
 
-  Widget _infoTile({required String title, required String value}) {
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16)),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      subtitle: Text(value, style: const TextStyle(fontSize: 15)),
     );
   }
 }
