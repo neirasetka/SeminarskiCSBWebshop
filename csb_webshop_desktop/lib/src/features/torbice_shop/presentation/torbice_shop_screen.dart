@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
@@ -197,11 +198,12 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             ],
           ),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
           action: SnackBarAction(
-            label: 'POGLEDAJ',
+            label: 'NARUČI',
             textColor: Colors.white,
             onPressed: () {
-              // Navigate to cart if needed
+              context.go('/checkout');
             },
           ),
         ),
