@@ -16,6 +16,7 @@ import '../features/lookbook/presentation/lookbook_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
+import '../features/torbice_shop/presentation/torbice_shop_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -52,6 +53,13 @@ final GoRouter appRouter = GoRouter(
           name: 'belts',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: RootScreen(title: 'CSB Webshop', initialIndex: 1),
+          ),
+        ),
+        GoRoute(
+          path: 'torbice',
+          name: 'torbice',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: TorbiceShopScreen(),
           ),
         ),
         GoRoute(
