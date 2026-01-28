@@ -26,6 +26,55 @@ class RootScreen extends ConsumerStatefulWidget {
   ConsumerState<RootScreen> createState() => _RootScreenState();
 }
 
+/// Logo widget za AppBar - prikazuje stiliziranu torbicu
+class _AppLogo extends StatelessWidget {
+  const _AppLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          Icon(
+            Icons.shopping_bag,
+            color: Colors.white.withValues(alpha: 0.3),
+            size: 32,
+          ),
+          const Positioned(
+            top: 8,
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RootScreenState extends ConsumerState<RootScreen> {
   int _index = 0;
 
@@ -48,9 +97,35 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       const CartScreen(),
       ProfileScreen(title: widget.title),
     ];
+    final String welcomeName = profile?.firstName ?? session?.username ?? '';
+    final String welcomeText = welcomeName.isNotEmpty ? 'Dobro došli, $welcomeName!' : 'Dobro došli!';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        leadingWidth: 60,
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 12),
+          child: _AppLogo(),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              welcomeText,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.title,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Nova najava',
