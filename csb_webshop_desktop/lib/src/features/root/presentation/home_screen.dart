@@ -11,6 +11,7 @@ class HomeScreen extends StatelessWidget {
 
     const List<_NavShortcut> shortcuts = <_NavShortcut>[
       _NavShortcut(icon: Icons.shopping_bag_outlined, label: 'Bags', route: '/bags'),
+      _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
       _NavShortcut(icon: Icons.checkroom_outlined, label: 'Belts', route: '/belts'),
       _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
       _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
