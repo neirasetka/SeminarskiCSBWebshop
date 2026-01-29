@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,6 +23,11 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   final TextEditingController _postalCodeController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  
+  // Card payment controllers
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _expiryDateController = TextEditingController();
+  final TextEditingController _cvvController = TextEditingController();
 
   bool _isProcessing = false;
   int _currentStep = 0;
@@ -54,6 +60,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     _postalCodeController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _cardNumberController.dispose();
+    _expiryDateController.dispose();
+    _cvvController.dispose();
     super.dispose();
   }
 
@@ -161,7 +170,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           if (_currentStep == 0) ...[
                             _buildShippingForm(colorScheme, textTheme),
                           ] else if (_currentStep == 1) ...[
-                            _buildPaymentMethodSection(colorScheme, textTheme),
+                            _buildPaymentMethodSection(colorScheme, textTheme, order),
                           ] else ...[
                             _buildConfirmationSection(colorScheme, textTheme, order),
                           ],
@@ -458,44 +467,191 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentMethodSection(ColorScheme colorScheme, TextTheme textTheme) {
+  Widget _buildPaymentMethodSection(ColorScheme colorScheme, TextTheme textTheme, OrderModel order) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Način plaćanja',
+          'Podaci o kartici',
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Odaberite način plaćanja za vašu narudžbu',
+          'Unesite podatke vaše kartice za plaćanje',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.outline,
           ),
         ),
         const SizedBox(height: 24),
 
-        // Card payment option
-        _buildPaymentOption(
-          icon: Icons.credit_card,
-          title: 'Kartica',
-          subtitle: 'Visa, MasterCard, American Express',
-          isSelected: true,
-          colorScheme: colorScheme,
-          textTheme: textTheme,
+        // Card Number field
+        TextFormField(
+          controller: _cardNumberController,
+          keyboardType: TextInputType.number,
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(16),
+            _CardNumberInputFormatter(),
+          ],
+          decoration: InputDecoration(
+            labelText: 'Broj kartice *',
+            hintText: '0000 0000 0000 0000',
+            prefixIcon: const Icon(Icons.credit_card),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ),
+          validator: (String? value) {
+            if (value == null || value.replaceAll(' ', '').length < 16) {
+              return 'Molimo unesite ispravan broj kartice (16 cifara)';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
 
-        // Info card about Stripe
+        // Expiry Date and CVV row
+        Row(
+          children: <Widget>[
+            // Expiry Date field
+            Expanded(
+              child: TextFormField(
+                controller: _expiryDateController,
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                  _ExpiryDateInputFormatter(),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Datum isteka *',
+                  hintText: 'MM/YY',
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                ),
+                validator: (String? value) {
+                  if (value == null || value.length < 5) {
+                    return 'Unesite datum (MM/YY)';
+                  }
+                  final List<String> parts = value.split('/');
+                  if (parts.length != 2) {
+                    return 'Neispravan format';
+                  }
+                  final int? month = int.tryParse(parts[0]);
+                  final int? year = int.tryParse(parts[1]);
+                  if (month == null || month < 1 || month > 12) {
+                    return 'Neispravan mjesec';
+                  }
+                  if (year == null) {
+                    return 'Neispravna godina';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            // CVV field
+            Expanded(
+              child: TextFormField(
+                controller: _cvvController,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'CVV kod *',
+                  hintText: '000',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                ),
+                validator: (String? value) {
+                  if (value == null || value.length < 3) {
+                    return 'Unesite CVV (3-4 cifre)';
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Price display card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[
+                colorScheme.primaryContainer,
+                colorScheme.primaryContainer.withValues(alpha: 0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Ukupno za plaćanje',
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${order.items.length} ${order.items.length == 1 ? 'proizvod' : 'proizvoda'}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${order.amount.toStringAsFixed(2)} KM',
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Security info card
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.3),
+              color: colorScheme.outlineVariant,
             ),
           ),
           child: Row(
@@ -518,7 +674,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Vaši podaci su zaštićeni SSL enkripcijom. Plaćanje se vrši putem Stripe sigurnosnog sustava.',
+                      'Vaši podaci su zaštićeni SSL enkripcijom.',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -526,57 +682,29 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ],
                 ),
               ),
+              Row(
+                children: <Widget>[
+                  Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png',
+                    height: 20,
+                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                      return const Icon(Icons.credit_card, size: 20);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png',
+                    height: 20,
+                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                      return const Icon(Icons.credit_card, size: 20);
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPaymentOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isSelected,
-    required ColorScheme colorScheme,
-    required TextTheme textTheme,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
-          width: isSelected ? 2 : 1,
-        ),
-        color: isSelected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.2)
-            : colorScheme.surface,
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isSelected ? colorScheme.onPrimary : colorScheme.outline,
-          ),
-        ),
-        title: Text(
-          title,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(subtitle),
-        trailing: isSelected
-            ? Icon(Icons.check_circle, color: colorScheme.primary)
-            : Icon(Icons.radio_button_unchecked, color: colorScheme.outline),
-      ),
     );
   }
 
@@ -624,7 +752,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           icon: Icons.payment,
           title: 'Plaćanje',
           content: <String>[
-            'Kartica (Stripe)',
+            'Kartica: **** **** **** ${_cardNumberController.text.replaceAll(' ', '').length >= 4 ? _cardNumberController.text.replaceAll(' ', '').substring(_cardNumberController.text.replaceAll(' ', '').length - 4) : '****'}',
+            'Datum isteka: ${_expiryDateController.text}',
             'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
           ],
           colorScheme: colorScheme,
@@ -696,7 +825,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         if (_currentStep < 2)
           FilledButton.icon(
             onPressed: () {
-              if (_currentStep == 0 && !_formKey.currentState!.validate()) {
+              if (!_formKey.currentState!.validate()) {
                 return;
               }
               setState(() => _currentStep++);
@@ -923,6 +1052,52 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Input formatter for card number field (adds spaces every 4 digits)
+class _CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final String text = newValue.text.replaceAll(' ', '');
+    final StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      if ((i + 1) % 4 == 0 && i + 1 != text.length) {
+        buffer.write(' ');
+      }
+    }
+    final String formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+/// Input formatter for expiry date field (adds / after month)
+class _ExpiryDateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final String text = newValue.text.replaceAll('/', '');
+    final StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      if (i == 1 && text.length > 2) {
+        buffer.write('/');
+      }
+    }
+    final String formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
