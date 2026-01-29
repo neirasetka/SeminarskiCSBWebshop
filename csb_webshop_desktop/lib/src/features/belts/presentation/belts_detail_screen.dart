@@ -61,6 +61,16 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   _showAddedToCartDialog(context, belt);
                 }
               },
+              onBuyNow: () async {
+                for (int i = 0; i < _quantity; i++) {
+                  await ref
+                      .read(cartProvider.notifier)
+                      .addBeltToCart(beltId: belt.id, price: belt.price);
+                }
+                if (context.mounted) {
+                  context.go('/checkout');
+                }
+              },
               onBack: () => Navigator.of(context).pop(),
             );
           },
@@ -164,6 +174,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
+    required this.onBuyNow,
     required this.onBack,
   });
 
@@ -172,6 +183,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
+  final VoidCallback onBuyNow;
   final VoidCallback onBack;
 
   @override
@@ -213,6 +225,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
+                    onBuyNow: onBuyNow,
                   )
                 : _NarrowLayout(
                     belt: belt,
@@ -220,6 +233,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
+                    onBuyNow: onBuyNow,
                   ),
           ),
         ),
@@ -235,6 +249,7 @@ class _WideLayout extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
+    required this.onBuyNow,
   });
 
   final Belt belt;
@@ -242,6 +257,7 @@ class _WideLayout extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
+  final VoidCallback onBuyNow;
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +279,7 @@ class _WideLayout extends StatelessWidget {
             quantity: quantity,
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
+            onBuyNow: onBuyNow,
           ),
         ),
       ],
@@ -277,6 +294,7 @@ class _NarrowLayout extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
+    required this.onBuyNow,
   });
 
   final Belt belt;
@@ -284,6 +302,7 @@ class _NarrowLayout extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
+  final VoidCallback onBuyNow;
 
   @override
   Widget build(BuildContext context) {
@@ -298,6 +317,7 @@ class _NarrowLayout extends StatelessWidget {
           quantity: quantity,
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
+          onBuyNow: onBuyNow,
         ),
       ],
     );
@@ -382,6 +402,7 @@ class _ProductDetails extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
+    required this.onBuyNow,
   });
 
   final Belt belt;
@@ -389,6 +410,7 @@ class _ProductDetails extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
+  final VoidCallback onBuyNow;
 
   @override
   Widget build(BuildContext context) {
@@ -542,26 +564,57 @@ class _ProductDetails extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // Add to cart button
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: FilledButton.icon(
-            onPressed: onAddToCart,
-            icon: const Icon(Icons.add_shopping_cart, size: 24),
-            label: Text(
-              'Dodaj u korpu  -  ${(belt.price * quantity).toStringAsFixed(2)} KM',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        // Action buttons row
+        Row(
+          children: <Widget>[
+            // Add to cart button
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: onAddToCart,
+                  icon: const Icon(Icons.add_shopping_cart, size: 22),
+                  label: const Text(
+                    'Dodaj u korpu',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: BorderSide(color: colorScheme.primary, width: 2),
+                  ),
+                ),
               ),
             ),
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            const SizedBox(width: 12),
+            // Buy now button
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: onBuyNow,
+                  icon: const Icon(Icons.shopping_bag, size: 22),
+                  label: Text(
+                    'Naruči  ${(belt.price * quantity).toStringAsFixed(2)} KM',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
         const SizedBox(height: 32),
       ],

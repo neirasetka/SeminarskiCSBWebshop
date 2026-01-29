@@ -142,6 +142,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                         onToggleFavorite: () =>
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
                         onAddToCart: () => _addToCart(belt),
+                        onBuyNow: () => _buyNow(belt),
                       );
                     },
                     childCount: sortedBelts.length,
@@ -209,6 +210,13 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _buyNow(Belt belt) async {
+    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+    if (mounted) {
+      context.go('/checkout');
     }
   }
 }
@@ -546,6 +554,7 @@ class _ProductCard extends StatefulWidget {
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
+    required this.onBuyNow,
   });
 
   final Belt belt;
@@ -553,6 +562,7 @@ class _ProductCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
+  final VoidCallback onBuyNow;
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -669,14 +679,25 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                               ),
                             ),
                             const Spacer(),
-                            FilledButton.icon(
+                            // Add to cart icon button
+                            IconButton(
                               onPressed: widget.onAddToCart,
-                              icon: const Icon(Icons.add_shopping_cart, size: 18),
-                              label: const Text('Kupi'),
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                minimumSize: const Size(0, 36),
+                              icon: const Icon(Icons.add_shopping_cart, size: 20),
+                              tooltip: 'Dodaj u korpu',
+                              style: IconButton.styleFrom(
+                                foregroundColor: colorScheme.primary,
                               ),
+                            ),
+                            const SizedBox(width: 4),
+                            // Buy now button
+                            FilledButton(
+                              onPressed: widget.onBuyNow,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                minimumSize: const Size(0, 36),
+                                backgroundColor: Colors.green.shade600,
+                              ),
+                              child: const Text('Naruči'),
                             ),
                           ],
                         ),
