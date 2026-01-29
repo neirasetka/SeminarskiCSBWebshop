@@ -6,6 +6,7 @@ import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 import '../../giveaways/domain/participant.dart';
 import '../../giveaways/data/giveaways_api.dart';
+import 'giveaway_register_screen.dart';
 
 class GiveawaysListScreen extends ConsumerWidget {
   const GiveawaysListScreen({super.key, this.forAdmin = false});
@@ -80,7 +81,9 @@ class GiveawaysListScreen extends ConsumerWidget {
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => GiveawayDetailScreen(giveawayId: g.id, forAdmin: forAdmin),
+                        builder: (_) => forAdmin 
+                            ? GiveawayDetailScreen(giveawayId: g.id, forAdmin: forAdmin)
+                            : GiveawayRegisterScreen(giveawayId: g.id),
                       ),
                     ),
                   );
