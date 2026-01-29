@@ -1,5 +1,6 @@
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
@@ -15,7 +16,11 @@ namespace CSBWebshopSeminarski.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Public endpoint for newsletter subscription.
+        /// </summary>
         [HttpPost("subscribe")]
+        [AllowAnonymous]
         public async Task<IActionResult> Subscribe([FromBody] Subscribers subscriber)
         {
             _context.Subscribers.Add(subscriber);

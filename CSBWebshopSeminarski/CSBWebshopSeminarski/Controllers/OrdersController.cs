@@ -24,6 +24,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("GetByOrderNumber")]
+        [Authorize(Roles = "Buyer, Admin")]
         public Order GetByOrderNumber([FromQuery] string name)
         {
             return _service.GetByOrderNumber(name);
