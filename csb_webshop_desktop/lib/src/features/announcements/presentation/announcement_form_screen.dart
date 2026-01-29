@@ -45,6 +45,12 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
       if (!mounted) return;
 
       if (created != null) {
+        // Clear form to prepare for adding a new record
+        _nameController.clear();
+        _priceController.clear();
+        _colorController.clear();
+        _formKey.currentState?.reset();
+        
         // Show success dialog
         await showDialog<void>(
           context: context,
@@ -52,9 +58,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
           builder: (BuildContext context) => _SuccessDialog(announcement: created),
         );
         
-        if (mounted) {
-          context.go('/');
-        }
+        // Stay on form for adding another announcement (form already cleared above)
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -519,18 +523,37 @@ class _SuccessDialog extends StatelessWidget {
         ],
       ),
       actions: <Widget>[
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.go('/');
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Početna'),
               ),
             ),
-            child: const Text('U redu'),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Dodaj još'),
+              ),
+            ),
+          ],
         ),
       ],
     );
