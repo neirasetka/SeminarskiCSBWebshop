@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../bags/domain/bag.dart';
 import '../../belts/domain/belt.dart';
@@ -18,15 +19,22 @@ class HomeScreen extends ConsumerWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    const List<_NavShortcut> shortcuts = <_NavShortcut>[
-      _NavShortcut(icon: Icons.shopping_bag_outlined, label: 'Bags', route: '/bags'),
-      _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
-      _NavShortcut(icon: Icons.checkroom_outlined, label: 'Belts', route: '/belts'),
-      _NavShortcut(icon: Icons.straighten, label: 'Kaisevi', route: '/kaisevi'),
-      _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
-      _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
-      _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
-      _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
+    // Check if user is admin
+    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
+    final bool isAdmin = isAdminAsync.value ?? false;
+
+    // Base shortcuts for all users
+    final List<_NavShortcut> shortcuts = <_NavShortcut>[
+      const _NavShortcut(icon: Icons.shopping_bag_outlined, label: 'Bags', route: '/bags'),
+      const _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
+      const _NavShortcut(icon: Icons.checkroom_outlined, label: 'Belts', route: '/belts'),
+      const _NavShortcut(icon: Icons.straighten, label: 'Kaisevi', route: '/kaisevi'),
+      const _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
+      const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
+      const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
+      // Admin-only shortcuts
+      if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Announcement', route: '/announcement/new'),
+      if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
     ];
 
     // Check if user is logged in
@@ -53,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
                       child: Column(
                         children: <Widget>[
                           Text(
-                            'Welcome',
+                            'Dobro došli',
                             style: textTheme.displayLarge?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.w600,

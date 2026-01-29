@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/announcements/presentation/announcement_form_screen.dart';
 import '../features/auth/presentation/auth_gate.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
@@ -146,6 +147,14 @@ final GoRouter appRouter = GoRouter(
           name: 'giveaways',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: GiveawaysListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'announcement/new',
+          name: 'announcementForm',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            requiredRoles: <String>['Admin'],
+            child: AnnouncementFormScreen(),
           ),
         ),
         GoRoute(
