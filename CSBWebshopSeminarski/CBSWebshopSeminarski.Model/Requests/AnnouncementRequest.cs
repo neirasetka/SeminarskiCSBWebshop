@@ -11,12 +11,12 @@ namespace CBSWebshopSeminarski.Model.Requests
 
     public class AnnouncementRequest
     {
-        [Required(ErrorMessage = "Subject je obavezan")]
-        [MinLength(2, ErrorMessage = "Subject mora imati najmanje 2 znaka")]
+        [Required(ErrorMessage = "Naslov je obavezan")]
+        [MinLength(2, ErrorMessage = "Naslov mora imati najmanje 2 znaka")]
         public string? Subject { get; set; }
         
-        [Required(ErrorMessage = "Body je obavezan")]
-        [MinLength(10, ErrorMessage = "Body mora imati najmanje 10 znakova")]
+        [Required(ErrorMessage = "Sadržaj poruke je obavezan")]
+        [MinLength(10, ErrorMessage = "Sadržaj poruke mora imati najmanje 10 znakova")]
         public string? Body { get; set; }
         
         public string? TemplateKey { get; set; }
