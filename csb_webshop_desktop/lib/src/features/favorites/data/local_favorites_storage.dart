@@ -5,6 +5,7 @@ class LocalFavoritesStorage {
       : _sharedPreferencesInstance = sharedPreferences;
 
   static const String _bagFavoritesKey = 'favorite_bag_ids';
+  static const String _beltFavoritesKey = 'favorite_belt_ids';
 
   SharedPreferences? _sharedPreferencesInstance;
 
@@ -12,6 +13,7 @@ class LocalFavoritesStorage {
     return _sharedPreferencesInstance ??= await SharedPreferences.getInstance();
   }
 
+  // Bag favorites
   Future<Set<int>> getFavoriteBagIds() async {
     final SharedPreferences prefs = await _prefs;
     final List<String> ids = prefs.getStringList(_bagFavoritesKey) ?? <String>[];
@@ -37,6 +39,35 @@ class LocalFavoritesStorage {
       ids.add(bagId);
     }
     await saveFavoriteBagIds(ids);
+    return ids;
+  }
+
+  // Belt favorites
+  Future<Set<int>> getFavoriteBeltIds() async {
+    final SharedPreferences prefs = await _prefs;
+    final List<String> ids = prefs.getStringList(_beltFavoritesKey) ?? <String>[];
+    return ids.map((String s) => int.tryParse(s)).whereType<int>().toSet();
+  }
+
+  Future<void> saveFavoriteBeltIds(Set<int> beltIds) async {
+    final SharedPreferences prefs = await _prefs;
+    final List<String> asStrings = beltIds.map((int id) => id.toString()).toList();
+    await prefs.setStringList(_beltFavoritesKey, asStrings);
+  }
+
+  Future<bool> isBeltFavorite(int beltId) async {
+    final Set<int> ids = await getFavoriteBeltIds();
+    return ids.contains(beltId);
+  }
+
+  Future<Set<int>> toggleBeltFavorite(int beltId) async {
+    final Set<int> ids = await getFavoriteBeltIds();
+    if (ids.contains(beltId)) {
+      ids.remove(beltId);
+    } else {
+      ids.add(beltId);
+    }
+    await saveFavoriteBeltIds(ids);
     return ids;
   }
 }
