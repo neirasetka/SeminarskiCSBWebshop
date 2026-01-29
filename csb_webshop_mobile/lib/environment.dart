@@ -4,7 +4,7 @@ class EnvironmentConfig {
   static const String flavor = String.fromEnvironment('FLAVOR', defaultValue: 'prod');
   static const String apiBaseUrl = String.fromEnvironment(
     'baseUrl',
-    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5265'),
+    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'https://localhost:7224'),
   );
   static const bool enableLogging = bool.fromEnvironment('ENABLE_LOGGING', defaultValue: false);
   static const String stripePublishableKey = String.fromEnvironment('STRIPE_PUBLISHABLE_KEY', defaultValue: '');
