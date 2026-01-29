@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatelessWidget {
+import 'info_panel.dart';
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -29,19 +32,35 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _HomeHeader(shortcuts: shortcuts),
-              const Spacer(),
-              Center(
-                child: Text(
-                  'Welcome',
-                  style: textTheme.displayLarge?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                  ),
-                  textAlign: TextAlign.center,
+              const SizedBox(height: 24),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    // Welcome message on the left
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Text(
+                          'Welcome',
+                          style: textTheme.displayLarge?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    // Info Panel on the right
+                    const Expanded(
+                      flex: 1,
+                      child: InfoPanel(),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(flex: 2),
             ],
           ),
         ),
