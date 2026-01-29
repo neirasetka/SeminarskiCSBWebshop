@@ -158,7 +158,10 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
                 controller: _codeController,
                 decoration: const InputDecoration(labelText: 'Šifra'),
                 textInputAction: TextInputAction.next,
-                validator: (_) => null,
+                validator: (String? value) {
+                  if (value == null || value.trim().isEmpty) return 'Šifra je obavezna';
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(
