@@ -5,7 +5,7 @@ import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/domain/bag_type.dart';
-import '../../bags/presentation/bags_detail_screen.dart';
+import '../../outfit_ideas/presentation/outfit_idea_screen.dart';
 
 class LookbookScreen extends ConsumerStatefulWidget {
   const LookbookScreen({super.key});
@@ -35,6 +35,48 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
       ),
       body: Column(
         children: <Widget>[
+          // Header - "How to style our bags"
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  Theme.of(context).colorScheme.primaryContainer,
+                  Theme.of(context).colorScheme.secondaryContainer,
+                ],
+              ),
+            ),
+            child: Column(
+              children: <Widget>[
+                Icon(
+                  Icons.style_outlined,
+                  size: 40,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'How to style our bags',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Klikni na torbicu za outfit inspiraciju',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Filter
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -45,8 +87,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
                       const DropdownMenuItem<int?>(value: null, child: Text('Sve vrste')),
                       ...types.map((BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
                     ];
-                    return DropdownButton<int?>
-                      (
+                    return DropdownButton<int?>(
                       value: _selectedBagTypeId,
                       items: items,
                       onChanged: (int? value) {
@@ -120,63 +161,87 @@ class _LookbookTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = bag.displayImageUrl;
-    final Widget image = LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double imageWidth = constraints.maxWidth * 0.33;
-        final Widget placeholder = Container(
-          color: Colors.grey.shade200,
-          child: const Center(child: Icon(Icons.image)),
-        );
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              width: imageWidth,
-              height: constraints.maxHeight,
-              child: imageUrl == null || imageUrl.isEmpty
-                  ? placeholder
-                  : Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(child: Icon(Icons.broken_image)),
-                      ),
-                    ),
-            ),
-          ),
-        );
-      },
-    );
-
+    
     return InkWell(
       onTap: () {
+        // Direktan link na Outfit Idea screen
         Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => BagDetailScreen(id: bag.id)),
+          MaterialPageRoute<void>(
+            builder: (_) => OutfitIdeaScreen(bagId: bag.id, bagName: bag.name),
+          ),
         );
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: <Widget>[
-            Expanded(child: image),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    bag.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+            // Slika torbice
+            Positioned.fill(
+              child: imageUrl == null || imageUrl.isEmpty
+                  ? Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(child: Icon(Icons.shopping_bag, size: 48)),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(child: Icon(Icons.broken_image, size: 48)),
+                      ),
+                    ),
+            ),
+            // Overlay s informacijama
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text('${bag.price.toStringAsFixed(2)} KM', style: const TextStyle(color: Colors.grey)),
-                ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      bag.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.style_outlined,
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Outfit Idea',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

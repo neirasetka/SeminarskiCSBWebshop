@@ -15,6 +15,7 @@ import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../profile/presentation/profile_update_screen.dart';
+import '../../lookbook/presentation/lookbook_screen.dart';
 
 class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({super.key, required this.title, this.initialIndex = 0});
@@ -28,13 +29,15 @@ class RootScreen extends ConsumerStatefulWidget {
 
 /// Logo widget za AppBar - prikazuje stiliziranu torbicu
 class _AppLogo extends StatelessWidget {
-  const _AppLogo();
+  const _AppLogo({this.size = 44});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 44,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -44,7 +47,7 @@ class _AppLogo extends StatelessWidget {
             Theme.of(context).colorScheme.secondary,
           ],
         ),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(size * 0.22),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
@@ -59,14 +62,130 @@ class _AppLogo extends StatelessWidget {
           Icon(
             Icons.shopping_bag,
             color: Colors.white.withValues(alpha: 0.3),
-            size: 32,
+            size: size * 0.72,
           ),
-          const Positioned(
-            top: 8,
+          Positioned(
+            top: size * 0.18,
             child: Icon(
               Icons.shopping_bag_outlined,
               color: Colors.white,
-              size: 28,
+              size: size * 0.63,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Glavni meni gumb za Home Screen
+class _MainMenuButton extends StatelessWidget {
+  const _MainMenuButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 40, color: color),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Home Screen sa glavnim meni gumbima
+class _HomeMenuScreen extends StatelessWidget {
+  const _HomeMenuScreen({
+    required this.onTorbice,
+    required this.onKaisevi,
+    required this.onGiveaway,
+    required this.onLookbook,
+  });
+
+  final VoidCallback onTorbice;
+  final VoidCallback onKaisevi;
+  final VoidCallback onGiveaway;
+  final VoidCallback onLookbook;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: <Widget>[
+          const SizedBox(height: 20),
+          // Glavni meni - 2x2 grid
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
+              childAspectRatio: 1.0,
+              children: <Widget>[
+                _MainMenuButton(
+                  icon: Icons.shopping_bag_outlined,
+                  label: 'Torbice',
+                  color: colors.primary,
+                  onTap: onTorbice,
+                ),
+                _MainMenuButton(
+                  icon: Icons.checkroom_outlined,
+                  label: 'Kaiševi',
+                  color: colors.secondary,
+                  onTap: onKaisevi,
+                ),
+                _MainMenuButton(
+                  icon: Icons.celebration_outlined,
+                  label: 'Giveaway',
+                  color: Colors.orange,
+                  onTap: onGiveaway,
+                ),
+                _MainMenuButton(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Lookbook',
+                  color: Colors.purple,
+                  onTap: onLookbook,
+                ),
+              ],
             ),
           ),
         ],
@@ -84,6 +203,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     _index = widget.initialIndex;
   }
 
+  void _navigateToPage(int index) {
+    setState(() => _index = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final AsyncValue<AuthSession?> sessionAsync = ref.watch(authControllerProvider);
@@ -92,9 +215,24 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     final UserProfile? profile = profileAsync.valueOrNull;
 
     final List<Widget> pages = <Widget>[
+      // 0 - Home Menu
+      _HomeMenuScreen(
+        onTorbice: () => _navigateToPage(1),
+        onKaisevi: () => _navigateToPage(2),
+        onGiveaway: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
+        ),
+        onLookbook: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const LookbookScreen()),
+        ),
+      ),
+      // 1 - Torbice
       const BagsListScreen(),
+      // 2 - Kaiševi
       const BeltsListScreen(),
+      // 3 - Korpa
       const CartScreen(),
+      // 4 - Profil
       ProfileScreen(title: widget.title),
     ];
     final String welcomeName = profile?.firstName ?? session?.username ?? '';
@@ -103,64 +241,43 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 60,
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 12),
-          child: _AppLogo(),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: GestureDetector(
+            onTap: () => _navigateToPage(0),
+            child: const _AppLogo(),
+          ),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              welcomeText,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+        title: GestureDetector(
+          onTap: () => _navigateToPage(0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                welcomeText,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: <Widget>[
+          // Korpa ikona
           IconButton(
-            tooltip: 'Nova najava',
-            icon: const Icon(Icons.campaign_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AddAnnouncementScreen()),
-              );
-            },
+            tooltip: 'Korpa',
+            icon: const Icon(Icons.shopping_cart_outlined),
+            onPressed: () => _navigateToPage(3),
           ),
-          IconButton(
-            tooltip: 'Info panel',
-            icon: const Icon(Icons.info_outline),
-            onPressed: () => context.go('/info-panel'),
-          ),
-          IconButton(
-            tooltip: 'Kaiševi',
-            icon: const Icon(Icons.checkroom_outlined),
-            onPressed: () => context.go('/belts'),
-          ),
-          IconButton(
-            tooltip: 'Izvještaji',
-            icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go('/reports'),
-          ),
-          IconButton(
-            tooltip: 'Checkout demo',
-            icon: const Icon(Icons.payment_outlined),
-            onPressed: () => context.go('/checkout'),
-          ),
-          IconButton(
-            tooltip: 'Lookbook',
-            icon: const Icon(Icons.grid_view_outlined),
-            onPressed: () => context.go('/lookbook'),
-          ),
+          // User avatar - vodi na edit profile
           if (sessionAsync.isLoading && session == null)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
@@ -195,21 +312,14 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         index: _index,
         children: pages,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
-          );
-        },
-        label: const Text('Giveawayi'),
-        icon: const Icon(Icons.celebration_outlined),
-      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         onTap: (int i) => setState(() => _index = i),
+        type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Početna'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Torbe'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Kaiševi'),
+          BottomNavigationBarItem(icon: Icon(Icons.checkroom_outlined), label: 'Kaiševi'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Korpa'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
