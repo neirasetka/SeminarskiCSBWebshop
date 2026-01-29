@@ -7,6 +7,7 @@ import '../../belts/application/belt_types_provider.dart';
 import '../../belts/domain/belt.dart';
 import '../../belts/domain/belt_type.dart';
 import '../../belts/presentation/belts_detail_screen.dart';
+import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
 class KaiseviShopScreen extends ConsumerStatefulWidget {
@@ -59,6 +60,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<Set<int>> beltFavoritesAsync = ref.watch(beltFavoritesProvider);
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -83,6 +85,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                   _sortAscending = ascending;
                 });
               },
+              onBackPressed: () => context.go('/'),
             ),
           ),
           // Products grid
@@ -131,9 +134,13 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
                       final Belt belt = sortedBelts[index];
+                      final bool isFav = beltFavoritesAsync.value?.contains(belt.id) ?? false;
                       return _ProductCard(
                         belt: belt,
+                        isFavorite: isFav,
                         onTap: () => _navigateToDetail(belt),
+                        onToggleFavorite: () =>
+                            ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
                         onAddToCart: () => _addToCart(belt),
                       );
                     },
@@ -215,6 +222,7 @@ class _ShopHeader extends ConsumerWidget {
     required this.sortBy,
     required this.sortAscending,
     required this.onSortChanged,
+    required this.onBackPressed,
   });
 
   final TextEditingController searchController;
@@ -224,6 +232,7 @@ class _ShopHeader extends ConsumerWidget {
   final String sortBy;
   final bool sortAscending;
   final void Function(String, bool) onSortChanged;
+  final VoidCallback onBackPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -246,9 +255,26 @@ class _ShopHeader extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // Back button row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 24, 0),
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                    onPressed: onBackPressed,
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    tooltip: 'Nazad na početnu',
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
             // Title section
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
               child: Row(
                 children: <Widget>[
                   Container(
@@ -516,12 +542,16 @@ class _SortButton extends StatelessWidget {
 class _ProductCard extends StatefulWidget {
   const _ProductCard({
     required this.belt,
+    required this.isFavorite,
     required this.onTap,
+    required this.onToggleFavorite,
     required this.onAddToCart,
   });
 
   final Belt belt;
+  final bool isFavorite;
   final VoidCallback onTap;
+  final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
 
   @override
@@ -562,6 +592,15 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                         child: _ProductImage(imageUrl: widget.belt.displayImageUrl),
+                      ),
+                      // Favorite button
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: _FavoriteButton(
+                          isFavorite: widget.isFavorite,
+                          onPressed: widget.onToggleFavorite,
+                        ),
                       ),
                       // Rating badge
                       if (widget.belt.averageRating != null)
@@ -691,6 +730,36 @@ class _ProductImage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  const _FavoriteButton({
+    required this.isFavorite,
+    required this.onPressed,
+  });
+
+  final bool isFavorite;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : Colors.grey,
+            size: 20,
+          ),
+        ),
+      ),
     );
   }
 }
