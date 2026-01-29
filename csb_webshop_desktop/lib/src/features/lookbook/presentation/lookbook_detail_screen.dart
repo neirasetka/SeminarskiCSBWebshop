@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
+import '../../outfit_ideas/application/outfit_ideas_provider.dart';
+import '../../outfit_ideas/domain/outfit_idea.dart';
 
 class LookbookDetailScreen extends ConsumerStatefulWidget {
   const LookbookDetailScreen({super.key, required this.bagId});
@@ -15,68 +19,142 @@ class LookbookDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
-    });
+    Future.microtask(_loadData);
+  }
+
+  Future<void> _loadData() async {
+    // Load bag details
+    await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
+    
+    // Load outfit ideas for this bag
+    await ref.read(outfitIdeasForBagProvider.notifier).loadForBag(widget.bagId);
+    
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  void _showImagePreview(OutfitIdeaImage image) {
+    if (image.imageBytes == null || image.imageBytes!.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: <Widget>[
+            Center(
+              child: InteractiveViewer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.memory(
+                    Uint8List.fromList(image.imageBytes!),
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 48),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final OutfitIdeasListState outfitState = ref.watch(outfitIdeasForBagProvider);
 
     return BackConfirmationWrapper(
       child: Scaffold(
-      body: bagAsync.when(
-        data: (Bag bag) => _LookbookDetailContent(bag: bag),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object error, StackTrace stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  'Greška pri učitavanju',
-                  style: Theme.of(context).textTheme.titleLarge,
+        body: !_isInitialized
+            ? const Center(child: CircularProgressIndicator())
+            : bagAsync.when(
+                data: (Bag bag) => _LookbookDetailContent(
+                  bag: bag,
+                  outfitState: outfitState,
+                  onImageTap: _showImagePreview,
+                  onRefresh: _loadData,
                 ),
-                const SizedBox(height: 8),
-                Text(error.toString(), textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => ref.read(bagDetailProvider.notifier).fetch(widget.bagId),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Pokušaj ponovo'),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (Object error, StackTrace stackTrace) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Greška pri učitavanju',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(error.toString(), textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _loadData,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Pokušaj ponovo'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
-    ),
     );
   }
 }
 
 class _LookbookDetailContent extends StatelessWidget {
-  const _LookbookDetailContent({required this.bag});
+  const _LookbookDetailContent({
+    required this.bag,
+    required this.outfitState,
+    required this.onImageTap,
+    required this.onRefresh,
+  });
 
   final Bag bag;
+  final OutfitIdeasListState outfitState;
+  final void Function(OutfitIdeaImage) onImageTap;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = bag.displayImageUrl;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final List<OutfitIdeaImage> images = outfitState.allImages;
 
     return CustomScrollView(
       slivers: <Widget>[
         // Hero image with app bar
         SliverAppBar(
-          expandedHeight: 400,
+          expandedHeight: 350,
           pinned: true,
           leading: Builder(
             builder: (BuildContext context) => buildBackButtonWithConfirmation(context),
@@ -91,19 +169,37 @@ class _LookbookDetailContent extends StatelessWidget {
                 ],
               ),
             ),
-            background: imageUrl != null && imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: const Center(child: Icon(Icons.image, size: 64)),
+            background: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                imageUrl != null && imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: colorScheme.surfaceContainerHighest,
+                          child: const Center(child: Icon(Icons.image, size: 64)),
+                        ),
+                      )
+                    : Container(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: const Center(child: Icon(Icons.image, size: 64)),
+                      ),
+                // Gradient overlay for better text readability
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
                     ),
-                  )
-                : Container(
-                    color: colorScheme.surfaceContainerHighest,
-                    child: const Center(child: Icon(Icons.image, size: 64)),
                   ),
+                ),
+              ],
+            ),
           ),
         ),
 
@@ -114,66 +210,58 @@ class _LookbookDetailContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Title section
-                Text(
-                  'How to style',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: colorScheme.primary,
-                        letterSpacing: 1.5,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  bag.name,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 16),
-
-                // Price tag
+                // Title section - "Outfit Idea"
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${bag.price.toStringAsFixed(2)} KM',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimaryContainer,
-                      fontSize: 18,
+                    gradient: LinearGradient(
+                      colors: <Color>[
+                        colorScheme.primaryContainer,
+                        colorScheme.secondaryContainer,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 40,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Outfit Idea',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Inspiracija kako stilizovati ${bag.name}',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Description
-                if (bag.description.isNotEmpty) ...<Widget>[
-                  Text(
-                    'Opis',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    bag.description,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Styling tips section
-                _StylingTipsSection(bag: bag),
-
-                const SizedBox(height: 24),
-
-                // Occasions section
-                _OccasionsSection(),
-
                 const SizedBox(height: 32),
+
+                // Outfit inspiration images section
+                _OutfitImagesSection(
+                  images: images,
+                  isLoading: outfitState.isLoading,
+                  error: outfitState.error,
+                  onImageTap: onImageTap,
+                  onRefresh: onRefresh,
+                ),
               ],
             ),
           ),
@@ -183,159 +271,296 @@ class _LookbookDetailContent extends StatelessWidget {
   }
 }
 
-class _StylingTipsSection extends StatelessWidget {
-  const _StylingTipsSection({required this.bag});
-
-  final Bag bag;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    final List<_StylingTip> tips = <_StylingTip>[
-      _StylingTip(
-        icon: Icons.checkroom,
-        title: 'Casual look',
-        description: 'Kombinirajte ${bag.name} sa trapericama i bijelom majicom za opušten dnevni izgled.',
-      ),
-      _StylingTip(
-        icon: Icons.business_center,
-        title: 'Poslovni stil',
-        description: 'Savršena za ured - nosite uz blazer i elegantne hlače.',
-      ),
-      _StylingTip(
-        icon: Icons.nightlife,
-        title: 'Večernji izlazak',
-        description: 'Dodajte malo glamura svojoj večernjoj odjeći sa ovom torbicom.',
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Icon(Icons.auto_awesome, color: colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              'Savjeti za stiliziranje',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ...tips.map((_StylingTip tip) => _StylingTipCard(tip: tip)),
-      ],
-    );
-  }
-}
-
-class _StylingTip {
-  const _StylingTip({
-    required this.icon,
-    required this.title,
-    required this.description,
+class _OutfitImagesSection extends StatelessWidget {
+  const _OutfitImagesSection({
+    required this.images,
+    required this.isLoading,
+    required this.error,
+    required this.onImageTap,
+    required this.onRefresh,
   });
 
-  final IconData icon;
-  final String title;
-  final String description;
-}
-
-class _StylingTipCard extends StatelessWidget {
-  const _StylingTipCard({required this.tip});
-
-  final _StylingTip tip;
+  final List<OutfitIdeaImage> images;
+  final bool isLoading;
+  final String? error;
+  final void Function(OutfitIdeaImage) onImageTap;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(tip.icon, color: colorScheme.onPrimaryContainer),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    tip.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    tip.description,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    // Loading state
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(48),
+          child: CircularProgressIndicator(),
         ),
-      ),
-    );
-  }
-}
+      );
+    }
 
-class _OccasionsSection extends StatelessWidget {
-  const _OccasionsSection();
+    // Error state
+    if (error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: <Widget>[
+              Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                'Greška pri učitavanju slika',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Pokušaj ponovo'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    // Empty state
+    if (images.isEmpty) {
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.all(48),
+          child: Column(
+            children: <Widget>[
+              Icon(
+                Icons.image_outlined,
+                size: 80,
+                color: colorScheme.outline.withOpacity(0.5),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Nema outfit inspiracija',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Inspiracije za stilizovanje ove torbice još nisu dodane.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.outline,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-    final List<String> occasions = <String>[
-      'Dnevni izlasci',
-      'Posao',
-      'Shopping',
-      'Putovanja',
-      'Večernji eventi',
-      'Vikend',
-    ];
-
+    // Images grid
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(Icons.event, color: colorScheme.primary),
+            Icon(Icons.style, color: colorScheme.primary),
             const SizedBox(width: 8),
             Text(
-              'Prilike za nošenje',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              'Inspiracije za stilizovanje',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${images.length} ${images.length == 1 ? 'slika' : 'slika'}',
+                style: TextStyle(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: occasions.map((String occasion) {
-            return Chip(
-              label: Text(occasion),
-              backgroundColor: colorScheme.secondaryContainer,
-              labelStyle: TextStyle(color: colorScheme.onSecondaryContainer),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // Responsive grid: 2 columns on smaller screens, 3 on larger
+            final int crossAxisCount = constraints.maxWidth > 800 ? 3 : 2;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.75,
+              ),
+              itemCount: images.length,
+              itemBuilder: (BuildContext context, int index) {
+                final OutfitIdeaImage image = images[index];
+                return _OutfitImageCard(
+                  image: image,
+                  onTap: () => onImageTap(image),
+                );
+              },
             );
-          }).toList(),
+          },
         ),
       ],
+    );
+  }
+}
+
+class _OutfitImageCard extends StatefulWidget {
+  const _OutfitImageCard({
+    required this.image,
+    required this.onTap,
+  });
+
+  final OutfitIdeaImage image;
+  final VoidCallback onTap;
+
+  @override
+  State<_OutfitImageCard> createState() => _OutfitImageCardState();
+}
+
+class _OutfitImageCardState extends State<_OutfitImageCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasImage = widget.image.imageBytes != null && widget.image.imageBytes!.isNotEmpty;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: _isHovered
+            ? (Matrix4.identity()..scale(1.02))
+            : Matrix4.identity(),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          elevation: _isHovered ? 8 : 2,
+          shadowColor: colorScheme.shadow.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: InkWell(
+            onTap: widget.onTap,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                hasImage
+                    ? Image.memory(
+                        Uint8List.fromList(widget.image.imageBytes!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildPlaceholder(colorScheme),
+                      )
+                    : _buildPlaceholder(colorScheme),
+                // Hover overlay
+                AnimatedOpacity(
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.zoom_in,
+                          color: colorScheme.primary,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Caption at bottom
+                if (widget.image.caption != null && widget.image.caption!.isNotEmpty)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: <Color>[
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: Text(
+                        widget.image.caption!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(ColorScheme colorScheme) {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(
+              Icons.image,
+              size: 40,
+              color: colorScheme.outline.withOpacity(0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Slika nije dostupna',
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

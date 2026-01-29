@@ -35,6 +35,70 @@ class OutfitIdeaState {
   }
 }
 
+/// State for outfit ideas list (for lookbook)
+class OutfitIdeasListState {
+  OutfitIdeasListState({
+    this.outfitIdeas = const <OutfitIdea>[],
+    this.isLoading = false,
+    this.error,
+  });
+
+  final List<OutfitIdea> outfitIdeas;
+  final bool isLoading;
+  final String? error;
+
+  /// Get all images from all outfit ideas combined
+  List<OutfitIdeaImage> get allImages {
+    final List<OutfitIdeaImage> images = <OutfitIdeaImage>[];
+    for (final OutfitIdea idea in outfitIdeas) {
+      images.addAll(idea.images);
+    }
+    return images;
+  }
+
+  OutfitIdeasListState copyWith({
+    List<OutfitIdea>? outfitIdeas,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
+    return OutfitIdeasListState(
+      outfitIdeas: outfitIdeas ?? this.outfitIdeas,
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+    );
+  }
+}
+
+/// Notifier for loading outfit ideas for a specific bag (for lookbook view)
+class OutfitIdeasForBagNotifier extends StateNotifier<OutfitIdeasListState> {
+  OutfitIdeasForBagNotifier(this._api) : super(OutfitIdeasListState());
+
+  final OutfitIdeasApi _api;
+
+  /// Loads all outfit ideas for a specific bag
+  Future<void> loadForBag(int bagId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final List<OutfitIdea> ideas = await _api.getAll(bagId: bagId);
+      state = state.copyWith(outfitIdeas: ideas, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
+  }
+
+  /// Clears the current state
+  void clear() {
+    state = OutfitIdeasListState();
+  }
+}
+
+final StateNotifierProvider<OutfitIdeasForBagNotifier, OutfitIdeasListState>
+    outfitIdeasForBagProvider =
+    StateNotifierProvider<OutfitIdeasForBagNotifier, OutfitIdeasListState>(
+  (Ref ref) => OutfitIdeasForBagNotifier(ref.read(outfitIdeasApiProvider)),
+);
+
 /// Notifier for managing a single outfit idea for a bag
 class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
   OutfitIdeaNotifier(this._api) : super(OutfitIdeaState());
