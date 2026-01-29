@@ -6,12 +6,39 @@ class AnnouncementsApi {
   Future<List<Announcement>> getAnnouncements() async {
     // Simulate network latency
     await Future<void>.delayed(const Duration(milliseconds: 300));
-    return _dummyAnnouncements;
+    return List<Announcement>.from(_dummyAnnouncements);
   }
 
   Future<Announcement> getAnnouncementById(int id) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return _dummyAnnouncements.firstWhere((Announcement a) => a.id == id);
+  }
+
+  /// Creates a new bag announcement.
+  /// Returns the created announcement.
+  Future<Announcement> createBagAnnouncement({
+    required String bagName,
+    required double bagPrice,
+    required String bagColor,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    
+    final int newId = _dummyAnnouncements.isEmpty 
+        ? 1 
+        : _dummyAnnouncements.map((Announcement a) => a.id).reduce((int a, int b) => a > b ? a : b) + 1;
+    
+    final Announcement newAnnouncement = Announcement(
+      id: newId,
+      title: 'Nova torbica: $bagName',
+      body: 'Predstavljamo vam novu torbicu "$bagName" u boji $bagColor po cijeni od ${bagPrice.toStringAsFixed(2)} KM. Pogledajte našu ponudu!',
+      publishedAt: DateTime.now(),
+      type: AnnouncementType.announcement,
+    );
+    
+    // Add to the beginning of the list (newest first)
+    _dummyAnnouncements.insert(0, newAnnouncement);
+    
+    return newAnnouncement;
   }
 }
 
