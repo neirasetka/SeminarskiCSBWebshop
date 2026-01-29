@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
@@ -12,8 +13,22 @@ namespace CSBWebshopSeminarski.Controllers
             _configuration = configuration;
         }
 
+        /// <summary>
+        /// Basic health check endpoint - returns only status for public consumption.
+        /// </summary>
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Get()
+        {
+            return Ok(new { status = "ok" });
+        }
+
+        /// <summary>
+        /// Detailed health check with configuration info - Admin only.
+        /// </summary>
+        [HttpGet("detailed")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetDetailed()
         {
             var rabbitHost = _configuration["RabbitMQ:HostName"] ?? "not-set";
             var rabbitExchange = _configuration["RabbitMQ:Exchange"] ?? "not-set";
