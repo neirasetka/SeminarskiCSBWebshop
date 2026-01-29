@@ -17,6 +17,7 @@ import '../features/reports/presentation/reports_screen.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
 import '../features/torbice_shop/presentation/torbice_shop_screen.dart';
+import '../features/kaisevi_shop/presentation/kaisevi_shop_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -60,6 +61,13 @@ final GoRouter appRouter = GoRouter(
           name: 'torbice',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: TorbiceShopScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'kaisevi',
+          name: 'kaisevi',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: KaiseviShopScreen(),
           ),
         ),
         GoRoute(
