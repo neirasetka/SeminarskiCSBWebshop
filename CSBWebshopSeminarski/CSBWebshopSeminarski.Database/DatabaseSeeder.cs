@@ -293,7 +293,7 @@ namespace CSBWebshopSeminarski.Database
                     BagID = bag.BagID ?? 0,
                     BeltID = belt.BeltID,
                     Date = DateTime.UtcNow.AddDays(-1),
-                    Comment = "Odličan kvalitet i dizajn!",
+                    Comment = "Great quality and design!",
                     Status = ReviewStatus.Approved
                 });
                 await context.SaveChangesAsync();
@@ -378,8 +378,8 @@ namespace CSBWebshopSeminarski.Database
                 await context.News.AddAsync(new NewsItem
                 {
                     PublishedAtUtc = DateTime.UtcNow,
-                    Title = "Nova kolekcija je stigla",
-                    Body = "Pogledajte naše najnovije torbe i pojaseve.",
+                    Title = "New collection has arrived.",
+                    Body = "Take a look at our new bags and belts.",
                     Segment = "AllSubscribers",
                     LaunchDate = DateTime.UtcNow.AddDays(7),
                     ProductName = "Coco Tote",
@@ -457,4 +457,3 @@ namespace CSBWebshopSeminarski.Database
         }
     }
 }
-

@@ -8,15 +8,13 @@ using CSBWebshopSeminarski.Database;
 using CSBWebshopSeminarski.Filters;
 using CSBWebshopSeminarski.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using CSBWebshopSeminarski.Security;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using System.Text;
 using System.Threading.RateLimiting;
-using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
@@ -36,7 +34,6 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<IAuthorizationHandler, CanModifyReviewHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, CanModifyRateHandler>();
 
-// CORS: allow local dev from any origin (adjust in production)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -127,7 +124,7 @@ builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 // Payments
 builder.Services.AddTransient<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService, CBSWebshopSeminarski.Services.Services.PaymentsService>();
 
-// Email service registration (values from configuration Smtp section)
+// Email service registration
 builder.Services.AddSingleton(provider =>
     new EmailService(
         builder.Configuration["Smtp:Host"] ?? "",

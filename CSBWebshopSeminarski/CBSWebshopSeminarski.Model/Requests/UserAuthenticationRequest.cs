@@ -4,10 +4,10 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class UserAuthenticationRequest
     {
-        [Required(ErrorMessage = "Korisničko ime je obavezno")]
+        [Required(ErrorMessage = "Username is required.")]
         public string UserName { get; set; }
         
-        [Required(ErrorMessage = "Lozinka je obavezna")]
+        [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; }
     }
 }

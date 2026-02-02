@@ -15,7 +15,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public DateTime OccurredAt { get; set; }
 
         // Optional metadata
-        public string? Source { get; set; } // Manual / Carrier / Webhook
+        public string? Source { get; set; } // Manual/Carrier/Webhook
         public string? ExternalStatus { get; set; }
         public string? RawPayload { get; set; }
     }

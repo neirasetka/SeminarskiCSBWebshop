@@ -21,7 +21,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         // Payment
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
  
-        // Shipping / tracking
+        // Shipping/tracking
         public string? TrackingNumber { get; set; }
         public string? CarrierCode { get; set; }
         public ShippingStatus ShippingStatus { get; set; } = ShippingStatus.Pending;

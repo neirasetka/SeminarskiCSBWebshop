@@ -13,9 +13,7 @@ namespace CSBWebshopSeminarski.Controllers
             _configuration = configuration;
         }
 
-        /// <summary>
-        /// Basic health check endpoint - returns only status for public consumption.
-        /// </summary>
+        ///Basic health check endpoint - returns only status for public consumption.
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Get()
@@ -23,9 +21,7 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(new { status = "ok" });
         }
 
-        /// <summary>
-        /// Detailed health check with configuration info - Admin only.
-        /// </summary>
+        ///Detailed health check with configuration info - Admin only.
         [HttpGet("detailed")]
         [Authorize(Roles = "Admin")]
         public IActionResult GetDetailed()

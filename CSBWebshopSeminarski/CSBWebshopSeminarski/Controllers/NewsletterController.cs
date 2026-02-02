@@ -16,9 +16,7 @@ namespace CSBWebshopSeminarski.Controllers
             _context = context;
         }
 
-        /// <summary>
-        /// Public endpoint for newsletter subscription.
-        /// </summary>
+        ///Public endpoint for newsletter subscription.
         [HttpPost("subscribe")]
         [AllowAnonymous]
         public async Task<IActionResult> Subscribe([FromBody] Subscribers subscriber)

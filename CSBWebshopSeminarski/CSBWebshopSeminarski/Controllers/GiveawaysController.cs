@@ -147,9 +147,7 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(dto);
         }
 
-        /// <summary>
-        /// Announces the giveaway winner by posting to info panel and sending emails to winner + subscribers
-        /// </summary>
+        ///Announces the giveaway winner by posting to info panel and sending emails to winner + subscribers
         [HttpPost("{id:int}/announce-winner")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AnnounceWinner(int id)

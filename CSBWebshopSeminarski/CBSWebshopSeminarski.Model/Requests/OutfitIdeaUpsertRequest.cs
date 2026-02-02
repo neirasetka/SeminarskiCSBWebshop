@@ -4,19 +4,19 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class OutfitIdeaUpsertRequest
     {
-        [Range(1, int.MaxValue, ErrorMessage = "ID torbice mora biti validan")]
+        [Range(1, int.MaxValue, ErrorMessage = "Bag ID must be valid.")]
         public int BagID { get; set; }
         
-        [Required(ErrorMessage = "ID korisnika je obavezan")]
-        [Range(1, int.MaxValue, ErrorMessage = "ID korisnika mora biti validan")]
+        [Required(ErrorMessage = "User ID is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]
         public int UserID { get; set; }
         
-        [Required(ErrorMessage = "Naslov je obavezan")]
-        [MinLength(2, ErrorMessage = "Naslov mora imati najmanje 2 znaka")]
-        [MaxLength(200, ErrorMessage = "Naslov može imati najviše 200 znakova")]
+        [Required(ErrorMessage = "Title is required.")]
+        [MinLength(2, ErrorMessage = "Title must be at least 2 characters long.")]
+        [MaxLength(200, ErrorMessage = "The title can be a maximum of 200 characters.")]
         public string? Title { get; set; }
         
-        [MaxLength(1000, ErrorMessage = "Opis može imati najviše 1000 znakova")]
+        [MaxLength(1000, ErrorMessage = "The description can be up to 1000 characters long.")]
         public string? Description { get; set; }
     }
 }

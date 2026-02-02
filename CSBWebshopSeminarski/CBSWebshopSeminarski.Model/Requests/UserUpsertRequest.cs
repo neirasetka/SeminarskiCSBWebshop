@@ -4,26 +4,26 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class UserUpsertRequest
     {
-        [Required(ErrorMessage = "Ime je obavezno")]
-        [MinLength(2, ErrorMessage = "Ime mora imati najmanje 2 znaka")]
+        [Required(ErrorMessage = "Name is required.")]
+        [MinLength(2, ErrorMessage = "Name must have at least 2 characters.")]
         public string Name { get; set; }
         
-        [Required(ErrorMessage = "Prezime je obavezno")]
-        [MinLength(2, ErrorMessage = "Prezime mora imati najmanje 2 znaka")]
+        [Required(ErrorMessage = "Surname is required.")]
+        [MinLength(2, ErrorMessage = "Last name must have at least 2 characters.")]
         public string Surname { get; set; }
         
-        [Required(ErrorMessage = "Email je obavezan")]
-        [EmailAddress(ErrorMessage = "Unesite ispravnu email adresu")]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; }
         
-        [Phone(ErrorMessage = "Unesite ispravan broj telefona")]
+        [Phone(ErrorMessage = "Please enter a valid phone number.")]
         public string Phone { get; set; }
         
-        [Required(ErrorMessage = "Korisničko ime je obavezno")]
-        [MinLength(3, ErrorMessage = "Korisničko ime mora imati najmanje 3 znaka")]
+        [Required(ErrorMessage = "Username is required.")]
+        [MinLength(3, ErrorMessage = "Username must have at least 3 characters.")]
         public string UserName { get; set; }
         
-        [MinLength(6, ErrorMessage = "Lozinka mora imati najmanje 6 znakova")]
+        [MinLength(6, ErrorMessage = "Password must have at least 6 characters.")]
         public string Password { get; set; }
         
         public string PasswordConfirmation { get; set; }

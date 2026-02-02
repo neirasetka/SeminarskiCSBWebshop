@@ -46,7 +46,6 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<Orders, ShippingInfo>()
                 .ForMember(d => d.TrackingEvents, o => o.Ignore());
 
-            // Shipping mappings
             CreateMap<ShippingStatusEntity, ShippingStatusModel>()
                 .ConvertUsing(src => (ShippingStatusModel)src);
             CreateMap<ShippingStatusModel, ShippingStatusEntity>()
@@ -90,7 +89,6 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<SeasonModel, SeasonEntity>()
                 .ConvertUsing(src => (SeasonEntity)src);
 
-            // OutfitIdeas mappings
             CreateMap<OutfitIdeas, OutfitIdea>().ReverseMap();
             CreateMap<OutfitIdeas, OutfitIdeaUpsertRequest>().ReverseMap();
             CreateMap<OutfitIdeaImages, OutfitIdeaImage>().ReverseMap();

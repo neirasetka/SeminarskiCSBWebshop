@@ -1,5 +1,3 @@
-using System;
-
 namespace CBSWebshopSeminarski.Model.DTOs
 {
     public class NewsItemDto
