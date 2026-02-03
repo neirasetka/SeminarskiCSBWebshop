@@ -11,7 +11,7 @@ docker-compose up
 ```
 
 ### Backend (ASP.NET Core API)
-Preduvjet: SQL Server (lokalni ili Express). Podesite connection string u
+Preduslov: SQL Server (lokalni ili Express). Podesite connection string u
 `CSBWebshopSeminarski/CSBWebshopSeminarski/appsettings.json` po potrebi.
 
 ```bash
