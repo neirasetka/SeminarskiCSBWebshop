@@ -2,6 +2,14 @@
 
 ## CSB Webshop — Pokretanje aplikacije
 
+### Docker (backend/infrastruktura)
+U direktoriju gdje se nalazi projekat pokrenite sljedece naredbe:
+
+```bash
+docker-compose build
+docker-compose up
+```
+
 ### Backend (ASP.NET Core API)
 Preduvjet: SQL Server (lokalni ili Express). Podesite connection string u
 `CSBWebshopSeminarski/CSBWebshopSeminarski/appsettings.json` po potrebi.
