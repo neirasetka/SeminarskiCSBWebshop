@@ -1,6 +1,6 @@
 # SeminarskiCSBWebshop
 
-## FurnitureStore — Pokretanje aplikacije
+## CSB Webshop — Pokretanje aplikacije
 
 ### Docker (backend/infrastruktura)
 U direktoriju gdje se nalazi projekat pokrenite sljedeće naredbe:
