@@ -21,4 +21,8 @@
     <ProjectReference Include="..\CSBWebshopSeminarski.Core\CSBWebshopSeminarski.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

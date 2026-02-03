@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CSBWebshopSeminarski.Database.Migrations
 {
     /// <inheritdoc />
-    public partial class AddReviewStatusToReviews : Migration
+    public partial class newDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -69,7 +69,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     Segment = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LaunchDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ProductName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     Color = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -242,18 +242,48 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Favorites",
+                name: "OutfitIdeas",
                 columns: table => new
                 {
-                    UserID = table.Column<int>(type: "int", nullable: false)
+                    OutfitIdeaID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID1 = table.Column<int>(type: "int", nullable: false),
                     BagID = table.Column<int>(type: "int", nullable: false),
-                    BeltID = table.Column<int>(type: "int", nullable: false)
+                    UserID = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Favorites", x => x.UserID);
+                    table.PrimaryKey("PK_OutfitIdeas", x => x.OutfitIdeaID);
+                    table.ForeignKey(
+                        name: "FK_OutfitIdeas_Bags_BagID",
+                        column: x => x.BagID,
+                        principalTable: "Bags",
+                        principalColumn: "BagID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OutfitIdeas_Users_UserID",
+                        column: x => x.UserID,
+                        principalTable: "Users",
+                        principalColumn: "UserID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    FavoriteID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    BagID = table.Column<int>(type: "int", nullable: true),
+                    BeltID = table.Column<int>(type: "int", nullable: true),
+                    UserID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.FavoriteID);
                     table.ForeignKey(
                         name: "FK_Favorites_Bags_BagID",
                         column: x => x.BagID,
@@ -267,8 +297,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         principalColumn: "BeltID",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Favorites_Users_UserID1",
-                        column: x => x.UserID1,
+                        name: "FK_Favorites_Users_UserID",
+                        column: x => x.UserID,
                         principalTable: "Users",
                         principalColumn: "UserID",
                         onDelete: ReferentialAction.Cascade);
@@ -504,6 +534,29 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OutfitIdeaImages",
+                columns: table => new
+                {
+                    OutfitIdeaImageID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OutfitIdeaID = table.Column<int>(type: "int", nullable: false),
+                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutfitIdeaImages", x => x.OutfitIdeaImageID);
+                    table.ForeignKey(
+                        name: "FK_OutfitIdeaImages_OutfitIdeas_OutfitIdeaID",
+                        column: x => x.OutfitIdeaID,
+                        principalTable: "OutfitIdeas",
+                        principalColumn: "OutfitIdeaID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Giveaways",
                 columns: table => new
                 {
@@ -574,9 +627,9 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 column: "BeltID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_UserID1",
+                name: "IX_Favorites_UserID",
                 table: "Favorites",
-                column: "UserID1");
+                column: "UserID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Giveaways_WinnerParticipantId",
@@ -611,6 +664,21 @@ namespace CSBWebshopSeminarski.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_UserID",
                 table: "Orders",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutfitIdeaImages_OutfitIdeaID",
+                table: "OutfitIdeaImages",
+                column: "OutfitIdeaID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutfitIdeas_BagID",
+                table: "OutfitIdeas",
+                column: "BagID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutfitIdeas_UserID",
+                table: "OutfitIdeas",
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
@@ -717,6 +785,9 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 name: "OrderItems");
 
             migrationBuilder.DropTable(
+                name: "OutfitIdeaImages");
+
+            migrationBuilder.DropTable(
                 name: "Purchases");
 
             migrationBuilder.DropTable(
@@ -738,7 +809,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 name: "UserRoles");
 
             migrationBuilder.DropTable(
-                name: "Bags");
+                name: "OutfitIdeas");
 
             migrationBuilder.DropTable(
                 name: "Belts");
@@ -750,10 +821,13 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "BagTypes");
+                name: "Bags");
 
             migrationBuilder.DropTable(
                 name: "BeltTypes");
+
+            migrationBuilder.DropTable(
+                name: "BagTypes");
 
             migrationBuilder.DropTable(
                 name: "Users");

@@ -153,6 +153,8 @@ namespace CSBWebshopSeminarski.Database
             {
                 entity.HasKey(i => i.OutfitIdeaImageID);
             });
+
+            modelBuilder.Entity<Orders>().Property(o => o.ShippingStatus).HasConversion<int>();
         }
     }
 }

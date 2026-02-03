@@ -424,6 +424,72 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeaImages", b =>
+                {
+                    b.Property<int>("OutfitIdeaImageID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OutfitIdeaImageID"));
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Image")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("OutfitIdeaID")
+                        .HasColumnType("int");
+
+                    b.HasKey("OutfitIdeaImageID");
+
+                    b.HasIndex("OutfitIdeaID");
+
+                    b.ToTable("OutfitIdeaImages");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.Property<int>("OutfitIdeaID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OutfitIdeaID"));
+
+                    b.Property<int>("BagID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("OutfitIdeaID");
+
+                    b.HasIndex("BagID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("OutfitIdeas");
+                });
+
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Participants", b =>
                 {
                     b.Property<int>("Id")
@@ -871,6 +937,36 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeaImages", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", "OutfitIdea")
+                        .WithMany("Images")
+                        .HasForeignKey("OutfitIdeaID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OutfitIdea");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Bags", "Bag")
+                        .WithMany()
+                        .HasForeignKey("BagID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bag");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Participants", b =>
                 {
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Giveaways", "Giveaway")
@@ -1032,6 +1128,11 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("TrackingEvents");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Users", b =>

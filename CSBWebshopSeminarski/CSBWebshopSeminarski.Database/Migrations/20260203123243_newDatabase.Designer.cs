@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CSBWebshopSeminarski.Database.Migrations
 {
     [DbContext(typeof(CocoSunBagsWebshopDbContext))]
-    [Migration("20250831205841_AddReviewStatusToReviews")]
-    partial class AddReviewStatusToReviews
+    [Migration("20260203123243_newDatabase")]
+    partial class newDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -185,28 +185,28 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Favorites", b =>
                 {
-                    b.Property<int>("UserID")
+                    b.Property<int>("FavoriteID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FavoriteID"));
 
-                    b.Property<int>("BagID")
+                    b.Property<int?>("BagID")
                         .HasColumnType("int");
 
-                    b.Property<int>("BeltID")
+                    b.Property<int?>("BeltID")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserID1")
+                    b.Property<int>("UserID")
                         .HasColumnType("int");
 
-                    b.HasKey("UserID");
+                    b.HasKey("FavoriteID");
 
                     b.HasIndex("BagID");
 
                     b.HasIndex("BeltID");
 
-                    b.HasIndex("UserID1");
+                    b.HasIndex("UserID");
 
                     b.ToTable("Favorites");
                 });
@@ -322,6 +322,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ProductName")
@@ -424,6 +425,72 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasIndex("UserID");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeaImages", b =>
+                {
+                    b.Property<int>("OutfitIdeaImageID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OutfitIdeaImageID"));
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Image")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("OutfitIdeaID")
+                        .HasColumnType("int");
+
+                    b.HasKey("OutfitIdeaImageID");
+
+                    b.HasIndex("OutfitIdeaID");
+
+                    b.ToTable("OutfitIdeaImages");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.Property<int>("OutfitIdeaID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OutfitIdeaID"));
+
+                    b.Property<int>("BagID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("OutfitIdeaID");
+
+                    b.HasIndex("BagID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("OutfitIdeas");
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Participants", b =>
@@ -775,7 +842,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("BeltType");
@@ -788,18 +855,16 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Bags", "Bag")
                         .WithMany("Favorites")
                         .HasForeignKey("BagID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Belts", "Belt")
                         .WithMany("Favorites")
                         .HasForeignKey("BeltID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany()
-                        .HasForeignKey("UserID1")
+                        .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -875,6 +940,36 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeaImages", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", "OutfitIdea")
+                        .WithMany("Images")
+                        .HasForeignKey("OutfitIdeaID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OutfitIdea");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Bags", "Bag")
+                        .WithMany()
+                        .HasForeignKey("BagID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bag");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Participants", b =>
                 {
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Giveaways", "Giveaway")
@@ -897,7 +992,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -981,7 +1076,7 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -1036,6 +1131,11 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("TrackingEvents");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OutfitIdeas", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Users", b =>
