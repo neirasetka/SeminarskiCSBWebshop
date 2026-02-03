@@ -3,12 +3,24 @@
 ## CSB Webshop — Pokretanje aplikacije
 
 ### Docker (backend/infrastruktura)
-U direktoriju gdje se nalazi projekat pokrenite sljedeće naredbe:
+U direktoriju gdje se nalazi projekat pokrenite sljedece naredbe:
 
 ```bash
 docker-compose build
 docker-compose up
 ```
+
+### Backend (ASP.NET Core API)
+Preduvjet: SQL Server (lokalni ili Express). Podesite connection string u
+`CSBWebshopSeminarski/CSBWebshopSeminarski/appsettings.json` po potrebi.
+
+```bash
+cd CSBWebshopSeminarski
+dotnet restore
+dotnet run --project CSBWebshopSeminarski/CSBWebshopSeminarski.csproj
+```
+
+API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
 
 ### Desktop klijent (Windows)
 - Prijava:
@@ -17,22 +29,22 @@ docker-compose up
 - Pokretanje aplikacije:
 
 ```bash
-cd csb_webshop_mobile
+cd csb_webshop_desktop
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:7015/api/ -d windows
+flutter run --dart-define=API_BASE_URL=http://localhost:5265/api/ -d windows
 ```
 
 ### Mobilni klijent (Android Emulator)
 - Prijava:
-  - username: customer
-  - password: Customer123!
+  - username: buyer
+  - password: Buyer123!
 - Pokretanje aplikacije:
 
 ```bash
 cd csb_webshop_mobile
 flutter pub get
 flutter emulators --launch "Pixel 2 API 35"
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:7015/api/
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265/api/
 ```
 
 ### Testna kreditna kartica
