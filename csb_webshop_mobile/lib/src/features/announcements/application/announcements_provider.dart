@@ -43,7 +43,7 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
 final AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>> announcementsListProvider =
     AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>>(AnnouncementsListNotifier.new);
 
-class AnnouncementDetailNotifier extends AsyncNotifier<Announcement> {
+class AnnouncementDetailNotifier extends AutoDisposeAsyncNotifier<Announcement> {
   @override
   Future<Announcement> build() async {
     throw UnimplementedError('Call fetch(id) first');

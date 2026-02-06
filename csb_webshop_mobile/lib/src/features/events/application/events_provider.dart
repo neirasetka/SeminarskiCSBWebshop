@@ -22,7 +22,7 @@ class EventsListNotifier extends AsyncNotifier<List<EventModel>> {
 final AsyncNotifierProvider<EventsListNotifier, List<EventModel>> eventsListProvider =
     AsyncNotifierProvider<EventsListNotifier, List<EventModel>>(EventsListNotifier.new);
 
-class EventDetailNotifier extends AsyncNotifier<EventModel> {
+class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
   int? _id;
 
   @override

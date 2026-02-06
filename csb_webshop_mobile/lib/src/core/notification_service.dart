@@ -53,10 +53,10 @@ class NotificationService {
     const NotificationDetails details = NotificationDetails(android: androidDetails);
     final String payload = json.encode(<String, dynamic>{'orderId': orderId});
     await _plugin.show(
-      id: orderId,
-      title: title,
-      body: body,
-      notificationDetails: details,
+      orderId,
+      title,
+      body,
+      details,
       payload: payload,
     );
   }
