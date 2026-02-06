@@ -16,7 +16,7 @@ class NotificationService {
     const InitializationSettings initSettings = InitializationSettings(android: androidInit);
 
     await _plugin.initialize(
-      initializationSettings: initSettings,
+      initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final String? payload = response.payload;
         if (payload == null || payload.isEmpty) return;
