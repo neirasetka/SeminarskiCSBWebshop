@@ -6,7 +6,7 @@ import '../domain/participant.dart';
 
 final Provider<GiveawaysApi> giveawaysApiProvider = Provider<GiveawaysApi>((Ref ref) => GiveawaysApi());
 
-class GiveawaysListNotifier extends AsyncNotifier<List<Giveaway>> {
+class GiveawaysListNotifier extends AutoDisposeAsyncNotifier<List<Giveaway>> {
   String _status = 'all';
 
   @override
@@ -28,7 +28,7 @@ class GiveawaysListNotifier extends AsyncNotifier<List<Giveaway>> {
 final giveawaysListProvider =
     AsyncNotifierProvider.autoDispose<GiveawaysListNotifier, List<Giveaway>>(GiveawaysListNotifier.new);
 
-class GiveawayDetailNotifier extends AsyncNotifier<Giveaway> {
+class GiveawayDetailNotifier extends AutoDisposeAsyncNotifier<Giveaway> {
   int? _id;
 
   @override
@@ -51,7 +51,7 @@ class GiveawayDetailNotifier extends AsyncNotifier<Giveaway> {
 final giveawayDetailProvider =
     AsyncNotifierProvider.autoDispose<GiveawayDetailNotifier, Giveaway>(GiveawayDetailNotifier.new);
 
-class ParticipantsNotifier extends AsyncNotifier<List<GiveawayParticipant>> {
+class ParticipantsNotifier extends AutoDisposeAsyncNotifier<List<GiveawayParticipant>> {
   int? _giveawayId;
 
   @override

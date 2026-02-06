@@ -16,7 +16,7 @@ class NotificationService {
     const InitializationSettings initSettings = InitializationSettings(android: androidInit);
 
     await _plugin.initialize(
-      initSettings,
+      initializationSettings: initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final String? payload = response.payload;
         if (payload == null || payload.isEmpty) return;
@@ -53,10 +53,10 @@ class NotificationService {
     const NotificationDetails details = NotificationDetails(android: androidDetails);
     final String payload = json.encode(<String, dynamic>{'orderId': orderId});
     await _plugin.show(
-      id: orderId,
-      title: title,
-      body: body,
-      notificationDetails: details,
+      orderId,
+      title,
+      body,
+      details,
       payload: payload,
     );
   }
