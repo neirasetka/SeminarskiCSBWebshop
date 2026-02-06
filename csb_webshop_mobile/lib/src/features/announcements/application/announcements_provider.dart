@@ -33,7 +33,7 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
       );
       final List<Announcement> refreshed = await api.getAnnouncements();
       state = AsyncValue<List<Announcement>>.data(refreshed);
-    } catch (Object error, StackTrace stackTrace) {
+    } catch (error, stackTrace) {
       state = AsyncValue<List<Announcement>>.error(error, stackTrace);
       rethrow;
     }
@@ -43,7 +43,7 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
 final AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>> announcementsListProvider =
     AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>>(AnnouncementsListNotifier.new);
 
-class AnnouncementDetailNotifier extends AutoDisposeAsyncNotifier<Announcement> {
+class AnnouncementDetailNotifier extends AsyncNotifier<Announcement> {
   @override
   Future<Announcement> build() async {
     throw UnimplementedError('Call fetch(id) first');
@@ -56,6 +56,6 @@ class AnnouncementDetailNotifier extends AutoDisposeAsyncNotifier<Announcement> 
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<AnnouncementDetailNotifier, Announcement> announcementDetailProvider =
-    AutoDisposeAsyncNotifierProvider<AnnouncementDetailNotifier, Announcement>(AnnouncementDetailNotifier.new);
+final announcementDetailProvider =
+    AsyncNotifierProvider.autoDispose<AnnouncementDetailNotifier, Announcement>(AnnouncementDetailNotifier.new);
 

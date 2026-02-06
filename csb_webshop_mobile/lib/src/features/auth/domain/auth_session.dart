@@ -83,7 +83,7 @@ class AuthSession {
       final Object? value = decoded[key];
       if (value == null) continue;
       if (value is Iterable) {
-        roles.addAll(value.map((Object e) => e.toString()));
+        roles.addAll(value.map((dynamic e) => e.toString()));
       } else {
         roles.add(value.toString());
       }

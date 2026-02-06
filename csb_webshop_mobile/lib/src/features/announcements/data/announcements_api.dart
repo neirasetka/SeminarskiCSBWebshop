@@ -27,7 +27,7 @@ class AnnouncementsApi {
       _ensureSuccess(response, 'load announcements');
       final List<dynamic> items = json.decode(response.body) as List<dynamic>;
       return items.map((dynamic e) => Announcement.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (Object error, StackTrace stackTrace) {
+    } catch (error, stackTrace) {
       developer.log(
         'Falling back to demo announcements',
         name: 'AnnouncementsApi',
@@ -44,7 +44,7 @@ class AnnouncementsApi {
       _ensureSuccess(response, 'load announcement $id');
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return Announcement.fromJson(map);
-    } catch (Object error, StackTrace stackTrace) {
+    } catch (error, stackTrace) {
       final Announcement? fallback = _findDemoAnnouncement(id);
       if (fallback != null) {
         developer.log(
@@ -76,7 +76,7 @@ class AnnouncementsApi {
     try {
       final http.Response response = await _apiClient.post(_newCollectionPath, body: json.encode(body));
       _ensureSuccess(response, 'create announcement');
-    } catch (Object error, StackTrace stackTrace) {
+    } catch (error, stackTrace) {
       developer.log(
         'Failed to create announcement remotely, adding demo entry instead',
         name: 'AnnouncementsApi',
