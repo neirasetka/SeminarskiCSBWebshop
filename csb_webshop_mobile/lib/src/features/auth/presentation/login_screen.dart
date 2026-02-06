@@ -24,11 +24,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+  late final ProviderSubscription<AsyncValue<AuthSession?>> _authListener;
 
   @override
   void initState() {
     super.initState();
-    ref.listen<AsyncValue<AuthSession?>>(
+    _authListener = ref.listenManual<AsyncValue<AuthSession?>>(
       authControllerProvider,
       (AsyncValue<AuthSession?>? previous, AsyncValue<AuthSession?> next) {
         if (next.hasError) {
@@ -45,6 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
+    _authListener.close();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
