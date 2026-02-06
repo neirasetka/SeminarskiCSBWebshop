@@ -83,8 +83,8 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     
     final String name = _nameController.text.trim();
     final String code = _codeController.text.trim();
-    final double? price = double.tryParse(_priceController.text.replaceAll(',', '.'));
-    if (price == null) return;
+    final double price = double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0.0;
+    if (price <= 0) return;
     final String description = _descriptionController.text.trim();
 
     setState(() => _isSaving = true);
@@ -110,7 +110,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
             );
       }
       if (mounted) Navigator.of(context).pop(true);
-    } catch (Object e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Greška pri čuvanju: $e')),

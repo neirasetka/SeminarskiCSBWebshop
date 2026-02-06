@@ -357,8 +357,9 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
                 if (!(formKey.currentState?.validate() ?? false)) return;
                 final String name = nameController.text.trim();
                 final String code = codeController.text.trim();
-                final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+                final double price = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
                 final String desc = descController.text.trim();
+                if (price <= 0) return;
                 if (existing == null) {
                   await ref.read(beltsListProvider.notifier).create(
                         name: name,
