@@ -22,7 +22,7 @@ class EventsListNotifier extends AsyncNotifier<List<EventModel>> {
 final AsyncNotifierProvider<EventsListNotifier, List<EventModel>> eventsListProvider =
     AsyncNotifierProvider<EventsListNotifier, List<EventModel>>(EventsListNotifier.new);
 
-class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
+class EventDetailNotifier extends AsyncNotifier<EventModel> {
   int? _id;
 
   @override
@@ -44,7 +44,7 @@ class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
     if (id == null) return;
     final EventsApi api = ref.read(eventsApiProvider);
     // Optimistic update
-    final EventModel? current = state.valueOrNull;
+    final EventModel? current = state.asData?.value;
     if (current != null) {
       state = AsyncData<EventModel>(current.copyWith(
         isParticipating: true,
@@ -61,8 +61,8 @@ class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<EventDetailNotifier, EventModel> eventDetailProvider =
-    AutoDisposeAsyncNotifierProvider<EventDetailNotifier, EventModel>(EventDetailNotifier.new);
+final eventDetailProvider =
+    AsyncNotifierProvider.autoDispose<EventDetailNotifier, EventModel>(EventDetailNotifier.new);
 
 final countdownProvider = StreamProvider.family<Duration, DateTime>((ref, DateTime startTime) {
   return Stream<Duration>.periodic(const Duration(seconds: 1), (_) {

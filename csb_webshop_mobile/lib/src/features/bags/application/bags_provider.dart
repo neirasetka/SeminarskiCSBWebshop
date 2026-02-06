@@ -89,7 +89,7 @@ class BagsListNotifier extends AsyncNotifier<List<Bag>> {
 final AsyncNotifierProvider<BagsListNotifier, List<Bag>> bagsListProvider =
     AsyncNotifierProvider<BagsListNotifier, List<Bag>>(BagsListNotifier.new);
 
-class BagDetailNotifier extends AutoDisposeAsyncNotifier<Bag> {
+class BagDetailNotifier extends AsyncNotifier<Bag> {
   @override
   Future<Bag> build() async {
     throw UnimplementedError('Call fetch(id) first');
@@ -102,6 +102,5 @@ class BagDetailNotifier extends AutoDisposeAsyncNotifier<Bag> {
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag> bagDetailProvider =
-    AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag>(BagDetailNotifier.new);
+final bagDetailProvider = AsyncNotifierProvider.autoDispose<BagDetailNotifier, Bag>(BagDetailNotifier.new);
 

@@ -60,11 +60,7 @@ final AsyncNotifierProvider<OutfitIdeasNotifier, Map<int, OutfitIdea>>
         OutfitIdeasNotifier.new);
 
 /// Provider to get outfit idea for a specific bag.
-final AutoDisposeFamilyProvider<OutfitIdea?, int> outfitIdeaForBagProvider =
-    Provider.autoDispose.family<OutfitIdea?, int>((
-  AutoDisposeProviderRef<OutfitIdea?> ref,
-  int bagId,
-) {
+final outfitIdeaForBagProvider = Provider.autoDispose.family<OutfitIdea?, int>((ref, int bagId) {
   final AsyncValue<Map<int, OutfitIdea>> allIdeas = ref.watch(outfitIdeasProvider);
   return allIdeas.value?[bagId];
 });

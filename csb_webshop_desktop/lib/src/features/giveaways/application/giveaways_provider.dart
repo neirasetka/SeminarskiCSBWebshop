@@ -6,7 +6,7 @@ import '../domain/participant.dart';
 
 final Provider<GiveawaysApi> giveawaysApiProvider = Provider<GiveawaysApi>((Ref ref) => GiveawaysApi());
 
-class GiveawaysListNotifier extends AutoDisposeAsyncNotifier<List<Giveaway>> {
+class GiveawaysListNotifier extends AsyncNotifier<List<Giveaway>> {
   String _status = 'all';
 
   @override
@@ -25,10 +25,10 @@ class GiveawaysListNotifier extends AutoDisposeAsyncNotifier<List<Giveaway>> {
   Future<void> refresh() => filter(_status);
 }
 
-final AutoDisposeAsyncNotifierProvider<GiveawaysListNotifier, List<Giveaway>> giveawaysListProvider =
-    AutoDisposeAsyncNotifierProvider<GiveawaysListNotifier, List<Giveaway>>(GiveawaysListNotifier.new);
+final giveawaysListProvider =
+    AsyncNotifierProvider.autoDispose<GiveawaysListNotifier, List<Giveaway>>(GiveawaysListNotifier.new);
 
-class GiveawayDetailNotifier extends AutoDisposeAsyncNotifier<Giveaway> {
+class GiveawayDetailNotifier extends AsyncNotifier<Giveaway> {
   int? _id;
 
   @override
@@ -48,10 +48,10 @@ class GiveawayDetailNotifier extends AutoDisposeAsyncNotifier<Giveaway> {
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<GiveawayDetailNotifier, Giveaway> giveawayDetailProvider =
-    AutoDisposeAsyncNotifierProvider<GiveawayDetailNotifier, Giveaway>(GiveawayDetailNotifier.new);
+final giveawayDetailProvider =
+    AsyncNotifierProvider.autoDispose<GiveawayDetailNotifier, Giveaway>(GiveawayDetailNotifier.new);
 
-class ParticipantsNotifier extends AutoDisposeAsyncNotifier<List<GiveawayParticipant>> {
+class ParticipantsNotifier extends AsyncNotifier<List<GiveawayParticipant>> {
   int? _giveawayId;
 
   @override
@@ -69,6 +69,6 @@ class ParticipantsNotifier extends AutoDisposeAsyncNotifier<List<GiveawayPartici
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<ParticipantsNotifier, List<GiveawayParticipant>> participantsProvider =
-    AutoDisposeAsyncNotifierProvider<ParticipantsNotifier, List<GiveawayParticipant>>(ParticipantsNotifier.new);
+final participantsProvider =
+    AsyncNotifierProvider.autoDispose<ParticipantsNotifier, List<GiveawayParticipant>>(ParticipantsNotifier.new);
 
