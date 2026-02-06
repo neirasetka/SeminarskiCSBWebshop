@@ -87,7 +87,7 @@ class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
 final AsyncNotifierProvider<BeltsListNotifier, List<Belt>> beltsListProvider =
     AsyncNotifierProvider<BeltsListNotifier, List<Belt>>(BeltsListNotifier.new);
 
-class BeltDetailNotifier extends AutoDisposeAsyncNotifier<Belt> {
+class BeltDetailNotifier extends AsyncNotifier<Belt> {
   @override
   Future<Belt> build() async {
     throw UnimplementedError('Call fetch(id) first');
@@ -100,6 +100,6 @@ class BeltDetailNotifier extends AutoDisposeAsyncNotifier<Belt> {
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<BeltDetailNotifier, Belt> beltDetailProvider =
-    AutoDisposeAsyncNotifierProvider<BeltDetailNotifier, Belt>(BeltDetailNotifier.new);
+final beltDetailProvider =
+    AsyncNotifierProvider.autoDispose<BeltDetailNotifier, Belt>(BeltDetailNotifier.new);
 

@@ -211,8 +211,8 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<AuthSession?> sessionAsync = ref.watch(authControllerProvider);
     final AsyncValue<UserProfile?> profileAsync = ref.watch(userProfileProvider);
-    final AuthSession? session = sessionAsync.valueOrNull;
-    final UserProfile? profile = profileAsync.valueOrNull;
+    final AuthSession? session = sessionAsync.value;
+    final UserProfile? profile = profileAsync.value;
 
     final List<Widget> pages = <Widget>[
       // 0 - Home Menu
@@ -354,7 +354,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     if (!mounted) return;
     final ThemeData theme = Theme.of(context);
     final AsyncValue<AuthSession?> sessionAsync = ref.read(authControllerProvider);
-    final AuthSession? session = sessionAsync.valueOrNull;
+    final AuthSession? session = sessionAsync.value;
     
     await showModalBottomSheet<void>(
       context: context,

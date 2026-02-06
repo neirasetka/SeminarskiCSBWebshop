@@ -152,7 +152,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Uspješno dodana nova novost')),
       );
-    } catch (Object error) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

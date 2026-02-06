@@ -92,7 +92,7 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
   @override
   Widget build(BuildContext context) {
     final AsyncValue<OrderModel?> cartAsync = ref.watch(cartProvider);
-    final double totalAmount = cartAsync.valueOrNull?.amount ?? 0.0;
+    final double totalAmount = cartAsync.value?.amount ?? 0.0;
 
     return Scaffold(
       appBar: AppBar(
