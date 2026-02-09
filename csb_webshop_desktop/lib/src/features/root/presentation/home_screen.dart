@@ -458,7 +458,9 @@ class _HomeHeader extends StatelessWidget {
               runSpacing: 12,
               alignment: WrapAlignment.end,
               runAlignment: WrapAlignment.end,
-              children: shortcuts.map((_) => _NavShortcutButton(shortcut: _)).toList(),
+              children: shortcuts
+                  .map((shortcut) => _NavShortcutButton(shortcut: shortcut))
+                  .toList(),
             ),
           ),
         ),

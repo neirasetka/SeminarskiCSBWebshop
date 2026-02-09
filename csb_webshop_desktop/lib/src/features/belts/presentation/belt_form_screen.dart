@@ -110,7 +110,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
             );
       }
       if (mounted) Navigator.of(context).pop(true);
-    } catch (Object e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Greška pri čuvanju: $e')),
