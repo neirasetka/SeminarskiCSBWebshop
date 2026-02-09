@@ -31,7 +31,7 @@ API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
 ```bash
 cd csb_webshop_desktop
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:5265/api/ -d windows
+flutter run --dart-define=API_BASE_URL=http://localhost:5265 -d windows
 ```
 
 ### Mobilni klijent (Android Emulator)
@@ -44,7 +44,7 @@ flutter run --dart-define=API_BASE_URL=http://localhost:5265/api/ -d windows
 cd csb_webshop_mobile
 flutter pub get
 flutter emulators --launch "Pixel 2 API 35"
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265/api/
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
 ```
 
 ### Testna kreditna kartica
