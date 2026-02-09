@@ -110,7 +110,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
             );
       }
       if (mounted) Navigator.of(context).pop(true);
-    } catch (Object e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Greška pri čuvanju: $e')),
