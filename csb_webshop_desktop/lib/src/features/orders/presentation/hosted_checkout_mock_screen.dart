@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +16,11 @@ class HostedCheckoutMockScreen extends ConsumerStatefulWidget {
 
 class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScreen> {
   bool _confirming = false;
+  static const String _mockCheckoutPort =
+      String.fromEnvironment('MOCK_CHECKOUT_PORT', defaultValue: '4242');
 
   Uri get _checkoutUrl {
-    final int port = int.tryParse(Platform.environment['MOCK_CHECKOUT_PORT'] ?? '') ?? 4242;
+    final int port = int.tryParse(_mockCheckoutPort) ?? 4242;
     return Uri.parse('http://localhost:$port/checkout.html');
   }
 

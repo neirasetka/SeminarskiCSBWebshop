@@ -14,7 +14,9 @@ Future<void> main() async {
     Stripe.publishableKey = EnvironmentConfig.stripePublishableKey;
   }
 
-  NotificationService.instance.initialize();
+  if (!kIsWeb) {
+    NotificationService.instance.initialize();
+  }
 
   // Initialize desktop window management for Windows only
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
