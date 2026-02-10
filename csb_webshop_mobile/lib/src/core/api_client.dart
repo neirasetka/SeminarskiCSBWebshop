@@ -32,7 +32,8 @@ class ApiClient {
     if (path.startsWith('http')) {
       return Uri.parse(path);
     }
-    return Uri.parse('$_baseUrl$path');
+    final Uri base = Uri.parse(_baseUrl);
+    return base.resolve(path);
   }
 
   Future<http.Response> get(String path) async {
