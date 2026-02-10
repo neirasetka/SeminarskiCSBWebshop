@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -63,6 +62,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -86,9 +86,14 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
       // Add each selected image
       for (final PlatformFile file in result.files) {
-        if (file.path == null) continue;
-        
-        final Uint8List bytes = await File(file.path!).readAsBytes();
+        final Uint8List? bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) {
+          if (mounted) {
+            _showError('Ne mogu učitati sliku: ${file.name}');
+          }
+          continue;
+        }
+
         final bool success = await ref
             .read(outfitIdeaProvider.notifier)
             .addImage(bytes, caption: file.name);
