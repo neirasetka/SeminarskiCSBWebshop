@@ -43,7 +43,6 @@ dependencies:
   go_router: ^16.2.1
   flutter_local_notifications: ^19.4.1
   fl_chart: ^1.1.0
-  flutter_inappwebview: ^6.0.0
   window_manager: ^0.5.1
   file_picker: ^10.3.2
 
