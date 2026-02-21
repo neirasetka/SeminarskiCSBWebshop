@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
 import '../../giveaways/application/giveaways_provider.dart';
@@ -16,10 +17,13 @@ class GiveawaysListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Giveaway>> listAsync = ref.watch(giveawaysListProvider);
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => context.go('/'),
+        ),
         title: Text(forAdmin ? 'Giveaway administracija' : 'Giveawayi'),
       ),
       body: Column(
@@ -95,7 +99,6 @@ class GiveawaysListScreen extends ConsumerWidget {
           ),
         ],
       ),
-    ),
     );
   }
 }

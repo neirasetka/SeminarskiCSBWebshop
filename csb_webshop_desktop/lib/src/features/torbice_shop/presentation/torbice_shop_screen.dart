@@ -257,6 +257,15 @@ class _ShopHeader extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Row(
                 children: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: 'Nazad',
+                    onPressed: () => context.go('/'),
+                    style: IconButton.styleFrom(
+                      foregroundColor: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
