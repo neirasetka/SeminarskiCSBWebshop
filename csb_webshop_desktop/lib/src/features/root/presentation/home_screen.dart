@@ -61,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
                       child: Column(
                         children: <Widget>[
                           Text(
-                            'Dobro došli',
+                            'Dobrodošli na CocoSunBags Webshop',
                             style: textTheme.displayLarge?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.w600,

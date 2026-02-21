@@ -96,7 +96,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       ProfileScreen(title: widget.title),
     ];
     final String welcomeName = profile?.firstName ?? session?.username ?? '';
-    final String welcomeText = welcomeName.isNotEmpty ? 'Dobro došli, $welcomeName!' : 'Dobro došli!';
+    final String welcomeText = welcomeName.isNotEmpty ? 'Dobrodošli na CocoSunBags Webshop, $welcomeName!' : 'Dobrodošli na CocoSunBags Webshop';
 
     return Scaffold(
       appBar: AppBar(
