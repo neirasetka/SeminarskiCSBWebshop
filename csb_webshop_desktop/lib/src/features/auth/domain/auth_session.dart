@@ -54,7 +54,7 @@ class AuthSession {
     return AuthSession(
       token: token,
       expiresUtc: expiresUtc,
-      userId: userId ?? _readInt(_decodeClaim(token, <String>['nameid', 'sub'])),
+      userId: userId ?? _readInt(_decodeClaim(token, <String>['nameid', 'sub', 'NameIdentifier'])),
       username: username ?? _decodeClaim(token, <String>['unique_name', 'name'])?.toString(),
       roles: _rolesFromToken(token),
     );
@@ -64,7 +64,7 @@ class AuthSession {
     return AuthSession(
       token: token,
       expiresUtc: JwtDecoder.getExpirationDate(token),
-      userId: _readInt(_decodeClaim(token, const <String>['nameid', 'sub'])),
+      userId: _readInt(_decodeClaim(token, const <String>['nameid', 'sub', 'NameIdentifier'])),
       username: _decodeClaim(token, const <String>['unique_name', 'name'])?.toString(),
       roles: _rolesFromToken(token),
     );
