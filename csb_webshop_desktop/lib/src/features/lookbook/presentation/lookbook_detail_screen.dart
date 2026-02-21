@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
 import '../../bags/application/bags_provider.dart';
@@ -256,6 +257,7 @@ class _LookbookDetailContent extends StatelessWidget {
 
                 // Outfit inspiration images section
                 _OutfitImagesSection(
+                  bagId: bag.id,
                   images: images,
                   isLoading: outfitState.isLoading,
                   error: outfitState.error,
@@ -273,6 +275,7 @@ class _LookbookDetailContent extends StatelessWidget {
 
 class _OutfitImagesSection extends StatelessWidget {
   const _OutfitImagesSection({
+    required this.bagId,
     required this.images,
     required this.isLoading,
     required this.error,
@@ -280,6 +283,7 @@ class _OutfitImagesSection extends StatelessWidget {
     required this.onRefresh,
   });
 
+  final int bagId;
   final List<OutfitIdeaImage> images;
   final bool isLoading;
   final String? error;
@@ -333,6 +337,7 @@ class _OutfitImagesSection extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(48),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
                 Icons.image_outlined,
@@ -353,6 +358,15 @@ class _OutfitImagesSection extends StatelessWidget {
                       color: colorScheme.outline,
                     ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.go('/bags/$bagId/outfit-idea'),
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Dodaj inspiracije'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                ),
               ),
             ],
           ),
