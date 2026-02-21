@@ -62,34 +62,27 @@ class HomeScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              // Gornji dio: For You (lijevo) + Info Panel (desno), donji dio: centrirana slika torbice
+              // For You – samo za prijavljene, kompaktno iznad glavnog reda
+              if (isLoggedIn) ...<Widget>[
+                SizedBox(
+                  height: 280,
+                  child: const _ForYouSection(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Jedan red: slika torbice lijevo, info panel desno, iste visine, podjednako odmaknuto
               Expanded(
-                child: Column(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Expanded(
                       flex: 1,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Expanded(
-                            flex: 2,
-                            child: isLoggedIn
-                                ? const _ForYouSection()
-                                : const SizedBox.shrink(),
-                          ),
-                          const SizedBox(width: 32),
-                          const Expanded(
-                            flex: 1,
-                            child: InfoPanel(),
-                          ),
-                        ],
-                      ),
+                      child: _HeroBagImage(),
                     ),
-                    Expanded(
+                    const SizedBox(width: 32),
+                    const Expanded(
                       flex: 1,
-                      child: Center(
-                        child: _HeroBagImage(),
-                      ),
+                      child: InfoPanel(),
                     ),
                   ],
                 ),
@@ -464,7 +457,7 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-/// Hero slika torbice centrirana u donjoj polovini početne stranice.
+/// Hero slika torbice iste visine kao info panel, lijevo u redu.
 class _HeroBagImage extends StatelessWidget {
   const _HeroBagImage();
 
@@ -479,24 +472,16 @@ class _HeroBagImage extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 360),
-        child: Image.network(
-          _bagImageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => AspectRatio(
-            aspectRatio: 4 / 3,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colorScheme.onPrimary.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                Icons.shopping_bag,
-                color: colorScheme.primary,
-                size: 120,
-              ),
-            ),
+      child: Image.network(
+        _bagImageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => Center(
+          child: Icon(
+            Icons.shopping_bag,
+            color: colorScheme.primary,
+            size: 120,
           ),
         ),
       ),
