@@ -1,8 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/bag_stock_provider.dart';
 
 class ReportsScreen extends StatelessWidget {
@@ -10,10 +10,13 @@ class ReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => context.go('/'),
+        ),
         title: const Text('Izvještaji'),
       ),
       body: ListView(
@@ -29,7 +32,6 @@ class ReportsScreen extends StatelessWidget {
           _OrderStatusPieChart(),
         ],
       ),
-    ),
     );
   }
 }

@@ -299,6 +299,17 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
   Widget _buildHeader(ColorScheme colorScheme, TextTheme textTheme) {
     return Column(
       children: <Widget>[
+        Row(
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Nazad',
+              onPressed: _isSubmitting ? null : _closeForm,
+            ),
+            const Spacer(),
+          ],
+        ),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
