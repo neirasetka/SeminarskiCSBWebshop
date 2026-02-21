@@ -25,13 +25,12 @@ class HomeScreen extends ConsumerWidget {
 
     // Base shortcuts for all users
     final List<_NavShortcut> shortcuts = <_NavShortcut>[
-      const _NavShortcut(icon: Icons.shopping_bag_outlined, label: 'Bags', route: '/bags'),
       const _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
-      const _NavShortcut(icon: Icons.checkroom_outlined, label: 'Belts', route: '/belts'),
       const _NavShortcut(icon: Icons.straighten, label: 'Kaisevi', route: '/kaisevi'),
       const _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
       const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
-      const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
+      // Korpa samo za buyere, ne za admine
+      if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
       // Admin-only shortcuts
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Announcement', route: '/announcement/new'),
       if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
@@ -45,49 +44,45 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // Meni kružići na vrhu – cijelom dužinom, veće ikonice
-              _HomeHeader(shortcuts: shortcuts),
-              const SizedBox(height: 20),
-              // Natpis Dobrodošli
-              Text(
-                'Dobrodošli na CocoSunBags Webshop',
-                style: textTheme.displayLarge?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // Meni kružići na vrhu
+                _HomeHeader(shortcuts: shortcuts),
+                const SizedBox(height: 20),
+                // Natpis Dobrodošli – manja veličina slova
+                Text(
+                  'Dobrodošli na CocoSunBags Webshop',
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              // For You – samo za prijavljene, kompaktno iznad glavnog reda
-              if (isLoggedIn) ...<Widget>[
-                SizedBox(
-                  height: 280,
-                  child: const _ForYouSection(),
-                ),
-                const SizedBox(height: 16),
-              ],
-              // Jedan red: slika torbice lijevo, info panel desno, iste visine, podjednako odmaknuto
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Expanded(
-                      flex: 1,
+                const SizedBox(height: 20),
+                // Torbica na sredini ispod natpisa
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: const AspectRatio(
+                      aspectRatio: 400 / 260,
                       child: _HeroBagImage(),
                     ),
-                    const SizedBox(width: 32),
-                    const Expanded(
-                      flex: 1,
-                      child: InfoPanel(),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                // For You – ispod torbice, samo za prijavljene
+                if (isLoggedIn) ...<Widget>[
+                  const SizedBox(height: 280, child: _ForYouSection()),
+                  const SizedBox(height: 24),
+                ],
+                // Info panel ispod For You
+                const InfoPanel(),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),

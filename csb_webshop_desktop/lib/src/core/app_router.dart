@@ -44,13 +44,6 @@ final GoRouter appRouter = GoRouter(
       ),
       routes: <RouteBase>[
         GoRoute(
-          path: 'bags',
-          name: 'bags',
-          builder: (BuildContext context, GoRouterState state) => const AuthGate(
-            child: RootScreen(title: 'CSB Webshop', initialIndex: 0),
-          ),
-        ),
-        GoRoute(
           path: 'belts',
           name: 'belts',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
