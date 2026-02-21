@@ -92,7 +92,10 @@ class ProfileApi {
     final String? token = await _secureStorage.getToken();
     if (token == null || token.isEmpty) return null;
     final Map<String, dynamic> decoded = JwtDecoder.decode(token);
-    final Object? sub = decoded['nameid'] ?? decoded['sub'] ?? decoded['NameIdentifier'];
+    final Object? sub = decoded['nameid'] ??
+        decoded['sub'] ??
+        decoded['NameIdentifier'] ??
+        decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
     if (sub == null) return null;
     return int.tryParse(sub.toString());
   }

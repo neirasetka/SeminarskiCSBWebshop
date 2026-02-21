@@ -68,6 +68,10 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       await ref.read(userProfileProvider.notifier).refreshProfile();
       userId = ref.read(userProfileProvider).value?.id;
     }
+    // Fallback: if we already loaded outfit idea for this bag, use its userId
+    if (userId == null) {
+      userId = ref.read(outfitIdeaProvider).outfitIdea?.userId;
+    }
     if (userId == null) {
       _showError(
         'Korisnički ID nije dostupan. Pokušajte osvježiti stranicu ili se odjaviti i ponovo prijaviti.',
