@@ -49,7 +49,14 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 // Meni kružići na vrhu
-                _HomeHeader(shortcuts: shortcuts),
+                _HomeHeader(
+                  shortcuts: shortcuts,
+                  isAdmin: isAdmin,
+                  onLogout: (BuildContext ctx) async {
+                    await ref.read(authControllerProvider.notifier).logout();
+                    if (ctx.mounted) ctx.go('/login');
+                  },
+                ),
                 const SizedBox(height: 20),
                 // Natpis Dobrodošli – manja veličina slova
                 Text(
@@ -434,9 +441,15 @@ class _ProductCard extends StatelessWidget {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.shortcuts});
+  const _HomeHeader({
+    required this.shortcuts,
+    required this.isAdmin,
+    required this.onLogout,
+  });
 
   final List<_NavShortcut> shortcuts;
+  final bool isAdmin;
+  final void Function(BuildContext context) onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -445,9 +458,10 @@ class _HomeHeader extends StatelessWidget {
       runSpacing: 12,
       alignment: WrapAlignment.spaceEvenly,
       runAlignment: WrapAlignment.center,
-      children: shortcuts
-          .map((shortcut) => _NavShortcutButton(shortcut: shortcut))
-          .toList(),
+      children: <Widget>[
+        ...shortcuts.map((shortcut) => _NavShortcutButton(shortcut: shortcut)),
+        if (isAdmin) _LogoutShortcutButton(onLogout: onLogout),
+      ],
     );
   }
 }
@@ -521,6 +535,74 @@ class _NavShortcutButton extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Kružić za odjavu (samo za admine) – isti stil kao ostali, s dijalogom za potvrdu.
+class _LogoutShortcutButton extends StatelessWidget {
+  const _LogoutShortcutButton({required this.onLogout});
+
+  final void Function(BuildContext context) onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Material(
+          color: colorScheme.primary.withOpacity(0.08),
+          shape: const CircleBorder(),
+          child: IconButton(
+            tooltip: 'Logout',
+            iconSize: 36,
+            icon: Icon(Icons.logout, color: colorScheme.primary),
+            onPressed: () => _showLogoutDialog(context),
+            style: IconButton.styleFrom(
+              padding: const EdgeInsets.all(20),
+              minimumSize: const Size(64, 64),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Logout',
+          style: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Odjava'),
+        content: const Text(
+          'Jeste li sigurni da se želite odjaviti?',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Ne'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Da'),
+          ),
+        ],
+      ),
+    ).then((bool? confirmed) {
+      if (confirmed == true && context.mounted) {
+        onLogout(context);
+      }
+      // Ne ili zatvaranje dijaloga → ostaje na homepage
+    });
   }
 }
 
