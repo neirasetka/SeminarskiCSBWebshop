@@ -72,8 +72,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     const Text(
-                      'Dobrodošli nazad',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      'Dobrodošli na CocoSunBags Webshop',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(

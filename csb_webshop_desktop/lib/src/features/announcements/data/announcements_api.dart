@@ -45,7 +45,7 @@ class AnnouncementsApi {
 final List<Announcement> _dummyAnnouncements = <Announcement>[
   Announcement(
     id: 1,
-    title: 'Dobrodošli u aplikaciju',
+    title: 'Dobrodošli na CocoSunBags Webshop',
     body: 'Hvala što koristite našu aplikaciju. Ovo je početna obavijest.',
     publishedAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
     type: AnnouncementType.info,
