@@ -9,6 +9,7 @@ import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
+import '../../profile/application/user_profile_provider.dart';
 import '../application/outfit_ideas_provider.dart';
 import '../domain/outfit_idea.dart';
 
@@ -35,12 +36,17 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     // Load bag details
     await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
     
-    // Load outfit idea for this bag
+    // Resolve userId: from session first, then from profile (fallback if JWT has no nameid/sub)
     final AuthSession? session = ref.read(authControllerProvider).value;
-    if (session?.userId != null) {
+    int? userId = session?.userId;
+    if (userId == null && session != null) {
+      await ref.read(userProfileProvider.notifier).refreshProfile();
+      userId = ref.read(userProfileProvider).value?.id;
+    }
+    if (userId != null) {
       await ref.read(outfitIdeaProvider.notifier).loadForBag(
             widget.bagId,
-            session!.userId!,
+            userId,
           );
     }
     
@@ -53,8 +59,19 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
   Future<void> _pickAndAddImages() async {
     final AuthSession? session = ref.read(authControllerProvider).value;
-    if (session?.userId == null) {
+    if (session == null) {
       _showError('Morate biti prijavljeni');
+      return;
+    }
+    int? userId = session.userId ?? ref.read(userProfileProvider).value?.id;
+    if (userId == null) {
+      await ref.read(userProfileProvider.notifier).refreshProfile();
+      userId = ref.read(userProfileProvider).value?.id;
+    }
+    if (userId == null) {
+      _showError(
+        'Korisnički ID nije dostupan. Pokušajte osvježiti stranicu ili se odjaviti i ponovo prijaviti.',
+      );
       return;
     }
 
@@ -75,7 +92,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
             .read(outfitIdeaProvider.notifier)
             .createOutfitIdea(
               bagId: widget.bagId,
-              userId: session!.userId!,
+              userId: userId,
               title: 'Outfit inspiracija',
             );
         if (created == null) {
