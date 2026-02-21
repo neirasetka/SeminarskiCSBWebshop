@@ -18,6 +18,7 @@ class InfoPanel extends ConsumerWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Container(
+      constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
@@ -27,7 +28,7 @@ class InfoPanel extends ConsumerWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           // Header
           Container(
