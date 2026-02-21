@@ -37,7 +37,6 @@ class HomeScreen extends ConsumerWidget {
       if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
     ];
 
-    // Check if user is logged in
     final authState = ref.watch(authControllerProvider);
     final bool isLoggedIn = authState.value?.userId != null && authState.value!.userId! > 0;
 
@@ -45,44 +44,52 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              // Meni kružići na vrhu – cijelom dužinom, veće ikonice
               _HomeHeader(shortcuts: shortcuts),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              // Natpis Dobrodošli
+              Text(
+                'Dobrodošli na CocoSunBags Webshop',
+                style: textTheme.displayLarge?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Gornji dio: For You (lijevo) + Info Panel (desno), donji dio: centrirana slika torbice
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
                   children: <Widget>[
-                    // Welcome message and For You section on the left
                     Expanded(
-                      flex: 2,
-                      child: Column(
+                      flex: 1,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            'Dobrodošli na CocoSunBags Webshop',
-                            style: textTheme.displayLarge?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 2,
-                            ),
-                            textAlign: TextAlign.center,
+                          Expanded(
+                            flex: 2,
+                            child: isLoggedIn
+                                ? const _ForYouSection()
+                                : const SizedBox.shrink(),
                           ),
-                          const SizedBox(height: 32),
-                          // For You Recommendations Section
-                          if (isLoggedIn)
-                            const Expanded(
-                              child: _ForYouSection(),
-                            ),
+                          const SizedBox(width: 32),
+                          const Expanded(
+                            flex: 1,
+                            child: InfoPanel(),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 32),
-                    // Info Panel on the right
-                    const Expanded(
+                    Expanded(
                       flex: 1,
-                      child: InfoPanel(),
+                      child: Center(
+                        child: _HeroBagImage(),
+                      ),
                     ),
                   ],
                 ),
@@ -445,35 +452,24 @@ class _HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const _LogoBadge(),
-        const Spacer(),
-        Flexible(
-          child: Align(
-            alignment: Alignment.topRight,
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              alignment: WrapAlignment.end,
-              runAlignment: WrapAlignment.end,
-              children: shortcuts
-                  .map((shortcut) => _NavShortcutButton(shortcut: shortcut))
-                  .toList(),
-            ),
-          ),
-        ),
-      ],
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      alignment: WrapAlignment.spaceEvenly,
+      runAlignment: WrapAlignment.center,
+      children: shortcuts
+          .map((shortcut) => _NavShortcutButton(shortcut: shortcut))
+          .toList(),
     );
   }
 }
 
-class _LogoBadge extends StatelessWidget {
-  const _LogoBadge();
+/// Hero slika torbice centrirana u donjoj polovini početne stranice.
+class _HeroBagImage extends StatelessWidget {
+  const _HeroBagImage();
 
-  static const String _logoImageUrl =
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=240&q=80';
+  static const String _bagImageUrl =
+      'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';
 
   @override
   Widget build(BuildContext context) {
@@ -481,30 +477,24 @@ class _LogoBadge extends StatelessWidget {
     return Card(
       color: colorScheme.primaryContainer,
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.network(
-            _logoImageUrl,
-            width: 140,
-            height: 140,
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-            errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => SizedBox(
-              width: 140,
-              height: 140,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colorScheme.onPrimary.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.shopping_bag,
-                  color: colorScheme.primary,
-                  size: 64,
-                ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 360),
+        child: Image.network(
+          _bagImageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => AspectRatio(
+            aspectRatio: 4 / 3,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Icon(
+                Icons.shopping_bag,
+                color: colorScheme.primary,
+                size: 120,
               ),
             ),
           ),
@@ -532,14 +522,19 @@ class _NavShortcutButton extends StatelessWidget {
           shape: const CircleBorder(),
           child: IconButton(
             tooltip: shortcut.label,
+            iconSize: 36,
             icon: Icon(shortcut.icon, color: colorScheme.primary),
             onPressed: () => context.go(shortcut.route),
+            style: IconButton.styleFrom(
+              padding: const EdgeInsets.all(20),
+              minimumSize: const Size(64, 64),
+            ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           shortcut.label,
-          style: textTheme.labelMedium?.copyWith(
+          style: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: 0.4,
           ),
