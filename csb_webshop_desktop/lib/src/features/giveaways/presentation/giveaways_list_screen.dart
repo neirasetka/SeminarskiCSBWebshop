@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 import '../../giveaways/domain/participant.dart';
@@ -11,12 +12,15 @@ import 'giveaway_participants_screen.dart';
 import 'giveaway_register_screen.dart';
 
 class GiveawaysListScreen extends ConsumerWidget {
-  const GiveawaysListScreen({super.key, this.forAdmin = false});
+  /// When null, forAdmin is derived from [adminRoleProvider] (admin sees admin list).
+  /// When true/false, forces admin or buyer list regardless of role.
+  const GiveawaysListScreen({super.key, this.forAdmin});
 
-  final bool forAdmin;
+  final bool? forAdmin;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool isAdmin = forAdmin ?? ref.watch(adminRoleProvider).valueOrNull ?? false;
     final AsyncValue<List<Giveaway>> listAsync = ref.watch(giveawaysListProvider);
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +29,7 @@ class GiveawaysListScreen extends ConsumerWidget {
           tooltip: 'Nazad',
           onPressed: () => context.go('/'),
         ),
-        title: Text(forAdmin ? 'Giveaway administracija' : 'Giveawayi'),
+        title: Text(isAdmin ? 'Giveaway administracija' : 'Giveawayi'),
       ),
       body: Column(
         children: <Widget>[
@@ -50,7 +54,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                   child: const Text('Svi'),
                 ),
                 const Spacer(),
-                if (forAdmin)
+                if (isAdmin)
                   ElevatedButton.icon(
                     onPressed: () async {
                       await showModalBottomSheet<void>(
@@ -86,7 +90,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => forAdmin
+                        builder: (_) => isAdmin
                             ? GiveawayParticipantsScreen(
                                 giveawayId: g.id,
                                 giveawayTitle: g.title,
@@ -122,14 +126,13 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
   void initState() {
     super.initState();
     Future<void>.microtask(() {
-      ref.read(giveawayDetailProvider.notifier).fetch(widget.giveawayId);
       ref.read(participantsProvider.notifier).load(widget.giveawayId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider);
+    final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider(widget.giveawayId));
     final AsyncValue<List<GiveawayParticipant>> participantsAsync = ref.watch(participantsProvider);
 
     return BackConfirmationWrapper(
@@ -301,7 +304,7 @@ class _AdminActions extends ConsumerWidget {
                     }
                     await ref.read(participantsProvider.notifier).load(giveawayId);
                     await ref.read(giveawaysListProvider.notifier).refresh();
-                    await ref.read(giveawayDetailProvider.notifier).fetch(giveawayId);
+                    ref.invalidate(giveawayDetailProvider(giveawayId));
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
