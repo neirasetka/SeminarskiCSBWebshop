@@ -153,7 +153,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var bags = await _dbContext.Bags
                 .Include(b => b.BagType)
-                .Where(b => topBagIds.Contains(b.BagID))
+                .Where(b => topBagIds.Contains(b.BagID.Value))
                 .ToListAsync();
 
             var bagDict = bags.ToDictionary(b => b.BagID);
