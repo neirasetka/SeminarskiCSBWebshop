@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
+import 'announcement_edit_screen.dart';
 
 class AnnouncementDetailScreen extends ConsumerStatefulWidget {
   const AnnouncementDetailScreen({super.key, required this.id});
@@ -24,11 +26,30 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
+
     return BackConfirmationWrapper(
       child: Scaffold(
       appBar: AppBar(
         leading: buildBackButtonWithConfirmation(context),
         title: const Text('Detalji obavijesti'),
+        actions: <Widget>[
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Uredi obavijest',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AnnouncementEditScreen(id: widget.id),
+                  ),
+                ).then((_) {
+                  // Refresh detail after edit
+                  ref.read(announcementDetailProvider.notifier).fetch(widget.id);
+                });
+              },
+            ),
+        ],
       ),
       body: announcementAsync.when(
         data: (Announcement a) {
