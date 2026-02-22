@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../belts/application/belts_provider.dart';
 import '../../belts/application/belt_types_provider.dart';
 import '../../belts/domain/belt.dart';
@@ -61,6 +62,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
     final AsyncValue<Set<int>> beltFavoritesAsync = ref.watch(beltFavoritesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -138,6 +140,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                       return _ProductCard(
                         belt: belt,
                         isFavorite: isFav,
+                        showFavorite: !isAdmin,
                         onTap: () => _navigateToDetail(belt),
                         onToggleFavorite: () =>
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
@@ -551,6 +554,7 @@ class _ProductCard extends StatefulWidget {
   const _ProductCard({
     required this.belt,
     required this.isFavorite,
+    required this.showFavorite,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
@@ -559,6 +563,7 @@ class _ProductCard extends StatefulWidget {
 
   final Belt belt;
   final bool isFavorite;
+  final bool showFavorite;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
@@ -603,15 +608,16 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                         child: _ProductImage(imageUrl: widget.belt.displayImageUrl),
                       ),
-                      // Favorite button
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: _FavoriteButton(
-                          isFavorite: widget.isFavorite,
-                          onPressed: widget.onToggleFavorite,
+                      // Favorite button (samo za buyere, ne za admine)
+                      if (widget.showFavorite)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _FavoriteButton(
+                            isFavorite: widget.isFavorite,
+                            onPressed: widget.onToggleFavorite,
+                          ),
                         ),
-                      ),
                       // Rating badge
                       if (widget.belt.averageRating != null)
                         Positioned(

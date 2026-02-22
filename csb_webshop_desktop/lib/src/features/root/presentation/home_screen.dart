@@ -30,7 +30,8 @@ class HomeScreen extends ConsumerWidget {
       const _NavShortcut(icon: Icons.straighten, label: 'Kaiševi', route: '/kaisevi'),
       const _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
       const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
-      // Korpa samo za buyere, ne za admine
+      // Favoriti i Korpa samo za buyere, ne za admine
+      if (!isAdmin) const _NavShortcut(icon: Icons.favorite_border, label: 'Moji favoriti', route: '/favoriti'),
       if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
       // Admin-only shortcuts
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Najave', route: '/announcement/new'),

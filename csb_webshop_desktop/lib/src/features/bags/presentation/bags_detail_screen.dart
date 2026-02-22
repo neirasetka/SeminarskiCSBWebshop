@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../application/bags_provider.dart';
 import '../application/bag_types_provider.dart';
 import '../domain/bag.dart';
@@ -35,6 +36,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     final AsyncValue<List<BagType>> bagTypesAsync = ref.watch(bagTypesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return BackConfirmationWrapper(
@@ -52,6 +54,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
               bag: bag,
               bagTypeName: bagTypeName,
               isFavorite: isFav,
+              showFavorite: !isAdmin,
               quantity: _quantity,
               onQuantityChanged: (int qty) => setState(() => _quantity = qty),
               onToggleFavorite: () =>
@@ -173,6 +176,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
     required this.bag,
     required this.bagTypeName,
     required this.isFavorite,
+    required this.showFavorite,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onToggleFavorite,
@@ -184,6 +188,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
   final Bag bag;
   final String? bagTypeName;
   final bool isFavorite;
+  final bool showFavorite;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onToggleFavorite;
@@ -217,22 +222,23 @@ class _CustomerBagDetailBody extends StatelessWidget {
             onPressed: onBack,
           ),
           actions: <Widget>[
-            IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: BoxShape.circle,
+            if (showFavorite)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : colorScheme.onSurface,
+                  ),
                 ),
-                child: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : colorScheme.onSurface,
-                ),
+                onPressed: onToggleFavorite,
+                tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
               ),
-              onPressed: onToggleFavorite,
-              tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
-            ),
-            const SizedBox(width: 8),
+            if (showFavorite) const SizedBox(width: 8),
           ],
         ),
         // Content

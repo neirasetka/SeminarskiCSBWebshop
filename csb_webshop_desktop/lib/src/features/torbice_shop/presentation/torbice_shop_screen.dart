@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -61,6 +62,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -137,6 +139,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
                       return _ProductCard(
                         bag: bag,
                         isFavorite: isFav,
+                        showFavorite: !isAdmin,
                         onTap: () => _navigateToDetail(bag),
                         onToggleFavorite: () =>
                             ref.read(favoritesProvider.notifier).toggleBag(bag.id),
@@ -532,6 +535,7 @@ class _ProductCard extends StatefulWidget {
   const _ProductCard({
     required this.bag,
     required this.isFavorite,
+    required this.showFavorite,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
@@ -539,6 +543,7 @@ class _ProductCard extends StatefulWidget {
 
   final Bag bag;
   final bool isFavorite;
+  final bool showFavorite;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
@@ -582,15 +587,16 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                         child: _ProductImage(imageUrl: widget.bag.displayImageUrl),
                       ),
-                      // Favorite button
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: _FavoriteButton(
-                          isFavorite: widget.isFavorite,
-                          onPressed: widget.onToggleFavorite,
+                      // Favorite button (samo za buyere, ne za admine)
+                      if (widget.showFavorite)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _FavoriteButton(
+                            isFavorite: widget.isFavorite,
+                            onPressed: widget.onToggleFavorite,
+                          ),
                         ),
-                      ),
                       // Rating badge
                       if (widget.bag.averageRating != null)
                         Positioned(
