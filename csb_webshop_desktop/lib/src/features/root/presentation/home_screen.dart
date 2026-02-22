@@ -157,6 +157,19 @@ class _ForYouSection extends ConsumerWidget {
                         'Unable to load recommendations',
                         style: textTheme.bodyLarge?.copyWith(color: colorScheme.error),
                       ),
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          error.toString().replaceFirst('Exception: ', ''),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () => ref.read(recommendationsProvider.notifier).refresh(),
