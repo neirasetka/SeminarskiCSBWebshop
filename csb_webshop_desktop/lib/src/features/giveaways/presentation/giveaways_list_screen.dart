@@ -86,8 +86,11 @@ class GiveawaysListScreen extends ConsumerWidget {
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => forAdmin 
-                            ? GiveawayDetailScreen(giveawayId: g.id, forAdmin: forAdmin)
+                        builder: (_) => forAdmin
+                            ? GiveawayParticipantsScreen(
+                                giveawayId: g.id,
+                                giveawayTitle: g.title,
+                              )
                             : GiveawayRegisterScreen(giveawayId: g.id),
                       ),
                     ),
