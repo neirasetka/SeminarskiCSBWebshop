@@ -9,6 +9,7 @@ import '../../auth/application/auth_controller.dart';
 import '../../bags/domain/bag.dart';
 import '../../belts/domain/belt.dart';
 import '../../recommendations/application/recommendations_provider.dart';
+import '../../reports/application/bestselling_bags_provider.dart';
 import 'info_panel.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -82,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
                 // For You – ispod torbice, samo za prijavljene
                 if (isLoggedIn) ...<Widget>[
-                  const SizedBox(height: 280, child: _ForYouSection()),
+                  SizedBox(height: 280, child: _ForYouSection(isAdmin: isAdmin)),
                   const SizedBox(height: 24),
                 ],
                 // Info panel ispod For You
@@ -97,9 +98,24 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// For You recommendations section showing personalized product suggestions.
+/// For You section: buyer = personalized recommendations, admin = top-selling bags.
 class _ForYouSection extends ConsumerWidget {
-  const _ForYouSection();
+  const _ForYouSection({required this.isAdmin});
+
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (isAdmin) {
+      return _AdminForYouSection();
+    }
+    return _BuyerForYouSection();
+  }
+}
+
+/// Buyer: personalized recommendations based on favorites.
+class _BuyerForYouSection extends ConsumerWidget {
+  const _BuyerForYouSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -227,6 +243,113 @@ class _ForYouSection extends ConsumerWidget {
                     );
                   }
                   return _RecommendationsGrid(recommendations: recommendations);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Admin: top-selling bags.
+class _AdminForYouSection extends ConsumerWidget {
+  const _AdminForYouSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bestsellingBagsProvider);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(Icons.trending_up, color: colorScheme.primary, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'For You',
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Refresh',
+                  onPressed: () {
+                    ref.invalidate(bestsellingBagsProvider);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Torbice koje se najviše prodaju',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: bagsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (Object error, StackTrace stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Unable to load top selling bags',
+                        style: textTheme.bodyLarge?.copyWith(color: colorScheme.error),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () => ref.invalidate(bestsellingBagsProvider),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try Again'),
+                      ),
+                    ],
+                  ),
+                ),
+                data: (List<Bag> bags) {
+                  if (bags.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Još nema prodanih torbi.',
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    );
+                  }
+                  return SizedBox(
+                    height: 180,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: bags.length,
+                      separatorBuilder: (BuildContext context, int index) => const SizedBox(width: 12),
+                      itemBuilder: (BuildContext context, int index) {
+                        final Bag bag = bags[index];
+                        return _ProductCard(
+                          name: bag.name,
+                          price: bag.price,
+                          imageUrl: bag.displayImageUrl,
+                          onTap: () => context.go('/torbice/${bag.id}'),
+                        );
+                      },
+                    ),
+                  );
                 },
               ),
             ),
