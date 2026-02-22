@@ -310,7 +310,7 @@ class _ShopHeader extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Kaisevi Shop',
+                          'Kaisevi',
                           style: textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onPrimaryContainer,

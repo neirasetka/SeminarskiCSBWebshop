@@ -24,7 +24,8 @@ class BeltsApi {
       final List<dynamic> list = json.decode(response.body) as List<dynamic>;
       return list.map((dynamic e) => Belt.fromJson(e as Map<String, dynamic>)).toList();
     }
-    throw Exception('Failed to load belts: ${response.statusCode}');
+    final String body = response.body.isNotEmpty ? response.body : 'no body';
+    throw Exception('Failed to load belts: ${response.statusCode} — $body');
   }
 
   Future<Belt> getBeltById(int id) async {

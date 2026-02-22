@@ -4,7 +4,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../bags/application/bags_provider.dart';
@@ -216,10 +215,13 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Outfit Idea'),
         actions: <Widget>[
           if (outfitState.isLoading)
@@ -241,7 +243,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         tooltip: 'Dodaj slike',
         child: const Icon(Icons.add),
       ),
-    ),
     );
   }
 

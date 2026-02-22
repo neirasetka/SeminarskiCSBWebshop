@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/giveaways_provider.dart';
 import '../domain/participant.dart';
 
@@ -34,13 +33,16 @@ class _GiveawayParticipantsScreenState extends ConsumerState<GiveawayParticipant
   Widget build(BuildContext context) {
     final AsyncValue<List<GiveawayParticipant>> participantsAsync = ref.watch(participantsProvider);
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
-        appBar: AppBar(
-          leading: buildBackButtonWithConfirmation(context),
-          title: const Text('Lista učesnika giveawaya'),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: Column(
+        title: const Text('Lista učesnika giveawaya'),
+      ),
+      body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Padding(
