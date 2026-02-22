@@ -211,7 +211,7 @@ class _LookbookDetailContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Title section - "Outfit Idea"
+                // Title section - "Outfit ideja"
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
@@ -235,7 +235,7 @@ class _LookbookDetailContent extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Outfit Idea',
+                        'Outfit ideja',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,

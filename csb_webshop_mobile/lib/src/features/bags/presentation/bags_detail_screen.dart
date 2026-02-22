@@ -140,7 +140,7 @@ class _BagDetailBody extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onOutfitIdea,
               icon: const Icon(Icons.style_outlined),
-              label: const Text('Outfit Idea'),
+              label: const Text('Outfit ideja'),
             ),
           ),
         ],

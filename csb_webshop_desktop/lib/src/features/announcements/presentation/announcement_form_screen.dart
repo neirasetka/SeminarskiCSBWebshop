@@ -143,7 +143,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Text(
-                                        'Add New Announcement',
+                                        'Dodaj novu najavu',
                                         style: textTheme.headlineSmall?.copyWith(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -165,7 +165,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                             const SizedBox(height: 24),
 
                             // Name of the bag field
-                            _buildFieldLabel('Name of the bag', Icons.shopping_bag_outlined, colorScheme, textTheme),
+                            _buildFieldLabel('Naziv torbice', Icons.shopping_bag_outlined, colorScheme, textTheme),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _nameController,
@@ -187,7 +187,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                             const SizedBox(height: 24),
 
                             // Price of the bag field
-                            _buildFieldLabel('Price of the bag', Icons.attach_money, colorScheme, textTheme),
+                            _buildFieldLabel('Cijena torbice', Icons.attach_money, colorScheme, textTheme),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _priceController,
@@ -215,7 +215,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                             const SizedBox(height: 24),
 
                             // Color of the bag field
-                            _buildFieldLabel('Color of the bag', Icons.palette_outlined, colorScheme, textTheme),
+                            _buildFieldLabel('Boja torbice', Icons.palette_outlined, colorScheme, textTheme),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _colorController,
@@ -246,7 +246,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                                   child: OutlinedButton.icon(
                                     onPressed: _isSubmitting ? null : _closeForm,
                                     icon: const Icon(Icons.close),
-                                    label: const Text('Close'),
+                                    label: const Text('Zatvori'),
                                     style: OutlinedButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                       shape: RoundedRectangleBorder(
@@ -271,7 +271,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                                             ),
                                           )
                                         : const Icon(Icons.add),
-                                    label: Text(_isSubmitting ? 'Kreiranje...' : 'Add'),
+                                    label: Text(_isSubmitting ? 'Kreiranje...' : 'Dodaj'),
                                     style: FilledButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                       shape: RoundedRectangleBorder(

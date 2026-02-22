@@ -58,7 +58,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'How to style our bags',
+                  'Kako stilizirati naše torbice',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -232,7 +232,7 @@ class _LookbookTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Outfit Idea',
+                          'Outfit ideja',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 12,

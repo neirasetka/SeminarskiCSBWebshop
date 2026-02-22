@@ -191,7 +191,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
               }
             },
           ),
-          title: const Text('Outfit Idea'),
+          title: const Text('Outfit ideja'),
           actions: <Widget>[
             if (_isLoading)
               const Padding(

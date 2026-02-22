@@ -222,7 +222,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
           tooltip: 'Nazad',
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Outfit Idea'),
+        title: const Text('Outfit ideja'),
         actions: <Widget>[
           if (outfitState.isLoading)
             const Padding(

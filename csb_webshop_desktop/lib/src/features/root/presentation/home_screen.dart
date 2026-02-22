@@ -27,15 +27,15 @@ class HomeScreen extends ConsumerWidget {
     // Base shortcuts for all users
     final List<_NavShortcut> shortcuts = <_NavShortcut>[
       const _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
-      const _NavShortcut(icon: Icons.straighten, label: 'Kaisevi', route: '/kaisevi'),
+      const _NavShortcut(icon: Icons.straighten, label: 'Kaiševi', route: '/kaisevi'),
       const _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
       const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
       // Korpa samo za buyere, ne za admine
       if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
       // Admin-only shortcuts
-      if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Announcement', route: '/announcement/new'),
+      if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Najave', route: '/announcement/new'),
       if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Giveaway', route: '/giveaways/admin'),
-      if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
+      if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Izvještaji', route: '/reports'),
     ];
 
     final authState = ref.watch(authControllerProvider);

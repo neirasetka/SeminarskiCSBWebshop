@@ -310,7 +310,7 @@ class _ShopHeader extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Kaisevi',
+                          'Kaiševi',
                           style: textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onPrimaryContainer,
@@ -318,7 +318,7 @@ class _ShopHeader extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Pronađite savršen kais za sebe',
+                          'Pronađite savršen kaiš za sebe',
                           style: textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
                           ),
@@ -350,7 +350,7 @@ class _ShopHeader extends ConsumerWidget {
                     child: TextField(
                       controller: searchController,
                       decoration: InputDecoration(
-                        hintText: 'Pretraži kaiseve...',
+                        hintText: 'Pretraži kaiševe...',
                         prefixIcon: Icon(Icons.search, color: colorScheme.outline),
                         suffixIcon: IconButton(
                           icon: Icon(Icons.tune, color: colorScheme.primary),

@@ -57,7 +57,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
             child: Column(
               children: <Widget>[
                 Text(
-                  'How to style our bags',
+                  'Kako stilizirati naše torbice',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,

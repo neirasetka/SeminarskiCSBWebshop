@@ -54,7 +54,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                   controller: _bagNameController,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'Name of the bag',
+                    labelText: 'Naziv torbice',
                     hintText: 'Unesite naziv torbice',
                   ),
                   validator: (String? value) {
@@ -70,7 +70,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                   textInputAction: TextInputAction.next,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
-                    labelText: 'Price of the bag',
+                    labelText: 'Cijena torbice',
                     hintText: 'Unesite cijenu (npr. 149.90)',
                   ),
                   validator: (String? value) {
@@ -89,7 +89,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                   controller: _bagColorController,
                   textInputAction: TextInputAction.done,
                   decoration: const InputDecoration(
-                    labelText: 'Color of the bag',
+                    labelText: 'Boja torbice',
                     hintText: 'Unesite boju torbice',
                   ),
                   validator: (String? value) {
@@ -105,7 +105,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                        child: const Text('Close'),
+                        child: const Text('Zatvori'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -119,7 +119,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.campaign_outlined),
-                        label: const Text('Add'),
+                        label: const Text('Dodaj'),
                       ),
                     ),
                   ],
