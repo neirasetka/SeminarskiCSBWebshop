@@ -1,5 +1,8 @@
+using AutoMapper;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.ViewModels;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +11,12 @@ namespace CBSWebshopSeminarski.Services.Services
     public class ReportsService : IReportsService
     {
         private readonly CocoSunBagsWebshopDbContext _dbContext;
+        private readonly IMapper _mapper;
 
-        public ReportsService(CocoSunBagsWebshopDbContext dbContext)
+        public ReportsService(CocoSunBagsWebshopDbContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext;
+            _mapper = mapper;
         }
 
         public async Task<SalesSummaryVM> GetSalesSummary(DateTime? fromDateUtc, DateTime? toDateUtc)
@@ -128,6 +133,34 @@ namespace CBSWebshopSeminarski.Services.Services
                 .ToListAsync();
 
             return productAgg;
+        }
+
+        public async Task<List<Bag>> GetTopSellingBags(int take = 6)
+        {
+            var topBagIds = await _dbContext.OrderItems
+                .Where(oi => oi.BagID > 0)
+                .GroupBy(oi => oi.BagID)
+                .Select(g => new { BagId = g.Key, TotalQuantity = g.Sum(x => x.Quantity ?? 0) })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(take)
+                .Select(x => x.BagId)
+                .ToListAsync();
+
+            if (topBagIds.Count == 0)
+            {
+                return new List<Bag>();
+            }
+
+            var bags = await _dbContext.Bags
+                .Include(b => b.BagType)
+                .Where(b => topBagIds.Contains(b.BagID))
+                .ToListAsync();
+
+            var bagDict = bags.ToDictionary(b => b.BagID);
+            return topBagIds
+                .Where(id => bagDict.ContainsKey(id))
+                .Select(id => _mapper.Map<Bag>(bagDict[id]))
+                .ToList();
         }
     }
 }

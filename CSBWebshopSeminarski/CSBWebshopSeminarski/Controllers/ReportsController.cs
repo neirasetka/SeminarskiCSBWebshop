@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Model.ViewModels;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -35,6 +36,13 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var take = request.Take.HasValue && request.Take.Value > 0 ? request.Take.Value : 10;
             return await _reportsService.GetTopProducts(request.FromDateUtc, request.ToDateUtc, take);
+        }
+
+        [HttpGet("TopSellingBags")]
+        public async Task<List<Bag>> TopSellingBags([FromQuery] int? take)
+        {
+            var howMany = take.HasValue && take.Value > 0 ? take.Value : 6;
+            return await _reportsService.GetTopSellingBags(howMany);
         }
     }
 }
