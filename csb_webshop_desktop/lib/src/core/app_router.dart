@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/announcements/presentation/announcement_detail_screen.dart';
+import '../features/announcements/presentation/announcement_edit_screen.dart';
 import '../features/announcements/presentation/announcement_form_screen.dart';
 import '../features/announcements/presentation/announcements_list_screen.dart';
 import '../features/auth/presentation/auth_gate.dart';
@@ -167,6 +168,20 @@ final GoRouter appRouter = GoRouter(
                 final int id = int.tryParse(idParam ?? '') ?? 0;
                 return AuthGate(child: AnnouncementDetailScreen(id: id));
               },
+              routes: <RouteBase>[
+                GoRoute(
+                  path: 'edit',
+                  name: 'announcementEdit',
+                  builder: (BuildContext context, GoRouterState state) {
+                    final String? idParam = state.pathParameters['id'];
+                    final int id = int.tryParse(idParam ?? '') ?? 0;
+                    return AuthGate(
+                      requiredRoles: <String>['Admin'],
+                      child: AnnouncementEditScreen(id: id),
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),

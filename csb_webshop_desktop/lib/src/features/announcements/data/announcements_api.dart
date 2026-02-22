@@ -14,6 +14,29 @@ class AnnouncementsApi {
     return _dummyAnnouncements.firstWhere((Announcement a) => a.id == id);
   }
 
+  /// Updates an existing announcement by id.
+  /// Returns the updated announcement.
+  Future<Announcement> updateAnnouncement(
+    int id, {
+    required String title,
+    required String body,
+    AnnouncementType type = AnnouncementType.announcement,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final int index = _dummyAnnouncements.indexWhere((Announcement a) => a.id == id);
+    if (index < 0) throw StateError('Announcement with id $id not found');
+    final Announcement existing = _dummyAnnouncements[index];
+    final Announcement updated = Announcement(
+      id: existing.id,
+      title: title,
+      body: body,
+      publishedAt: existing.publishedAt,
+      type: type,
+    );
+    _dummyAnnouncements[index] = updated;
+    return updated;
+  }
+
   /// Creates a new bag announcement.
   /// Returns the created announcement.
   Future<Announcement> createBagAnnouncement({
