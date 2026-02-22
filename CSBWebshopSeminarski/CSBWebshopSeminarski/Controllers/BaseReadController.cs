@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +17,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<List<T>> Get([FromQuery] Tsearch search)
+        public virtual async Task<List<T>> Get([FromQuery] Tsearch search)
         {
             return await _service.Get(search);
         }
