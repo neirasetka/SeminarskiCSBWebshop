@@ -27,11 +27,9 @@ class Recommendations {
 /// Provider for fetching personalized recommendations.
 /// Watches auth state and favorites to auto-refresh when they change.
 class RecommendationsNotifier extends AsyncNotifier<Recommendations> {
-  late final RecommendationsApi _api;
-
   @override
   Future<Recommendations> build() async {
-    _api = ref.read(recommendationsApiProvider);
+    final api = ref.read(recommendationsApiProvider);
 
     // Watch auth state - recommendations depend on user being logged in
     final authState = ref.watch(authControllerProvider);
@@ -48,8 +46,8 @@ class RecommendationsNotifier extends AsyncNotifier<Recommendations> {
 
     // Fetch recommendations in parallel
     final results = await Future.wait(<Future<Object>>[
-      _api.getRecommendedBags(take: 6),
-      _api.getRecommendedBelts(take: 6),
+      api.getRecommendedBags(take: 6),
+      api.getRecommendedBelts(take: 6),
     ]);
 
     return Recommendations(
