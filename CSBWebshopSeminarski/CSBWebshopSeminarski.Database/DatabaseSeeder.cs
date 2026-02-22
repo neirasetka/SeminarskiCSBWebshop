@@ -425,20 +425,8 @@ namespace CSBWebshopSeminarski.Database
                 };
                 await context.Giveaways.AddAsync(giveaway);
                 await context.SaveChangesAsync();
-
-                var participants = new List<Participants>
-                {
-                    new Participants { Name = "Amar", Email = "amar@example.com", EntryDate = DateTime.UtcNow.AddDays(-5), GiveawayId = giveaway.Id },
-                    new Participants { Name = "Lejla", Email = "lejla@example.com", EntryDate = DateTime.UtcNow.AddDays(-4), GiveawayId = giveaway.Id },
-                    new Participants { Name = "Tarik", Email = "tarik@example.com", EntryDate = DateTime.UtcNow.AddDays(-3), GiveawayId = giveaway.Id }
-                };
-                await context.Participants.AddRangeAsync(participants);
-                await context.SaveChangesAsync();
-
-                // Set winner
-                giveaway.WinnerParticipantId = participants[1].Id;
-                await context.SaveChangesAsync();
-                logger.LogInformation("Seeded Giveaways and Participants.");
+                // No seed participants – list shows only real users who register via the app
+                logger.LogInformation("Seeded Giveaways (no seed participants).");
             }
         }
 
