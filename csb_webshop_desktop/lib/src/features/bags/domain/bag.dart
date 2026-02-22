@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 class Bag {
   const Bag({
     required this.id,
@@ -37,7 +40,7 @@ class Bag {
       averageRating: _toNullableDouble(json['AverageRating'] ?? json['averageRating']),
       code: (json['Code'] ?? json['code'])?.toString(),
       bagTypeId: _toNullableInt(json['BagTypeID'] ?? json['bagTypeID']),
-      imageBase64: (json['Image'] ?? json['image']) is String ? (json['Image'] ?? json['image']) as String : null,
+      imageBase64: _imageBase64FromJson(json['Image'] ?? json['image']),
     );
   }
 
@@ -61,6 +64,24 @@ class Bag {
     if (value == null) return null;
     if (value is int) return value;
     return int.tryParse(value.toString());
+  }
+
+  /// Backend može slati Image kao base64 string ili kao niz bajtova (JSON array).
+  static String? _imageBase64FromJson(dynamic value) {
+    if (value == null) return null;
+    if (value is String && value.isNotEmpty) return value;
+    if (value is List) {
+      try {
+        final list = value
+            .map<int>((e) => (e is num) ? e.toInt() : int.tryParse(e.toString()) ?? 0)
+            .toList();
+        if (list.isEmpty) return null;
+        return base64Encode(Uint8List.fromList(list));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }
 
