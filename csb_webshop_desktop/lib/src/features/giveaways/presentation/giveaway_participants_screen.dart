@@ -131,7 +131,7 @@ class _GiveawayParticipantsScreenState extends ConsumerState<GiveawayParticipant
                     ),
                   ),
                 ),
-              );
+              )
             ),
           ],
         ),
