@@ -247,7 +247,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
           
           // Main heading
           Text(
-            'Do you want to be a winner?',
+            'Želiš li biti dobitnik?',
             style: textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -255,7 +255,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Register here!',
+            'Registriraj se ovdje!',
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.primary,
@@ -457,7 +457,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
                         Icon(Icons.send, size: 20),
                         SizedBox(width: 12),
                         Text(
-                          'Submit',
+                          'Prijavi se',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

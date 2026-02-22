@@ -163,7 +163,7 @@ class _BuyerForYouSection extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Products recommended just for you based on your favorites',
+              'Proizvodi preporučeni za vas',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -209,11 +209,11 @@ class _BuyerForYouSection extends ConsumerWidget {
                     final String title;
                     final String subtitle;
                     if (hasAnyFavorites) {
-                      title = 'No recommendations yet';
+                      title = 'Preporuke još nisu dostupne';
                       subtitle =
-                          'We\'re still preparing your recommendations based on your favorites. Check back soon!';
+                          'Još uvijek pripremamo preporuke. Provjerite uskoro!';
                     } else {
-                      title = 'No recommendations yet';
+                      title = 'Preporuke još nisu dostupne';
                       subtitle =
                           'Add some bags or belts to your favorites\nto get personalized recommendations!';
                     }
