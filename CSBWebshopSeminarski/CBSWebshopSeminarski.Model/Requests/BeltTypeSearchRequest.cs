@@ -1,7 +1,7 @@
-﻿namespace CBSWebshopSeminarski.Model.Requests
+namespace CBSWebshopSeminarski.Model.Requests
 {
     public class BeltTypeSearchRequest
     {
-        public string BeltName { get; set; }
+        public string? BeltName { get; set; }
     }
 }
