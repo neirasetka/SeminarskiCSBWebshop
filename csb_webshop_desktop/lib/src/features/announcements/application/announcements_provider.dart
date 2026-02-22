@@ -41,6 +41,29 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
       return null;
     }
   }
+
+  /// Updates an existing announcement and refreshes the list.
+  /// Returns the updated announcement on success, null on failure.
+  Future<Announcement?> updateAnnouncement(
+    int id, {
+    required String title,
+    required String body,
+    required AnnouncementType type,
+  }) async {
+    final AnnouncementsApi api = ref.read(announcementsApiProvider);
+    try {
+      final Announcement updated = await api.updateAnnouncement(
+        id,
+        title: title,
+        body: body,
+        type: type,
+      );
+      await refresh();
+      return updated;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 final AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>> announcementsListProvider =
