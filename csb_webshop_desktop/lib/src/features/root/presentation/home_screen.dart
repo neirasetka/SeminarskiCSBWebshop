@@ -8,6 +8,7 @@ import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../bags/domain/bag.dart';
 import '../../belts/domain/belt.dart';
+import '../../favorites/application/favorites_provider.dart';
 import '../../recommendations/application/recommendations_provider.dart';
 import '../../reports/application/bestselling_bags_provider.dart';
 import 'info_panel.dart';
@@ -125,6 +126,11 @@ class _BuyerForYouSection extends ConsumerWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final AsyncValue<Recommendations> recommendationsAsync = ref.watch(recommendationsProvider);
+    final AsyncValue<Set<int>> bagFavoritesAsync = ref.watch(favoritesProvider);
+    final AsyncValue<Set<int>> beltFavoritesAsync = ref.watch(beltFavoritesProvider);
+
+    final bool hasAnyFavorites = (bagFavoritesAsync.valueOrNull?.isNotEmpty ?? false) ||
+        (beltFavoritesAsync.valueOrNull?.isNotEmpty ?? false);
 
     return Card(
       elevation: 2,
@@ -200,48 +206,47 @@ class _BuyerForYouSection extends ConsumerWidget {
                 ),
                 data: (Recommendations recommendations) {
                   if (recommendations.isEmpty) {
+                    final String title;
+                    final String subtitle;
+                    if (hasAnyFavorites) {
+                      title = 'No recommendations yet';
+                      subtitle =
+                          'We\'re still preparing your recommendations based on your favorites. Check back soon!';
+                    } else {
+                      title = 'No recommendations yet';
+                      subtitle =
+                          'Add some bags or belts to your favorites\nto get personalized recommendations!';
+                    }
                     return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(
-                            Icons.favorite_border,
-                            size: 64,
-                            color: colorScheme.outline,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No recommendations yet',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add some bags or belts to your favorites\nto get personalized recommendations!',
-                            style: textTheme.bodyMedium?.copyWith(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              hasAnyFavorites ? Icons.hourglass_empty : Icons.favorite_border,
+                              size: 64,
                               color: colorScheme.outline,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              OutlinedButton.icon(
-                                onPressed: () => context.go('/torbice'),
-                                icon: const Icon(Icons.shopping_bag),
-                                label: const Text('Browse Bags'),
+                            const SizedBox(height: 16),
+                            Text(
+                              title,
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
                               ),
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed: () => context.go('/kaisevi'),
-                                icon: const Icon(Icons.straighten),
-                                label: const Text('Browse Belts'),
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                subtitle,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.outline,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
