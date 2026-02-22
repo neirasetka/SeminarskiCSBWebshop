@@ -23,13 +23,6 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
   bool _isSubmitting = false;
   bool _isRegistered = false;
 
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.microtask(() {
-      ref.read(giveawayDetailProvider.notifier).fetch(widget.giveawayId);
-    });
-  }
 
   @override
   void dispose() {
@@ -82,7 +75,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider);
+    final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider(widget.giveawayId));
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final Size screenSize = MediaQuery.of(context).size;
     final bool isWideScreen = screenSize.width > 900;

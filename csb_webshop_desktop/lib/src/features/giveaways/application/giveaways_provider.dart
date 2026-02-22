@@ -28,28 +28,14 @@ class GiveawaysListNotifier extends AutoDisposeAsyncNotifier<List<Giveaway>> {
 final AutoDisposeAsyncNotifierProvider<GiveawaysListNotifier, List<Giveaway>> giveawaysListProvider =
     AutoDisposeAsyncNotifierProvider<GiveawaysListNotifier, List<Giveaway>>(GiveawaysListNotifier.new);
 
-class GiveawayDetailNotifier extends AutoDisposeAsyncNotifier<Giveaway> {
-  int? _id;
-
-  @override
-  Future<Giveaway> build() async {
-    if (_id == null) throw UnimplementedError('Call fetch(id) first');
-    final GiveawaysApi api = ref.read(giveawaysApiProvider);
-    final List<Giveaway> list = await api.getGiveaways();
-    return list.firstWhere((Giveaway g) => g.id == _id);
-  }
-
-  Future<void> fetch(int id) async {
-    _id = id;
-    final GiveawaysApi api = ref.read(giveawaysApiProvider);
-    state = const AsyncLoading<Giveaway>();
-    final List<Giveaway> list = await api.getGiveaways();
-    state = AsyncData<Giveaway>(list.firstWhere((Giveaway g) => g.id == id));
-  }
-}
-
-final AutoDisposeAsyncNotifierProvider<GiveawayDetailNotifier, Giveaway> giveawayDetailProvider =
-    AutoDisposeAsyncNotifierProvider<GiveawayDetailNotifier, Giveaway>(GiveawayDetailNotifier.new);
+/// Giveaway detail by id. Use [giveawayDetailProvider(giveawayId)] so the first watch
+/// loads automatically without calling fetch first.
+final giveawayDetailProvider =
+    FutureProvider.autoDispose.family<Giveaway, int>((Ref ref, int id) async {
+  final GiveawaysApi api = ref.read(giveawaysApiProvider);
+  final List<Giveaway> list = await api.getGiveaways();
+  return list.firstWhere((Giveaway g) => g.id == id);
+});
 
 class ParticipantsNotifier extends AutoDisposeAsyncNotifier<List<GiveawayParticipant>> {
   int? _giveawayId;
