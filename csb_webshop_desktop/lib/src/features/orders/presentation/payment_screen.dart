@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
 import '../domain/order_models.dart';
@@ -111,11 +110,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
-          leading: buildBackButtonWithConfirmation(context),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Nazad',
+            onPressed: () => context.pop(),
+          ),
           title: const Text('Plaćanje narudžbe'),
           centerTitle: true,
           elevation: 0,

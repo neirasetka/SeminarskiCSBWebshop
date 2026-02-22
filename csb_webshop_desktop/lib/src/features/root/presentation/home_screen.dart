@@ -55,6 +55,7 @@ class HomeScreen extends ConsumerWidget {
                 _HomeHeader(
                   shortcuts: shortcuts,
                   isAdmin: isAdmin,
+                  isLoggedIn: isLoggedIn,
                   onLogout: (BuildContext ctx) async {
                     await ref.read(authControllerProvider.notifier).logout();
                     if (ctx.mounted) ctx.go('/login');
@@ -582,11 +583,13 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.shortcuts,
     required this.isAdmin,
+    required this.isLoggedIn,
     required this.onLogout,
   });
 
   final List<_NavShortcut> shortcuts;
   final bool isAdmin;
+  final bool isLoggedIn;
   final void Function(BuildContext context) onLogout;
 
   @override
@@ -598,7 +601,7 @@ class _HomeHeader extends StatelessWidget {
       runAlignment: WrapAlignment.center,
       children: <Widget>[
         ...shortcuts.map((shortcut) => _NavShortcutButton(shortcut: shortcut)),
-        if (isAdmin) _LogoutShortcutButton(onLogout: onLogout),
+        if (isLoggedIn) _LogoutShortcutButton(onLogout: onLogout),
       ],
     );
   }
