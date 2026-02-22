@@ -34,7 +34,7 @@ class HomeScreen extends ConsumerWidget {
       if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/checkout'),
       // Admin-only shortcuts
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Announcement', route: '/announcement/new'),
-      if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Lista učesnika giveawaya', route: '/giveaways/admin'),
+      if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Giveaway', route: '/giveaways/admin'),
       if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Reports', route: '/reports'),
     ];
 
