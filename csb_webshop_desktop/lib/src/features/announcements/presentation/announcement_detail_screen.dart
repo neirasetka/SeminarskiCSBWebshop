@@ -75,6 +75,22 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
               Text(a.title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               Text(a.body, style: Theme.of(context).textTheme.bodyMedium),
+              if (isAdmin) ...<Widget>[
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AnnouncementEditScreen(id: widget.id),
+                      ),
+                    ).then((_) {
+                      ref.read(announcementDetailProvider.notifier).fetch(widget.id);
+                    });
+                  },
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Uredi obavijest'),
+                ),
+              ],
             ],
           );
         },
