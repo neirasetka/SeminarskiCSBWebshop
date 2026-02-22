@@ -143,6 +143,14 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: 'giveaways/admin',
+          name: 'giveawaysAdmin',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            requiredRoles: <String>['Admin'],
+            child: GiveawaysListScreen(forAdmin: true),
+          ),
+        ),
+        GoRoute(
           path: 'announcement/new',
           name: 'announcementForm',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(

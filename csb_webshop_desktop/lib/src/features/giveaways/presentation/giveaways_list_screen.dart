@@ -7,6 +7,7 @@ import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 import '../../giveaways/domain/participant.dart';
 import '../../giveaways/data/giveaways_api.dart';
+import 'giveaway_participants_screen.dart';
 import 'giveaway_register_screen.dart';
 
 class GiveawaysListScreen extends ConsumerWidget {
@@ -152,22 +153,39 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
             if (!widget.forAdmin)
               _RegisterCard(giveawayId: widget.giveawayId, isActive: g.isActiveNow && !g.isClosed),
             if (widget.forAdmin) _AdminActions(giveawayId: widget.giveawayId, isClosed: g.isClosed),
-            const SizedBox(height: 16),
-            const Text('Prijavljeni (admin prikaz):'),
-            const SizedBox(height: 8),
-            participantsAsync.when(
-              data: (List<GiveawayParticipant> list) => Column(
-                children: list
-                    .map((GiveawayParticipant p) => ListTile(
-                          title: Text(p.name?.isNotEmpty == true ? p.name! : '(bez imena)'),
-                          subtitle: Text(p.emailOrMasked),
-                          trailing: Text(p.entryDate.toLocal().toString()),
-                        ))
-                    .toList(),
+            if (widget.forAdmin) ...<Widget>[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => GiveawayParticipantsScreen(
+                      giveawayId: widget.giveawayId,
+                      giveawayTitle: g.title,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.people),
+                label: const Text('Lista učesnika giveawaya'),
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object e, StackTrace st) => Text('Greška: $e'),
-            ),
+            ],
+            const SizedBox(height: 16),
+            if (widget.forAdmin) ...[
+              const Text('Prijavljeni (pregled):'),
+              const SizedBox(height: 8),
+              participantsAsync.when(
+                data: (List<GiveawayParticipant> list) => Column(
+                  children: list
+                      .map((GiveawayParticipant p) => ListTile(
+                            title: Text(p.name?.isNotEmpty == true ? p.name! : '(bez imena)'),
+                            subtitle: Text(p.emailOrMasked),
+                            trailing: Text(p.entryDate.toLocal().toString()),
+                          ))
+                      .toList(),
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (Object e, StackTrace st) => Text('Greška: $e'),
+              ),
+            ],
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
