@@ -225,7 +225,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 
