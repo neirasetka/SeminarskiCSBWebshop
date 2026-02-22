@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -19,19 +19,20 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public override async Task<List<Belt>> Get(BeltSearchRequest request)
         {
-            var query = _context.Belts.Include(i => i.User).AsQueryable().OrderBy(c => c.BeltName);
+            request ??= new BeltSearchRequest();
+            var query = _context.Belts.Include(i => i.User).Include(i => i.BeltType).AsQueryable().OrderBy(c => c.BeltName);
 
             if (request.UserID != 0)
             {
                 query = query.Where(x => x.UserID == request.UserID).Include(i => i.User).OrderBy(c => c.BeltName);
             }
 
-            if (request?.BeltTypeID.HasValue == true)
+            if (request.BeltTypeID.HasValue)
             {
-                query = query.Where(x => x.BeltTypeID == request.BeltTypeID).Include(i => i.BeltTypeID).Include(i => i.User).OrderBy(c => c.BeltTypeID);
+                query = query.Where(x => x.BeltTypeID == request.BeltTypeID).Include(i => i.BeltType).Include(i => i.User).OrderBy(c => c.BeltTypeID);
             }
 
-            if (!string.IsNullOrWhiteSpace(request?.BeltName))
+            if (!string.IsNullOrWhiteSpace(request.BeltName))
             {
                 query = query.Where(x => x.BeltName.Contains(request.BeltName)).Include(i => i.User).OrderBy(c => c.BeltName);
             }

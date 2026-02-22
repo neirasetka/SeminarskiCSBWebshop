@@ -126,7 +126,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Torbice Shop',
+            tooltip: 'Torbice',
             icon: const Icon(Icons.shopping_bag),
             onPressed: () => context.go('/torbice'),
           ),

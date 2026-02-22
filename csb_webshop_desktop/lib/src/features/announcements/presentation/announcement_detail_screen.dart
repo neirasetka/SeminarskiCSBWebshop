@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
@@ -28,10 +27,13 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
     final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Detalji obavijesti'),
         actions: <Widget>[
           if (isAdmin)
@@ -95,7 +97,6 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
           ),
         ),
       ),
-    ),
     );
   }
 

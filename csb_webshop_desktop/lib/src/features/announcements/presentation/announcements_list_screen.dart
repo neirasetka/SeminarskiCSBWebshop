@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 import 'announcement_detail_screen.dart';
@@ -12,10 +11,13 @@ class AnnouncementsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Announcement>> announcementsAsync = ref.watch(announcementsListProvider);
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Najave i obavijesti'),
       ),
       body: announcementsAsync.when(
@@ -61,7 +63,6 @@ class AnnouncementsListScreen extends ConsumerWidget {
           ),
         ),
       ),
-    ),
     );
   }
 
