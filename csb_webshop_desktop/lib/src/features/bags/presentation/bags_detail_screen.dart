@@ -10,6 +10,7 @@ import '../domain/bag.dart';
 import '../domain/bag_type.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
+import 'bag_form_screen.dart';
 
 class BagDetailScreen extends ConsumerStatefulWidget {
   const BagDetailScreen({super.key, required this.id});
@@ -29,6 +30,17 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(bagDetailProvider.notifier).fetch(widget.id);
     });
+  }
+
+  Future<void> _openEditBag(Bag bag) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BagFormScreen(existing: bag),
+      ),
+    );
+    if (saved == true && mounted) {
+      ref.read(bagDetailProvider.notifier).fetch(widget.id);
+    }
   }
 
   @override
@@ -59,6 +71,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
               onQuantityChanged: (int qty) => setState(() => _quantity = qty),
               onToggleFavorite: () =>
                   ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+              onEdit: isAdmin ? () => _openEditBag(bag) : null,
               onAddToCart: () async {
                 for (int i = 0; i < _quantity; i++) {
                   await ref
@@ -183,6 +196,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
     required this.onAddToCart,
     required this.onOutfitIdea,
     required this.onBack,
+    this.onEdit,
   });
 
   final Bag bag;
@@ -195,6 +209,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -222,6 +237,19 @@ class _CustomerBagDetailBody extends StatelessWidget {
             onPressed: onBack,
           ),
           actions: <Widget>[
+            if (onEdit != null)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.edit, color: colorScheme.onSurface),
+                ),
+                onPressed: onEdit,
+                tooltip: 'Uredi torbu (slika, podaci)',
+              ),
             if (showFavorite)
               IconButton(
                 icon: Container(

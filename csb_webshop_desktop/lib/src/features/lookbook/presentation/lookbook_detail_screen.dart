@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
+import '../../bags/presentation/bag_form_screen.dart';
 import '../../outfit_ideas/application/outfit_ideas_provider.dart';
 import '../../outfit_ideas/domain/outfit_idea.dart';
 
@@ -39,6 +41,17 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
       setState(() {
         _isInitialized = true;
       });
+    }
+  }
+
+  Future<void> _openEditBag(Bag bag) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BagFormScreen(existing: bag),
+      ),
+    );
+    if (saved == true && mounted) {
+      await _loadData();
     }
   }
 
@@ -89,6 +102,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final OutfitIdeasListState outfitState = ref.watch(outfitIdeasForBagProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
 
     return BackConfirmationWrapper(
       child: Scaffold(
@@ -100,6 +114,9 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
                   outfitState: outfitState,
                   onImageTap: _showImagePreview,
                   onRefresh: _loadData,
+                  isAdmin: isAdmin,
+                  onEditBag: () => _openEditBag(bag),
+                  onOpenOutfitIdea: () => context.push('/bags/${bag.id}/outfit-idea'),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (Object error, StackTrace stackTrace) => Center(
@@ -138,12 +155,18 @@ class _LookbookDetailContent extends StatelessWidget {
     required this.outfitState,
     required this.onImageTap,
     required this.onRefresh,
+    this.isAdmin = false,
+    this.onEditBag,
+    this.onOpenOutfitIdea,
   });
 
   final Bag bag;
   final OutfitIdeasListState outfitState;
   final void Function(OutfitIdeaImage) onImageTap;
   final VoidCallback onRefresh;
+  final bool isAdmin;
+  final VoidCallback? onEditBag;
+  final VoidCallback? onOpenOutfitIdea;
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +183,20 @@ class _LookbookDetailContent extends StatelessWidget {
           leading: Builder(
             builder: (BuildContext context) => buildBackButtonWithConfirmation(context),
           ),
+          actions: <Widget>[
+            if (isAdmin && onEditBag != null)
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.white),
+                onPressed: onEditBag,
+                tooltip: 'Uredi torbu (slika, podaci)',
+              ),
+            if (isAdmin && onOpenOutfitIdea != null)
+              IconButton(
+                icon: const Icon(Icons.add_photo_alternate, color: Colors.white),
+                onPressed: onOpenOutfitIdea,
+                tooltip: 'Outfit ideja – dodaj slike',
+              ),
+          ],
           flexibleSpace: FlexibleSpaceBar(
             title: Text(
               bag.name,

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../bags/application/bags_provider.dart';
@@ -237,16 +238,18 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       ),
       body: !_isInitialized
           ? const Center(child: CircularProgressIndicator())
-          : _buildBody(bagAsync, outfitState),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickAndAddImages,
-        tooltip: 'Dodaj slike',
-        child: const Icon(Icons.add),
-      ),
+          : _buildBody(bagAsync, outfitState, isAdmin),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: _pickAndAddImages,
+              tooltip: 'Dodaj slike',
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
-  Widget _buildBody(AsyncValue<Bag> bagAsync, OutfitIdeaState outfitState) {
+  Widget _buildBody(AsyncValue<Bag> bagAsync, OutfitIdeaState outfitState, bool isAdmin) {
     if (outfitState.error != null) {
       return Center(
         child: Padding(
@@ -280,18 +283,18 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         // Left side - Bag info
         SizedBox(
           width: 300,
-          child: _buildBagInfo(bagAsync),
+          child: _buildBagInfo(bagAsync, isAdmin),
         ),
         const VerticalDivider(width: 1),
         // Right side - Images grid
         Expanded(
-          child: _buildImagesGrid(outfitState),
+          child: _buildImagesGrid(outfitState, isAdmin),
         ),
       ],
     );
   }
 
-  Widget _buildBagInfo(AsyncValue<Bag> bagAsync) {
+  Widget _buildBagInfo(AsyncValue<Bag> bagAsync, bool isAdmin) {
     return bagAsync.when(
       data: (Bag bag) => SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -361,8 +364,10 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Dodajte slike koje vas inspirišu za kombiniranje ove torbice. '
-              'Kliknite na + dugme da dodate nove slike.',
+              isAdmin
+                  ? 'Dodajte slike koje inspirišu za kombiniranje ove torbice. '
+                    'Kliknite na + dugme da dodate nove slike.'
+                  : 'Slike inspiracije za kombiniranje ove torbice.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey.shade600,
                   ),
@@ -380,7 +385,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     );
   }
 
-  Widget _buildImagesGrid(OutfitIdeaState outfitState) {
+  Widget _buildImagesGrid(OutfitIdeaState outfitState, bool isAdmin) {
     final List<OutfitIdeaImage> images = outfitState.outfitIdea?.images ?? <OutfitIdeaImage>[];
 
     if (images.isEmpty) {
@@ -401,20 +406,22 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
                 color: Colors.grey.shade600,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Dodajte slike pritiskom na + dugme',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
+            if (isAdmin) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                'Dodajte slike pritiskom na + dugme',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _pickAndAddImages,
-              icon: const Icon(Icons.add_photo_alternate),
-              label: const Text('Dodaj slike'),
-            ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _pickAndAddImages,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: const Text('Dodaj slike'),
+              ),
+            ],
           ],
         ),
       );
@@ -433,7 +440,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         final OutfitIdeaImage image = images[index];
         return _ImageCard(
           image: image,
-          onRemove: () => _removeImage(image.outfitIdeaImageId),
+          onRemove: isAdmin ? () => _removeImage(image.outfitIdeaImageId) : null,
           onTap: () => _showImagePreview(image),
         );
       },
@@ -444,12 +451,12 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 class _ImageCard extends StatelessWidget {
   const _ImageCard({
     required this.image,
-    required this.onRemove,
     required this.onTap,
+    this.onRemove,
   });
 
   final OutfitIdeaImage image;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
   final VoidCallback onTap;
 
   @override
@@ -472,18 +479,19 @@ class _ImageCard extends StatelessWidget {
                   )
                 : _buildPlaceholder(),
           ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.8),
+          if (onRemove != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.white),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withOpacity(0.8),
+                ),
+                onPressed: onRemove,
+                tooltip: 'Ukloni sliku',
               ),
-              onPressed: onRemove,
-              tooltip: 'Ukloni sliku',
             ),
-          ),
           if (image.caption != null && image.caption!.isNotEmpty)
             Positioned(
               bottom: 0,

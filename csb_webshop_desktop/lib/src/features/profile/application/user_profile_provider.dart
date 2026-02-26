@@ -31,19 +31,21 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
     state = await AsyncValue.guard(_load);
   }
 
-  Future<void> updateProfile({required String firstName, required String lastName, String? avatarUrl}) async {
+  Future<void> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String userName,
+    String? imageBase64,
+  }) async {
     final UserProfile? current = state.value;
-    // Optimistic update
-    if (current != null) {
-      state = AsyncData<UserProfile?>(
-        current.copyWith(firstName: firstName, lastName: lastName, avatarUrl: avatarUrl),
-      );
-    }
     try {
       final UserProfile updated = await _api.updateMe(
         firstName: firstName,
         lastName: lastName,
-        avatarUrl: avatarUrl,
+        email: email,
+        userName: userName,
+        imageBase64: imageBase64,
       );
       state = AsyncData<UserProfile?>(updated);
     } catch (e, st) {

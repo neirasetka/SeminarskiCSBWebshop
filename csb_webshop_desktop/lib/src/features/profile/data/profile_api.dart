@@ -31,7 +31,13 @@ class ProfileApi {
     throw Exception('Failed to load profile: ${response.statusCode}');
   }
 
-  Future<UserProfile> updateMe({required String firstName, required String lastName, String? avatarUrl}) async {
+  Future<UserProfile> updateMe({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String userName,
+    String? imageBase64,
+  }) async {
     final int? userId = await _getUserIdFromToken();
     if (userId == null) {
       throw Exception('No valid token');
@@ -39,10 +45,11 @@ class ProfileApi {
     final Map<String, dynamic> body = <String, dynamic>{
       'Name': firstName,
       'Surname': lastName,
-      // Email is required by DTO but we do not change it here; backend likely ignores nulls
+      'Email': email,
+      'UserName': userName,
     };
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      // Backend expects byte[] Image; if we only have URL, skip updating image
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      body['Image'] = imageBase64;
     }
     final http.Response response = await _apiClient.put(
       '$_usersPath/$userId',

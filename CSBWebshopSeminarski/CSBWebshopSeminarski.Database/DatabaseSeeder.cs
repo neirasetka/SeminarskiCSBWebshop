@@ -7,6 +7,12 @@ namespace CSBWebshopSeminarski.Database
 {
     public static class DatabaseSeeder
     {
+        /// <summary>Minimal 1x1 PNG (siva piksel) da se u listama i detaljima prikaže slika umjesto "Slika nije dostupna".</summary>
+        private static byte[] GetPlaceholderImageBytes()
+        {
+            const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+            return Convert.FromBase64String(base64);
+        }
         public static async Task SeedAllAsync(CocoSunBagsWebshopDbContext context, ILogger logger)
         {
             // Ensure base reference data first
@@ -126,7 +132,7 @@ namespace CSBWebshopSeminarski.Database
                 Description = "Spacious everyday tote bag.",
                 Code = "BAG-001",
                 Price = 129.99f,
-                Image = Array.Empty<byte>(),
+                Image = GetPlaceholderImageBytes(),
                 UserID = ownerUserId
             };
             await context.Bags.AddAsync(bag);
@@ -150,7 +156,7 @@ namespace CSBWebshopSeminarski.Database
                 Description = "Genuine leather belt with metal buckle.",
                 Code = "BELT-001",
                 Price = 49.99f,
-                Image = Array.Empty<byte>(),
+                Image = GetPlaceholderImageBytes(),
                 UserID = ownerUserId
             };
             await context.Belts.AddAsync(belt);
@@ -331,7 +337,7 @@ namespace CSBWebshopSeminarski.Database
                         SortOrder = 1,
                         IsFeatured = true,
                         CreatedAt = DateTime.UtcNow,
-                        Image = Array.Empty<byte>(),
+                        Image = GetPlaceholderImageBytes(),
                         BagID = bag.BagID,
                         Occasion = OccasionType.Weekend,
                         Style = StyleType.Minimalist,
@@ -345,7 +351,7 @@ namespace CSBWebshopSeminarski.Database
                         SortOrder = 2,
                         IsFeatured = false,
                         CreatedAt = DateTime.UtcNow,
-                        Image = Array.Empty<byte>(),
+                        Image = GetPlaceholderImageBytes(),
                         BeltID = belt.BeltID,
                         Occasion = OccasionType.Work,
                         Style = StyleType.Classic,

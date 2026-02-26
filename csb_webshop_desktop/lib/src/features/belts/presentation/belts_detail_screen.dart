@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../application/belts_provider.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt.dart';
 import '../domain/belt_type.dart';
 import '../../orders/application/cart_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
+import 'belt_form_screen.dart';
 
 class BeltDetailScreen extends ConsumerStatefulWidget {
   const BeltDetailScreen({super.key, required this.id});
@@ -30,10 +32,22 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
     });
   }
 
+  Future<void> _openEditBelt(Belt belt) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BeltFormScreen(existing: belt),
+      ),
+    );
+    if (saved == true && mounted) {
+      ref.read(beltDetailProvider.notifier).fetch(widget.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
     final AsyncValue<List<BeltType>> beltTypesAsync = ref.watch(beltTypesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return BackConfirmationWrapper(
@@ -72,6 +86,8 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                 }
               },
               onBack: () => Navigator.of(context).pop(),
+              isAdmin: isAdmin,
+              onEdit: isAdmin ? () => _openEditBelt(belt) : null,
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -176,6 +192,8 @@ class _CustomerBeltDetailBody extends StatelessWidget {
     required this.onAddToCart,
     required this.onBuyNow,
     required this.onBack,
+    this.isAdmin = false,
+    this.onEdit,
   });
 
   final Belt belt;
@@ -185,6 +203,8 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
   final VoidCallback onBack;
+  final bool isAdmin;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -210,6 +230,21 @@ class _CustomerBeltDetailBody extends StatelessWidget {
             ),
             onPressed: onBack,
           ),
+          actions: <Widget>[
+            if (isAdmin && onEdit != null)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.edit, color: colorScheme.onSurface),
+                ),
+                onPressed: onEdit,
+                tooltip: 'Uredi kaiš (slika, podaci)',
+              ),
+          ],
         ),
         // Content
         SliverToBoxAdapter(
