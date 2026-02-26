@@ -215,6 +215,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(
