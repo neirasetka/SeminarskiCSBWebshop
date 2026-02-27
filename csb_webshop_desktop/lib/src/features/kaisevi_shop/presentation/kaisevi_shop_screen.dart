@@ -744,6 +744,20 @@ class _ProductImage extends StatelessWidget {
       return placeholder;
     }
 
+    // Support data URLs (base64 image) in addition to regular network URLs.
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+        );
+      } catch (_) {
+        return placeholder;
+      }
+    }
+
     return Image.network(
       imageUrl!,
       fit: BoxFit.cover,

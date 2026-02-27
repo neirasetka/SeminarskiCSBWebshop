@@ -416,7 +416,45 @@ class _ProductImageGallery extends StatelessWidget {
       return placeholder;
     }
 
-    return Container(
+    // Build base image widget (network or data URL).
+    Widget baseImage;
+
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        baseImage = Image.memory(
+          bytes,
+          height: 450,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      } catch (_) {
+        return placeholder;
+      }
+    } else {
+      baseImage = Image.network(
+        imageUrl!,
+        height: 450,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder:
+            (BuildContext context, Widget child, ImageChunkEvent? progress) {
+          if (progress == null) return child;
+          return Container(
+            height: 450,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    final Widget imageWithDecoration = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
@@ -429,27 +467,36 @@ class _ProductImageGallery extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: Image.network(
-          imageUrl!,
-          height: 450,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => placeholder,
-          loadingBuilder:
-              (BuildContext context, Widget child, ImageChunkEvent? progress) {
-            if (progress == null) return child;
-            return Container(
-              height: 450,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          },
-        ),
+        child: baseImage,
       ),
     );
+
+    // If admin can edit, overlay a small "Uredi" button on the image.
+    if (onAddImage != null) {
+      return Stack(
+        children: <Widget>[
+          imageWithDecoration,
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                backgroundColor: colorScheme.surface.withValues(alpha: 0.9),
+              ),
+              onPressed: onAddImage,
+              icon: const Icon(Icons.edit, size: 18),
+              label: const Text(
+                'Uredi',
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return imageWithDecoration;
   }
 }
 
