@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/back_confirmation_dialog.dart';
 import '../application/bag_types_provider.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
