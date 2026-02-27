@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -135,7 +138,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                       final Bag bag = bags[index];
                       final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
                       return ListTile(
-                        leading: _BagThumbnail(imageUrl: bag.imageUrl),
+                        leading: _BagThumbnail(imageUrl: bag.displayImageUrl),
                         title: Text(bag.name),
                         subtitle: Text(
                           bag.description,
@@ -283,6 +286,26 @@ class _BagThumbnail extends StatelessWidget {
       child: const Icon(Icons.shopping_bag),
     );
     if (imageUrl == null || imageUrl!.isEmpty) return placeholder;
+
+    // If the URL is a data URL (base64), render it with Image.memory.
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(
+            bytes,
+            width: 56,
+            height: 56,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (_) {
+        return placeholder;
+      }
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Image.network(

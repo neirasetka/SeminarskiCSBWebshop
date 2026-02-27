@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -438,6 +441,37 @@ class _ProductImageGallery extends StatelessWidget {
 
     if (noImage) {
       return placeholder;
+    }
+
+    // If we received a data URL (base64 image), render it with Image.memory.
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.memory(
+              bytes,
+              height: 450,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      } catch (_) {
+        return placeholder;
+      }
     }
 
     return Container(

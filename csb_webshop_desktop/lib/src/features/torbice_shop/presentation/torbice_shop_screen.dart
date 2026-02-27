@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -710,6 +713,20 @@ class _ProductImage extends StatelessWidget {
 
     if (imageUrl == null || imageUrl!.isEmpty) {
       return placeholder;
+    }
+
+    // Support data URLs (base64 image) in addition to regular network URLs.
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+        );
+      } catch (_) {
+        return placeholder;
+      }
     }
 
     return Image.network(
