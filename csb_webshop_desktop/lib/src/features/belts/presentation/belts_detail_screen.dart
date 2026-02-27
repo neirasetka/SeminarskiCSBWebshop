@@ -261,6 +261,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
                     onBuyNow: onBuyNow,
+                    onEdit: onEdit,
                   )
                 : _NarrowLayout(
                     belt: belt,
@@ -269,6 +270,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
                     onBuyNow: onBuyNow,
+                    onEdit: onEdit,
                   ),
           ),
         ),
@@ -285,6 +287,7 @@ class _WideLayout extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    this.onEdit,
   });
 
   final Belt belt;
@@ -293,6 +296,7 @@ class _WideLayout extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +306,10 @@ class _WideLayout extends StatelessWidget {
         // Left side - Image
         Expanded(
           flex: 5,
-          child: _ProductImageGallery(imageUrl: belt.displayImageUrl),
+          child: _ProductImageGallery(
+            imageUrl: belt.displayImageUrl,
+            onAddImage: onEdit,
+          ),
         ),
         const SizedBox(width: 48),
         // Right side - Details
@@ -330,6 +337,7 @@ class _NarrowLayout extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    this.onEdit,
   });
 
   final Belt belt;
@@ -338,13 +346,17 @@ class _NarrowLayout extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _ProductImageGallery(imageUrl: belt.displayImageUrl),
+        _ProductImageGallery(
+          imageUrl: belt.displayImageUrl,
+          onAddImage: onEdit,
+        ),
         const SizedBox(height: 24),
         _ProductDetails(
           belt: belt,
@@ -360,14 +372,17 @@ class _NarrowLayout extends StatelessWidget {
 }
 
 class _ProductImageGallery extends StatelessWidget {
-  const _ProductImageGallery({this.imageUrl});
+  const _ProductImageGallery({this.imageUrl, this.onAddImage});
 
   final String? imageUrl;
+  /// Kad je admin i nema slike, poziv ovog callbacka otvara formu za uređivanje (gdje se može dodati slika).
+  final VoidCallback? onAddImage;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    final bool noImage = imageUrl == null || imageUrl!.isEmpty;
     final Widget placeholder = Container(
       height: 450,
       decoration: BoxDecoration(
@@ -384,12 +399,20 @@ class _ProductImageGallery extends StatelessWidget {
               'Slika nije dostupna',
               style: TextStyle(color: colorScheme.outline),
             ),
+            if (onAddImage != null) ...<Widget>[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onAddImage,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: const Text('Dodaj sliku'),
+              ),
+            ],
           ],
         ),
       ),
     );
 
-    if (imageUrl == null || imageUrl!.isEmpty) {
+    if (noImage) {
       return placeholder;
     }
 
