@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -44,6 +44,17 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _mapper.Map<Bags>(request);
 
+            // Normalize optional foreign keys coming from the client.
+            // Frontend sends 0 / omits values to mean "no type / no user".
+            if (entity.BagTypeID.HasValue && entity.BagTypeID.Value == 0)
+            {
+                entity.BagTypeID = null;
+            }
+            if (entity.UserID.HasValue && entity.UserID.Value == 0)
+            {
+                entity.UserID = null;
+            }
+
             _context.Set<Bags>().Add(entity);
             await _context.SaveChangesAsync();
 
@@ -52,17 +63,44 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<Bag> Update(int ID, BagUpsertRequest request)
         {
-            var bag = await _context.Bags.FindAsync(ID);
-            if (await _context.Bags.AnyAsync(i => i.BagName == request.BagName) && request.BagName != bag.BagName)
+            var entity = await _context.Bags.FindAsync(ID);
+            if (entity == null)
+            {
+                throw new Exception($"Bag with ID {ID} not found.");
+            }
+
+            // Enforce unique name across bags (excluding the current one).
+            if (await _context.Bags.AnyAsync(i => i.BagName == request.BagName && i.BagID != ID))
             {
                 throw new Exception("Bag already exists!");
             }
 
-            var entity = _context.Set<Bags>().Find(ID);
-            _context.Set<Bags>().Attach(entity);
-            _context.Set<Bags>().Update(entity);
+            // Update scalar fields directly to avoid overwriting important values with defaults/nulls.
+            entity.BagName = request.BagName;
+            entity.Code = request.Code;
+            entity.Price = request.Price;
+            if (!string.IsNullOrWhiteSpace(request.Description))
+            {
+                entity.Description = request.Description;
+            }
 
-            _mapper.Map(request, entity);
+            // BagType is optional – treat 0 as "no type".
+            if (request.BagTypeID == 0)
+            {
+                entity.BagTypeID = null;
+            }
+            else
+            {
+                entity.BagTypeID = request.BagTypeID;
+            }
+
+            // Only overwrite the image if the client actually sent one.
+            if (request.Image != null && request.Image.Length > 0)
+            {
+                entity.Image = request.Image;
+            }
+
+            // Do NOT change UserID here – keep the existing owner.
 
             await _context.SaveChangesAsync();
 
