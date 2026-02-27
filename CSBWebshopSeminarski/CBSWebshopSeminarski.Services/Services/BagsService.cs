@@ -55,6 +55,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 entity.UserID = null;
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Image))
+                entity.Image = Convert.FromBase64String(request.Image);
+
             _context.Set<Bags>().Add(entity);
             await _context.SaveChangesAsync();
 
@@ -94,10 +97,10 @@ namespace CBSWebshopSeminarski.Services.Services
                 entity.BagTypeID = request.BagTypeID;
             }
 
-            // Only overwrite the image if the client actually sent one.
-            if (request.Image != null && request.Image.Length > 0)
+            // Only overwrite the image if the client actually sent one (base64 string).
+            if (!string.IsNullOrWhiteSpace(request.Image))
             {
-                entity.Image = request.Image;
+                entity.Image = Convert.FromBase64String(request.Image);
             }
 
             // Do NOT change UserID here – keep the existing owner.

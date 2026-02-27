@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -12,7 +12,8 @@ namespace CBSWebshopSeminarski.Model.Requests
         public float Price { get; set; }
         public string Description { get; set; }
         public int BeltTypeID { get; set; }
-        public byte[] Image { get; set; }
+        /// <summary>Base64-encoded image data (e.g. from JSON).</summary>
+        public string Image { get; set; }
         public int UserID { get; set; }
     }
 }

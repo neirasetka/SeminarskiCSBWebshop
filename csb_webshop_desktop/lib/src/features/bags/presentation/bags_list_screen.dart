@@ -153,18 +153,19 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                               tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
                               onPressed: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add_shopping_cart),
-                              tooltip: 'Dodaj u korpu',
-                              onPressed: () async {
-                                await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Dodano u korpu')),
-                                  );
-                                }
-                              },
-                            ),
+                            if (!isAdmin)
+                              IconButton(
+                                icon: const Icon(Icons.add_shopping_cart),
+                                tooltip: 'Dodaj u korpu',
+                                onPressed: () async {
+                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Dodano u korpu')),
+                                    );
+                                  }
+                                },
+                              ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,

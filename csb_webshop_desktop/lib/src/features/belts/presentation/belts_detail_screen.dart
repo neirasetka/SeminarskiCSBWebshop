@@ -66,6 +66,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
             return _CustomerBeltDetailBody(
               belt: belt,
               beltTypeName: beltTypeName,
+              showQuantityAndCart: !isAdmin,
               quantity: _quantity,
               onQuantityChanged: (int qty) => setState(() => _quantity = qty),
               onAddToCart: () async {
@@ -190,6 +191,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   const _CustomerBeltDetailBody({
     required this.belt,
     required this.beltTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -201,6 +203,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
 
   final Belt belt;
   final String? beltTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -260,6 +263,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                 ? _WideLayout(
                     belt: belt,
                     beltTypeName: beltTypeName,
+                    showQuantityAndCart: showQuantityAndCart,
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
@@ -269,6 +273,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                 : _NarrowLayout(
                     belt: belt,
                     beltTypeName: beltTypeName,
+                    showQuantityAndCart: showQuantityAndCart,
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
@@ -286,6 +291,7 @@ class _WideLayout extends StatelessWidget {
   const _WideLayout({
     required this.belt,
     required this.beltTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -295,6 +301,7 @@ class _WideLayout extends StatelessWidget {
 
   final Belt belt;
   final String? beltTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -321,6 +328,7 @@ class _WideLayout extends StatelessWidget {
           child: _ProductDetails(
             belt: belt,
             beltTypeName: beltTypeName,
+            showQuantityAndCart: showQuantityAndCart,
             quantity: quantity,
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
@@ -336,6 +344,7 @@ class _NarrowLayout extends StatelessWidget {
   const _NarrowLayout({
     required this.belt,
     required this.beltTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -345,6 +354,7 @@ class _NarrowLayout extends StatelessWidget {
 
   final Belt belt;
   final String? beltTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -364,6 +374,7 @@ class _NarrowLayout extends StatelessWidget {
         _ProductDetails(
           belt: belt,
           beltTypeName: beltTypeName,
+          showQuantityAndCart: showQuantityAndCart,
           quantity: quantity,
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
@@ -507,6 +518,7 @@ class _ProductDetails extends StatelessWidget {
   const _ProductDetails({
     required this.belt,
     required this.beltTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -515,6 +527,7 @@ class _ProductDetails extends StatelessWidget {
 
   final Belt belt;
   final String? beltTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -647,84 +660,84 @@ class _ProductDetails extends StatelessWidget {
         ),
         const SizedBox(height: 32),
 
-        // Quantity selector
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
+        // Quantity selector (hidden for admin)
+        if (showQuantityAndCart)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  'Količina:',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                _QuantitySelector(
+                  quantity: quantity,
+                  onChanged: onQuantityChanged,
+                ),
+              ],
+            ),
           ),
-          child: Row(
+        if (showQuantityAndCart) const SizedBox(height: 24),
+
+        // Action buttons row (hidden for admin)
+        if (showQuantityAndCart)
+          Row(
             children: <Widget>[
-              Text(
-                'Količina:',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    onPressed: onAddToCart,
+                    icon: const Icon(Icons.add_shopping_cart, size: 22),
+                    label: const Text(
+                      'Dodaj u korpu',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(color: colorScheme.primary, width: 2),
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
-              _QuantitySelector(
-                quantity: quantity,
-                onChanged: onQuantityChanged,
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: FilledButton.icon(
+                    onPressed: onBuyNow,
+                    icon: const Icon(Icons.shopping_bag, size: 22),
+                    label: Text(
+                      'Naruči  ${(belt.price * quantity).toStringAsFixed(2)} KM',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 24),
-
-        // Action buttons row
-        Row(
-          children: <Widget>[
-            // Add to cart button
-            Expanded(
-              child: SizedBox(
-                height: 56,
-                child: OutlinedButton.icon(
-                  onPressed: onAddToCart,
-                  icon: const Icon(Icons.add_shopping_cart, size: 22),
-                  label: const Text(
-                    'Dodaj u korpu',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    side: BorderSide(color: colorScheme.primary, width: 2),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Buy now button
-            Expanded(
-              child: SizedBox(
-                height: 56,
-                child: FilledButton.icon(
-                  onPressed: onBuyNow,
-                  icon: const Icon(Icons.shopping_bag, size: 22),
-                  label: Text(
-                    'Naruči  ${(belt.price * quantity).toStringAsFixed(2)} KM',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
+        if (showQuantityAndCart) const SizedBox(height: 32),
       ],
     );
   }

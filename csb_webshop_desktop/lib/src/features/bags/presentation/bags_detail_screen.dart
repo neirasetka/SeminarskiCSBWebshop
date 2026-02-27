@@ -70,6 +70,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
               bagTypeName: bagTypeName,
               isFavorite: isFav,
               showFavorite: !isAdmin,
+              showQuantityAndCart: !isAdmin,
               quantity: _quantity,
               onQuantityChanged: (int qty) => setState(() => _quantity = qty),
               onToggleFavorite: () =>
@@ -193,6 +194,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
     required this.bagTypeName,
     required this.isFavorite,
     required this.showFavorite,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onToggleFavorite,
@@ -206,6 +208,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
   final String? bagTypeName;
   final bool isFavorite;
   final bool showFavorite;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onToggleFavorite;
@@ -283,6 +286,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
                 ? _WideLayout(
                     bag: bag,
                     bagTypeName: bagTypeName,
+                    showQuantityAndCart: showQuantityAndCart,
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
@@ -292,6 +296,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
                 : _NarrowLayout(
                     bag: bag,
                     bagTypeName: bagTypeName,
+                    showQuantityAndCart: showQuantityAndCart,
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
@@ -309,6 +314,7 @@ class _WideLayout extends StatelessWidget {
   const _WideLayout({
     required this.bag,
     required this.bagTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -318,6 +324,7 @@ class _WideLayout extends StatelessWidget {
 
   final Bag bag;
   final String? bagTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -344,6 +351,7 @@ class _WideLayout extends StatelessWidget {
           child: _ProductDetails(
             bag: bag,
             bagTypeName: bagTypeName,
+            showQuantityAndCart: showQuantityAndCart,
             quantity: quantity,
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
@@ -359,6 +367,7 @@ class _NarrowLayout extends StatelessWidget {
   const _NarrowLayout({
     required this.bag,
     required this.bagTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -368,6 +377,7 @@ class _NarrowLayout extends StatelessWidget {
 
   final Bag bag;
   final String? bagTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -387,6 +397,7 @@ class _NarrowLayout extends StatelessWidget {
         _ProductDetails(
           bag: bag,
           bagTypeName: bagTypeName,
+          showQuantityAndCart: showQuantityAndCart,
           quantity: quantity,
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
@@ -531,6 +542,7 @@ class _ProductDetails extends StatelessWidget {
   const _ProductDetails({
     required this.bag,
     required this.bagTypeName,
+    required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
@@ -539,6 +551,7 @@ class _ProductDetails extends StatelessWidget {
 
   final Bag bag;
   final String? bagTypeName;
+  final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
@@ -671,53 +684,55 @@ class _ProductDetails extends StatelessWidget {
         ),
         const SizedBox(height: 32),
 
-        // Quantity selector
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
+        // Quantity selector (hidden for admin)
+        if (showQuantityAndCart)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  'Količina:',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                _QuantitySelector(
+                  quantity: quantity,
+                  onChanged: onQuantityChanged,
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            children: <Widget>[
-              Text(
-                'Količina:',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+        if (showQuantityAndCart) const SizedBox(height: 24),
+
+        // Add to cart button (hidden for admin)
+        if (showQuantityAndCart)
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: onAddToCart,
+              icon: const Icon(Icons.add_shopping_cart, size: 24),
+              label: Text(
+                'Dodaj u korpu  -  ${(bag.price * quantity).toStringAsFixed(2)} KM',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              _QuantitySelector(
-                quantity: quantity,
-                onChanged: onQuantityChanged,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Add to cart button
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: FilledButton.icon(
-            onPressed: onAddToCart,
-            icon: const Icon(Icons.add_shopping_cart, size: 24),
-            label: Text(
-              'Dodaj u korpu  -  ${(bag.price * quantity).toStringAsFixed(2)} KM',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
+        if (showQuantityAndCart) const SizedBox(height: 12),
 
         // Outfit idea button
         SizedBox(

@@ -35,9 +35,11 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<Bags, Bag>().ReverseMap();
             CreateMap<Bags, BagUpsertRequest>().ReverseMap();
+            CreateMap<BagUpsertRequest, Bags>().ForMember(d => d.Image, o => o.Ignore());
 
             CreateMap<Belts, Belt>().ReverseMap();
             CreateMap<Belts, BeltUpsertRequest>().ReverseMap();
+            CreateMap<BeltUpsertRequest, Belts>().ForMember(d => d.Image, o => o.Ignore());
 
             CreateMap<Orders, Order>()
                 .ForMember(d => d.PaymentStatus, o => o.MapFrom(s => s.PaymentStatus.ToString()));

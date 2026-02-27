@@ -45,6 +45,9 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _mapper.Map<Belts>(request);
 
+            if (!string.IsNullOrWhiteSpace(request.Image))
+                entity.Image = Convert.FromBase64String(request.Image);
+
             _context.Set<Belts>().Add(entity);
             await _context.SaveChangesAsync();
 
@@ -52,17 +55,25 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public override async Task<Belt> Update(int ID, BeltUpsertRequest request)
         {
-            var proizvod = await _context.Belts.FindAsync(ID);
-            if (await _context.Belts.AnyAsync(i => i.BeltName == request.BeltName) && request.BeltName != proizvod.BeltName)
+            var entity = await _context.Belts.FindAsync(ID);
+            if (entity == null)
+            {
+                throw new Exception($"Belt with ID {ID} not found.");
+            }
+
+            if (await _context.Belts.AnyAsync(i => i.BeltName == request.BeltName && i.BeltID != ID))
             {
                 throw new Exception("Belt already exists!");
             }
 
-            var entity = _context.Set<Belts>().Find(ID);
-            _context.Set<Belts>().Attach(entity);
-            _context.Set<Belts>().Update(entity);
+            entity.BeltName = request.BeltName;
+            entity.Code = request.Code;
+            entity.Price = request.Price;
+            entity.Description = request.Description ?? string.Empty;
+            entity.BeltTypeID = request.BeltTypeID;
 
-            _mapper.Map(request, entity);
+            if (!string.IsNullOrWhiteSpace(request.Image))
+                entity.Image = Convert.FromBase64String(request.Image);
 
             await _context.SaveChangesAsync();
 

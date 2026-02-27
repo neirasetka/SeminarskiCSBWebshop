@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/bag_types_provider.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
@@ -131,10 +130,13 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
     final Bag? existing = widget.existing;
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Nazad',
+        ),
         title: Text(existing == null ? 'Nova torba' : 'Uredi torbu'),
       ),
       body: SafeArea(
@@ -237,32 +239,28 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _isSaving ? null : _cancel,
-                  child: const Text('Cancel'),
-                ),
+              OutlinedButton(
+                onPressed: _isSaving ? null : _cancel,
+                child: const Text('Cancel'),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _isSaving ? null : _save,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save),
-                  label: const Text('Save'),
-                ),
+              ElevatedButton.icon(
+                onPressed: _isSaving ? null : _save,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save),
+                label: const Text('Save'),
               ),
             ],
           ),
         ),
       ),
-    ),
     );
   }
 
