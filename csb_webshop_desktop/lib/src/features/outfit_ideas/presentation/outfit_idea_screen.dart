@@ -15,9 +15,11 @@ import '../domain/outfit_idea.dart';
 
 /// Screen for managing outfit inspiration images for a specific bag.
 class OutfitIdeaScreen extends ConsumerStatefulWidget {
-  const OutfitIdeaScreen({super.key, required this.bagId});
+  const OutfitIdeaScreen({super.key, required this.bagId, this.initialBag});
 
   final int bagId;
+  /// Bag passed from detail screen so the image is shown immediately (e.g. when API doesn't return image for single bag).
+  final Bag? initialBag;
 
   @override
   ConsumerState<OutfitIdeaScreen> createState() => _OutfitIdeaScreenState();
@@ -174,6 +176,25 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     }
   }
 
+  static Uint8List _base64ToBytes(String dataUrl) {
+    const String base64Marker = 'base64,';
+    final int i = dataUrl.indexOf(base64Marker);
+    final String base64 =
+        i >= 0 ? dataUrl.substring(i + base64Marker.length) : dataUrl;
+    return Uint8List.fromList(base64Decode(base64));
+  }
+
+  Widget _buildBagImagePlaceholder() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Center(child: Icon(Icons.image, size: 48)),
+    );
+  }
+
   void _showImagePreview(OutfitIdeaImage image) {
     if (image.imageBytes == null || image.imageBytes!.isEmpty) return;
 
@@ -297,36 +318,38 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
   Widget _buildBagInfo(AsyncValue<Bag> bagAsync, bool isAdmin) {
     return bagAsync.when(
-      data: (Bag bag) => SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // Bag image
-            if (bag.displayImageUrl != null && bag.displayImageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  bag.displayImageUrl!,
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 200,
-                    color: Colors.grey.shade200,
-                    child: const Center(child: Icon(Icons.image, size: 48)),
-                  ),
-                ),
-              )
-            else
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+      data: (Bag bag) {
+        // Prefer bag from API; fall back to initialBag (from detail) for image so Coco Tote etc. always show
+        final String? imageUrl =
+            bag.displayImageUrl ?? widget.initialBag?.displayImageUrl;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Bag image
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(child: Icon(Icons.image, size: 48)),
-              ),
+                  child: imageUrl.startsWith('data:')
+                      ? Image.memory(
+                          _base64ToBytes(imageUrl),
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildBagImagePlaceholder(),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _buildBagImagePlaceholder(),
+                        ),
+                )
+              else
+                _buildBagImagePlaceholder(),
             const SizedBox(height: 16),
             Text(
               bag.name,
@@ -375,7 +398,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
             ),
           ],
         ),
-      ),
+      );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (Object error, _) => Center(
         child: Padding(

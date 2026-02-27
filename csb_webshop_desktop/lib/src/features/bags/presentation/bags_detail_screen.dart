@@ -90,6 +90,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                 context.pushNamed(
                   'outfitIdea',
                   pathParameters: <String, String>{'id': bag.id.toString()},
+                  extra: bag,
                 );
               },
               onBack: () => Navigator.of(context).pop(),
