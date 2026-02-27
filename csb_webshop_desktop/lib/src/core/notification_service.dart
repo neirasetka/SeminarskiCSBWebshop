@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications_windows/flutter_local_notifications_windows.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_router.dart';
@@ -13,7 +15,17 @@ class NotificationService {
 
   Future<void> initialize() async {
     const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initSettings = InitializationSettings(android: androidInit);
+    final InitializationSettings initSettings;
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      const WindowsInitializationSettings windowsInit = WindowsInitializationSettings(
+        appName: 'CSB Webshop',
+        appUserModelId: 'CocoSunBags.CSBWebshop.Desktop.1',
+        guid: 'A1B2C3D4-E5F6-7890-ABCD-EF1234567890',
+      );
+      initSettings = const InitializationSettings(android: androidInit, windows: windowsInit);
+    } else {
+      initSettings = const InitializationSettings(android: androidInit);
+    }
 
     await _plugin.initialize(
       initSettings,
