@@ -143,6 +143,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
                         bag: bag,
                         isFavorite: isFav,
                         showFavorite: !isAdmin,
+                        showAddToCart: !isAdmin,
                         onTap: () => _navigateToDetail(bag),
                         onToggleFavorite: () =>
                             ref.read(favoritesProvider.notifier).toggleBag(bag.id),
@@ -539,6 +540,7 @@ class _ProductCard extends StatefulWidget {
     required this.bag,
     required this.isFavorite,
     required this.showFavorite,
+    required this.showAddToCart,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
@@ -547,6 +549,7 @@ class _ProductCard extends StatefulWidget {
   final Bag bag;
   final bool isFavorite;
   final bool showFavorite;
+  final bool showAddToCart;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
@@ -666,16 +669,18 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                                 color: colorScheme.primary,
                               ),
                             ),
-                            const Spacer(),
-                            FilledButton.icon(
-                              onPressed: widget.onAddToCart,
-                              icon: const Icon(Icons.add_shopping_cart, size: 18),
-                              label: const Text('Kupi'),
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                minimumSize: const Size(0, 36),
+                            if (widget.showAddToCart) ...[
+                              const Spacer(),
+                              FilledButton.icon(
+                                onPressed: widget.onAddToCart,
+                                icon: const Icon(Icons.add_shopping_cart, size: 18),
+                                label: const Text('Kupi'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  minimumSize: const Size(0, 36),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],
