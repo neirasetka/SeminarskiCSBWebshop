@@ -19,7 +19,11 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CocoSunBagsWebshopDbContext>(options =>
        options.UseSqlServer(builder.Configuration.GetConnectionString("CocoSunBagsWebshop")));
-builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>());
+builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>())
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();

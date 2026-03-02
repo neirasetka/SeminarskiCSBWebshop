@@ -50,9 +50,9 @@ class BagsApi {
       'Code': code,
       'Price': price,
       'Description': description,
-      if (bagTypeId != null) 'BagTypeID': bagTypeId,
-      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
-      if (userId != null) 'UserID': userId,
+      'BagTypeID': bagTypeId ?? 0,
+      'Image': imageBase64 ?? '',
+      'UserID': userId ?? 0,
     };
     final http.Response response = await _apiClient.post(_bagsPath, body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -77,9 +77,9 @@ class BagsApi {
       'Code': code,
       'Price': price,
       'Description': description,
-      if (bagTypeId != null) 'BagTypeID': bagTypeId,
-      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
-      if (userId != null) 'UserID': userId,
+      'BagTypeID': bagTypeId ?? 0,
+      'Image': imageBase64 ?? '',
+      'UserID': userId ?? 0,
     };
     final http.Response response = await _apiClient.put('$_bagsPath/$id', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {

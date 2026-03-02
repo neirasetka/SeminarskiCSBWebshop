@@ -82,10 +82,7 @@ namespace CBSWebshopSeminarski.Services.Services
             entity.BagName = request.BagName;
             entity.Code = request.Code;
             entity.Price = request.Price;
-            if (!string.IsNullOrWhiteSpace(request.Description))
-            {
-                entity.Description = request.Description;
-            }
+            entity.Description = request.Description ?? string.Empty;
 
             // BagType is optional – treat 0 as "no type".
             if (request.BagTypeID == 0)
