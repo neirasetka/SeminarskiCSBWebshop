@@ -21,7 +21,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             return await _service.Get(search);
         }
-        [HttpGet("{ID}")]
+        [HttpGet("{ID:int}")]
         [Authorize]
         public async Task<T> GetById(int ID)
         {
