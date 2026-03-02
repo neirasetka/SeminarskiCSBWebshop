@@ -3,6 +3,7 @@ using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -13,12 +14,22 @@ namespace CSBWebshopSeminarski.Controllers
     {
         /// <summary>
         /// Override to allow anonymous viewing of outfit ideas (e.g. GET ?bagID=1 or ?beltID=1).
+        /// Parses query params manually to avoid [FromQuery] complex type binding validation errors.
         /// </summary>
         [HttpGet]
         [AllowAnonymous]
-        public override async Task<List<OutfitIdea>> Get([FromQuery] OutfitIdeaSearchRequest? search)
+        public override async Task<List<OutfitIdea>> Get([FromQuery, BindNever] OutfitIdeaSearchRequest? search)
         {
-            return await _outfitIdeasService.Get(search ?? new OutfitIdeaSearchRequest());
+            var searchReq = new OutfitIdeaSearchRequest();
+            if (int.TryParse(Request.Query["bagID"], out var bagId) && bagId > 0)
+                searchReq.BagID = bagId;
+            if (int.TryParse(Request.Query["beltID"], out var beltId) && beltId > 0)
+                searchReq.BeltID = beltId;
+            if (int.TryParse(Request.Query["userID"], out var userId) && userId > 0)
+                searchReq.UserID = userId;
+            if (Request.Query.TryGetValue("title", out var titleVal) && !string.IsNullOrWhiteSpace(titleVal))
+                searchReq.Title = titleVal;
+            return await _outfitIdeasService.Get(searchReq);
         }
         private readonly IOutfitIdeasService _outfitIdeasService;
 

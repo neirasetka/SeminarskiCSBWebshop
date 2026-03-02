@@ -25,7 +25,10 @@ class OutfitIdeasApi {
           .map((dynamic e) => OutfitIdea.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw Exception('Failed to load outfit ideas: ${response.statusCode}');
+    throw Exception(
+      'Failed to load outfit ideas: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Gets an outfit idea by its ID
@@ -36,7 +39,10 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception('Failed to load outfit idea: ${response.statusCode}');
+    throw Exception(
+      'Failed to load outfit idea: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Gets outfit idea for a specific bag and user
@@ -51,7 +57,9 @@ class OutfitIdeasApi {
       return null;
     }
     throw Exception(
-        'Failed to load outfit idea for bag: ${response.statusCode}');
+      'Failed to load outfit idea for bag: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Gets outfit idea for a specific belt and user
@@ -66,7 +74,9 @@ class OutfitIdeasApi {
       return null;
     }
     throw Exception(
-        'Failed to load outfit idea for belt: ${response.statusCode}');
+      'Failed to load outfit idea for belt: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Creates a new outfit idea for a bag
@@ -139,7 +149,10 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception('Failed to update outfit idea: ${response.statusCode}');
+    throw Exception(
+      'Failed to update outfit idea: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Deletes an outfit idea
@@ -147,7 +160,10 @@ class OutfitIdeasApi {
     final response = await _apiClient.delete('/api/OutfitIdeas/$id');
     
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete outfit idea: ${response.statusCode}');
+      throw Exception(
+        'Failed to delete outfit idea: ${response.statusCode}'
+        '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+      );
     }
   }
 
@@ -175,7 +191,10 @@ class OutfitIdeasApi {
       return OutfitIdeaImage.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception('Failed to add image: ${response.statusCode}');
+    throw Exception(
+      'Failed to add image: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 
   /// Removes an image from an outfit idea
@@ -183,7 +202,10 @@ class OutfitIdeasApi {
     final response = await _apiClient.delete('/api/OutfitIdeas/images/$imageId');
     
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to remove image: ${response.statusCode}');
+      throw Exception(
+        'Failed to remove image: ${response.statusCode}'
+        '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+      );
     }
   }
 
@@ -199,6 +221,9 @@ class OutfitIdeasApi {
               OutfitIdeaImage.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw Exception('Failed to load images: ${response.statusCode}');
+    throw Exception(
+      'Failed to load images: ${response.statusCode}'
+      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
+    );
   }
 }
