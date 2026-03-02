@@ -36,6 +36,7 @@ class _OutfitIdeaBeltScreenState extends ConsumerState<OutfitIdeaBeltScreen> {
   }
 
   Future<void> _loadData() async {
+    ref.read(outfitIdeaProvider.notifier).clear();
     await ref.read(beltDetailProvider.notifier).fetch(widget.beltId);
 
     final AuthSession? session = ref.read(authControllerProvider).value;

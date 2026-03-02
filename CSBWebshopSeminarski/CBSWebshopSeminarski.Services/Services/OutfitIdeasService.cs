@@ -23,8 +23,6 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var query = _context.OutfitIdeas
                 .Include(x => x.Images)
-                .Include(x => x.Bag)
-                .Include(x => x.Belt)
                 .AsQueryable();
 
             if (request.BagID.HasValue && request.BagID.Value > 0)
@@ -55,8 +53,6 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
-                .Include(x => x.Bag)
-                .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.OutfitIdeaID == id);
 
             return _mapper.Map<OutfitIdea>(entity);
@@ -66,8 +62,6 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
-                .Include(x => x.Bag)
-                .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.BagID == bagId && x.UserID == userId);
 
             return entity != null ? _mapper.Map<OutfitIdea>(entity) : null;
@@ -77,8 +71,6 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
-                .Include(x => x.Bag)
-                .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.BeltID == beltId && x.UserID == userId);
 
             return entity != null ? _mapper.Map<OutfitIdea>(entity) : null;

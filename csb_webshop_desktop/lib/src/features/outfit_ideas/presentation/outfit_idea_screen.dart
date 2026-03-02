@@ -36,6 +36,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
   }
 
   Future<void> _loadData() async {
+    ref.read(outfitIdeaProvider.notifier).clear();
     // Load bag details
     await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
     

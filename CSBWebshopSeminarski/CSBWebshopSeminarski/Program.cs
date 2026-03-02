@@ -23,6 +23,7 @@ builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>())
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
