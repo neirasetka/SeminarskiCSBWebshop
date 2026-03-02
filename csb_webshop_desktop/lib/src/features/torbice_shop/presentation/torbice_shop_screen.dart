@@ -144,10 +144,12 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
                         isFavorite: isFav,
                         showFavorite: !isAdmin,
                         showAddToCart: !isAdmin,
+                        showDelete: isAdmin,
                         onTap: () => _navigateToDetail(bag),
                         onToggleFavorite: () =>
                             ref.read(favoritesProvider.notifier).toggleBag(bag.id),
                         onAddToCart: () => _addToCart(bag),
+                        onDelete: isAdmin ? () => _deleteBag(context, ref, bag) : null,
                       );
                     },
                     childCount: sortedBags.length,
@@ -190,6 +192,37 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
         builder: (BuildContext context) => BagDetailScreen(id: bag.id),
       ),
     );
+  }
+
+  Future<void> _deleteBag(BuildContext context, WidgetRef ref, Bag bag) async {
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Obriši torbicu'),
+        content: Text(
+          'Da li ste sigurni da želite obrisati "${bag.name}"?',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Odustani'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('Obriši'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(bagsListProvider.notifier).remove(bag.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${bag.name} je obrisana')),
+        );
+      }
+    }
   }
 
   Future<void> _addToCart(Bag bag) async {
@@ -541,18 +574,22 @@ class _ProductCard extends StatefulWidget {
     required this.isFavorite,
     required this.showFavorite,
     required this.showAddToCart,
+    required this.showDelete,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
+    this.onDelete,
   });
 
   final Bag bag;
   final bool isFavorite;
   final bool showFavorite;
   final bool showAddToCart;
+  final bool showDelete;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
+  final VoidCallback? onDelete;
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -602,6 +639,13 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                             isFavorite: widget.isFavorite,
                             onPressed: widget.onToggleFavorite,
                           ),
+                        ),
+                      // Delete button (samo za admine) - ikonica kante u gornjem desnom uglu
+                      if (widget.showDelete && widget.onDelete != null)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _DeleteButton(onPressed: widget.onDelete!),
                         ),
                       // Rating badge
                       if (widget.bag.averageRating != null)
@@ -773,6 +817,33 @@ class _FavoriteButton extends StatelessWidget {
           child: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
             color: isFavorite ? Colors.red : Colors.grey,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteButton extends StatelessWidget {
+  const _DeleteButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            Icons.delete_outline,
+            color: colorScheme.error,
             size: 20,
           ),
         ),
