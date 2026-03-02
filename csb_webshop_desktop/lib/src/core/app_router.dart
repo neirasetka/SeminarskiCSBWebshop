@@ -23,6 +23,8 @@ import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_belt_screen.dart';
 import '../features/belts/domain/belt.dart';
+import '../features/bags/presentation/bags_detail_screen.dart';
+import '../features/belts/presentation/belts_detail_screen.dart';
 import '../features/torbice_shop/presentation/torbice_shop_screen.dart';
 import '../features/kaisevi_shop/presentation/kaisevi_shop_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
@@ -63,6 +65,17 @@ final GoRouter appRouter = GoRouter(
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: TorbiceShopScreen(),
           ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: ':id',
+              name: 'torbiceDetail',
+              builder: (BuildContext context, GoRouterState state) {
+                final String? idParam = state.pathParameters['id'];
+                final int bagId = int.tryParse(idParam ?? '') ?? 0;
+                return AuthGate(child: BagDetailScreen(id: bagId));
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: 'kaisevi',
@@ -70,6 +83,17 @@ final GoRouter appRouter = GoRouter(
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: KaiseviShopScreen(),
           ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: ':id',
+              name: 'kaiseviDetail',
+              builder: (BuildContext context, GoRouterState state) {
+                final String? idParam = state.pathParameters['id'];
+                final int beltId = int.tryParse(idParam ?? '') ?? 0;
+                return AuthGate(child: BeltDetailScreen(id: beltId));
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: 'favoriti',
