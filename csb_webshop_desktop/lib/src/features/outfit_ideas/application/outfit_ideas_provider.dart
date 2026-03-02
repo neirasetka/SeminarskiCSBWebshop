@@ -107,17 +107,23 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
 
   /// Loads outfit idea for a specific bag and user.
   /// When [userId] is null, loads all ideas for the bag and uses the first one (for anonymous viewing).
+  /// Uses getAll endpoint (which works) and filters client-side to avoid backend 500 on getByBagAndUser.
   Future<void> loadForBag(int bagId, int? userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      final List<OutfitIdea> ideas = await _api.getAll(bagId: bagId);
       OutfitIdea? idea;
       if (userId != null) {
-        idea = await _api.getByBagAndUser(bagId, userId);
-      } else {
-        final List<OutfitIdea> ideas = await _api.getAll(bagId: bagId);
-        idea = ideas.where((OutfitIdea o) => o.images.isNotEmpty).firstOrNull ??
-            ideas.firstOrNull;
+        idea = ideas
+            .where((OutfitIdea o) => o.userId == userId)
+            .where((OutfitIdea o) => o.images.isNotEmpty)
+            .firstOrNull ??
+            ideas.where((OutfitIdea o) => o.userId == userId).firstOrNull;
       }
+      idea ??= ideas
+          .where((OutfitIdea o) => o.images.isNotEmpty)
+          .firstOrNull ??
+          ideas.firstOrNull;
       state = state.copyWith(outfitIdea: idea, isLoading: false, clearOutfitIdea: idea == null);
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
@@ -149,17 +155,23 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
 
   /// Loads outfit idea for a specific belt and user.
   /// When [userId] is null, loads all ideas for the belt and uses the first one (for anonymous viewing).
+  /// Uses getAll endpoint (which works) and filters client-side to avoid backend 500 on getByBeltAndUser.
   Future<void> loadForBelt(int beltId, int? userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      final List<OutfitIdea> ideas = await _api.getAll(beltId: beltId);
       OutfitIdea? idea;
       if (userId != null) {
-        idea = await _api.getByBeltAndUser(beltId, userId);
-      } else {
-        final List<OutfitIdea> ideas = await _api.getAll(beltId: beltId);
-        idea = ideas.where((OutfitIdea o) => o.images.isNotEmpty).firstOrNull ??
-            ideas.firstOrNull;
+        idea = ideas
+            .where((OutfitIdea o) => o.userId == userId)
+            .where((OutfitIdea o) => o.images.isNotEmpty)
+            .firstOrNull ??
+            ideas.where((OutfitIdea o) => o.userId == userId).firstOrNull;
       }
+      idea ??= ideas
+          .where((OutfitIdea o) => o.images.isNotEmpty)
+          .firstOrNull ??
+          ideas.firstOrNull;
       state = state.copyWith(outfitIdea: idea, isLoading: false, clearOutfitIdea: idea == null);
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
