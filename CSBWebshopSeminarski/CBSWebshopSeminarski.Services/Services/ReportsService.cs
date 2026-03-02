@@ -193,6 +193,35 @@ namespace CBSWebshopSeminarski.Services.Services
                 .ToList();
         }
 
+        public async Task<List<TopSellingBeltVM>> GetTopSellingBeltsWithQuantities(int take = 6)
+        {
+            var agg = await _dbContext.OrderItems
+                .Where(oi => oi.BeltID > 0)
+                .GroupBy(oi => oi.BeltID)
+                .Select(g => new { BeltId = g.Key, QuantitySold = g.Sum(x => x.Quantity ?? 0) })
+                .OrderByDescending(x => x.QuantitySold)
+                .Take(take)
+                .ToListAsync();
+
+            if (agg.Count == 0)
+                return new List<TopSellingBeltVM>();
+
+            var beltIds = agg.Select(x => x.BeltId).ToList();
+            var belts = await _dbContext.Belts
+                .Where(b => beltIds.Contains(b.BeltID))
+                .Select(b => new { b.BeltID, b.BeltName })
+                .ToListAsync();
+            var beltDict = belts.ToDictionary(b => b.BeltID, b => b.BeltName ?? "Nepoznato");
+
+            return agg
+                .Select(x => new TopSellingBeltVM
+                {
+                    BeltName = beltDict.GetValueOrDefault(x.BeltId, "Nepoznato"),
+                    QuantitySold = x.QuantitySold
+                })
+                .ToList();
+        }
+
         private static readonly Dictionary<ShippingStatusEntity, string> ShippingStatusLabels = new()
         {
             { ShippingStatusEntity.Pending, "Kreirano" },

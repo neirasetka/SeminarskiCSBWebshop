@@ -39,6 +39,18 @@ class ReportsApi {
     throw Exception('Failed to load top selling bags: ${response.statusCode}');
   }
 
+  /// Gets top-selling belts with quantities (for reports pie chart).
+  Future<List<TopSellingBeltEntry>> getTopSellingBeltsWithQuantities({int take = 6}) async {
+    final http.Response response = await _apiClient.get('$_reportsPath/TopSellingBeltsWithQuantities?take=$take');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return _parseTopSellingBeltList(response.body);
+    }
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      return <TopSellingBeltEntry>[];
+    }
+    throw Exception('Failed to load top selling belts: ${response.statusCode}');
+  }
+
   /// Gets order status counts (for reports pie chart).
   Future<List<OrderStatusCountEntry>> getOrderStatusCounts({DateTime? fromDateUtc, DateTime? toDateUtc}) async {
     final List<String> query = <String>[];
@@ -65,6 +77,19 @@ class ReportsApi {
           .toList();
     } catch (_) {
       return <TopSellingBagEntry>[];
+    }
+  }
+
+  static List<TopSellingBeltEntry> _parseTopSellingBeltList(String body) {
+    try {
+      final Object? decoded = json.decode(body);
+      if (decoded is! List<dynamic>) return <TopSellingBeltEntry>[];
+      return decoded
+          .map((dynamic e) => e is Map<String, dynamic> ? TopSellingBeltEntry.fromJson(e) : null)
+          .whereType<TopSellingBeltEntry>()
+          .toList();
+    } catch (_) {
+      return <TopSellingBeltEntry>[];
     }
   }
 

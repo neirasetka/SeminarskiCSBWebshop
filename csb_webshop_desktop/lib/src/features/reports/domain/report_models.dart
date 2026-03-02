@@ -1,3 +1,23 @@
+/// Entry for top-selling belts report (name + quantity).
+class TopSellingBeltEntry {
+  const TopSellingBeltEntry({required this.beltName, required this.quantitySold});
+
+  final String beltName;
+  final int quantitySold;
+
+  factory TopSellingBeltEntry.fromJson(Map<String, dynamic> json) {
+    return TopSellingBeltEntry(
+      beltName: (json['BeltName'] ?? json['beltName'] ?? '').toString(),
+      quantitySold: _toInt(json['QuantitySold'] ?? json['quantitySold'] ?? 0),
+    );
+  }
+
+  static int _toInt(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+}
+
 /// Entry for top-selling bags report (name + quantity).
 class TopSellingBagEntry {
   const TopSellingBagEntry({required this.bagName, required this.quantitySold});

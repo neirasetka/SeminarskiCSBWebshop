@@ -20,6 +20,13 @@ final FutureProvider<List<TopSellingBagEntry>> topSellingBagsWithQuantitiesProvi
   return api.getTopSellingBagsWithQuantities(take: 6);
 });
 
+/// Provider for top-selling belts with quantities (reports pie chart).
+final FutureProvider<List<TopSellingBeltEntry>> topSellingBeltsWithQuantitiesProvider =
+    FutureProvider<List<TopSellingBeltEntry>>((Ref ref) async {
+  final api = ref.read(reportsApiProvider);
+  return api.getTopSellingBeltsWithQuantities(take: 6);
+});
+
 /// Provider for order status counts (reports pie chart).
 final FutureProvider<List<OrderStatusCountEntry>> orderStatusCountsProvider =
     FutureProvider<List<OrderStatusCountEntry>>((Ref ref) async {

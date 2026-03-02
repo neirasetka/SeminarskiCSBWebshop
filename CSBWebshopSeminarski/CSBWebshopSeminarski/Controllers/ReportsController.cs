@@ -52,6 +52,13 @@ namespace CSBWebshopSeminarski.Controllers
             return await _reportsService.GetTopSellingBagsWithQuantities(howMany);
         }
 
+        [HttpGet("TopSellingBeltsWithQuantities")]
+        public async Task<List<TopSellingBeltVM>> TopSellingBeltsWithQuantities([FromQuery] int? take)
+        {
+            var howMany = take.HasValue && take.Value > 0 ? take.Value : 6;
+            return await _reportsService.GetTopSellingBeltsWithQuantities(howMany);
+        }
+
         [HttpGet("OrderStatusCounts")]
         public async Task<List<OrderStatusCountVM>> OrderStatusCounts([FromQuery] ReportsSearchRequest request)
         {
