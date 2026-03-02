@@ -151,7 +151,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
                         onAddToCart: () => _addToCart(belt),
                         onBuyNow: () => _buyNow(belt),
-                        onDelete: isAdmin ? () => _deleteBelt(context, ref, belt) : null,
+                        onDelete: isAdmin ? () => _deleteBelt(this.context, ref, belt) : null,
                       );
                     },
                     childCount: sortedBelts.length,
