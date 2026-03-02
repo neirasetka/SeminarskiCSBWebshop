@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../application/bag_stock_provider.dart';
+import '../application/bestselling_bags_provider.dart';
+import '../domain/report_models.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -175,87 +177,122 @@ class _BagAvailabilityBarChart extends StatelessWidget {
   }
 }
 
-class _TopBagsPieChart extends StatelessWidget {
+class _TopBagsPieChart extends ConsumerWidget {
   const _TopBagsPieChart();
 
-  List<PieChartSectionData> _sections(BuildContext context) {
-    // Mock data: bag model -> units sold
-    const Map<String, double> data = <String, double>{
-      'Model A': 35,
-      'Model B': 28,
-      'Model C': 22,
-      'Model D': 15,
-    };
-    final List<Color> colors = <Color>[const Color(0xFF7E57C2), const Color(0xFF42A5F5), const Color(0xFF26A69A), const Color(0xFFFFCA28)];
-    final TextStyle labelStyle = Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontWeight: FontWeight.w600);
-    int i = 0;
-    return data.entries.map((MapEntry<String, double> e) {
-      final PieChartSectionData section = PieChartSectionData(
-        color: colors[i % colors.length],
-        value: e.value,
-        title: e.key,
-        radius: 70,
-        titlePositionPercentageOffset: 1.3,
-        badgeWidget: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(color: colors[i % colors.length], borderRadius: BorderRadius.circular(8)),
-          child: Text('${e.key} (${e.value.toInt()})', style: labelStyle),
-        ),
-        badgePositionPercentageOffset: 1.15,
-      );
-      i += 1;
-      return section;
-    }).toList();
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<TopSellingBagEntry>> asyncData = ref.watch(topSellingBagsWithQuantitiesProvider);
+
     return _Card(
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 40,
-          sections: _sections(context),
+      child: asyncData.when(
+        data: (List<TopSellingBagEntry> entries) {
+          if (entries.isEmpty) {
+            return const Center(child: Text('Nema podataka o prodaji torbi.'));
+          }
+          final List<Color> colors = <Color>[
+            const Color(0xFF7E57C2),
+            const Color(0xFF42A5F5),
+            const Color(0xFF26A69A),
+            const Color(0xFFFFCA28),
+          ];
+          final TextStyle labelStyle = Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              );
+          final List<PieChartSectionData> sections = List<PieChartSectionData>.generate(
+            entries.length,
+            (int i) {
+              final TopSellingBagEntry e = entries[i];
+              final Color color = colors[i % colors.length];
+              return PieChartSectionData(
+                color: color,
+                value: e.quantitySold.toDouble(),
+                title: e.bagName,
+                radius: 70,
+                titlePositionPercentageOffset: 1.3,
+                badgeWidget: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('${e.bagName} (${e.quantitySold})', style: labelStyle),
+                ),
+                badgePositionPercentageOffset: 1.15,
+              );
+            },
+          );
+          return PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 40,
+              sections: sections,
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (Object err, StackTrace _) => Center(
+          child: Text(
+            'Greška: ${err.toString()}',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ),
     );
   }
 }
 
-class _OrderStatusPieChart extends StatelessWidget {
+class _OrderStatusPieChart extends ConsumerWidget {
   const _OrderStatusPieChart();
 
-  List<PieChartSectionData> _sections() {
-    // Mock data: status -> count
-    const Map<String, double> data = <String, double>{
-      'Kreirano': 18,
-      'Plaćeno': 42,
-      'Poslano': 30,
-      'Otkazano': 6,
-    };
-    final List<Color> colors = <Color>[const Color(0xFF66BB6A), const Color(0xFF42A5F5), const Color(0xFFFFA726), const Color(0xFFEF5350)];
-    int i = 0;
-    return data.entries.map((MapEntry<String, double> e) {
-      final PieChartSectionData section = PieChartSectionData(
-        color: colors[i % colors.length],
-        value: e.value,
-        title: '${e.key}\n${e.value.toInt()}',
-        radius: 65,
-        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-      );
-      i += 1;
-      return section;
-    }).toList();
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<OrderStatusCountEntry>> asyncData = ref.watch(orderStatusCountsProvider);
+
     return _Card(
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 32,
-          sections: _sections(),
+      child: asyncData.when(
+        data: (List<OrderStatusCountEntry> entries) {
+          if (entries.isEmpty) {
+            return const Center(child: Text('Nema narudžbi.'));
+          }
+          final List<Color> colors = <Color>[
+            const Color(0xFF66BB6A),
+            const Color(0xFF42A5F5),
+            const Color(0xFFFFA726),
+            const Color(0xFFEF5350),
+            const Color(0xFFAB47BC),
+            const Color(0xFF26A69A),
+          ];
+          final List<PieChartSectionData> sections = List<PieChartSectionData>.generate(
+            entries.length,
+            (int i) {
+              final OrderStatusCountEntry e = entries[i];
+              return PieChartSectionData(
+                color: colors[i % colors.length],
+                value: e.count.toDouble(),
+                title: '${e.statusName}\n${e.count}',
+                radius: 65,
+                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+              );
+            },
+          );
+          return PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 32,
+              sections: sections,
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (Object err, StackTrace _) => Center(
+          child: Text(
+            'Greška: ${err.toString()}',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ),
     );

@@ -9,5 +9,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task<List<RevenueByDayPointVM>> GetRevenueByDay(DateTime? fromDateUtc, DateTime? toDateUtc);
         Task<List<TopProductVM>> GetTopProducts(DateTime? fromDateUtc, DateTime? toDateUtc, int take = 10);
         Task<List<Bag>> GetTopSellingBags(int take = 6);
+        Task<List<TopSellingBagVM>> GetTopSellingBagsWithQuantities(int take = 6);
+        Task<List<OrderStatusCountVM>> GetOrderStatusCounts(DateTime? fromDateUtc, DateTime? toDateUtc);
     }
 }

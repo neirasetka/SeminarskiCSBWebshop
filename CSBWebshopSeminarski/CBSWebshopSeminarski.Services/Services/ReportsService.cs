@@ -4,6 +4,7 @@ using CBSWebshopSeminarski.Model.ViewModels;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
+using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -160,6 +161,70 @@ namespace CBSWebshopSeminarski.Services.Services
             return topBagIds
                 .Where(id => bagDict.ContainsKey(id))
                 .Select(id => _mapper.Map<Bag>(bagDict[id]))
+                .ToList();
+        }
+
+        public async Task<List<TopSellingBagVM>> GetTopSellingBagsWithQuantities(int take = 6)
+        {
+            var agg = await _dbContext.OrderItems
+                .Where(oi => oi.BagID > 0)
+                .GroupBy(oi => oi.BagID)
+                .Select(g => new { BagId = g.Key, QuantitySold = g.Sum(x => x.Quantity ?? 0) })
+                .OrderByDescending(x => x.QuantitySold)
+                .Take(take)
+                .ToListAsync();
+
+            if (agg.Count == 0)
+                return new List<TopSellingBagVM>();
+
+            var bagIds = agg.Select(x => x.BagId).ToList();
+            var bags = await _dbContext.Bags
+                .Where(b => bagIds.Contains(b.BagID.Value))
+                .Select(b => new { b.BagID, b.BagName })
+                .ToListAsync();
+            var bagDict = bags.ToDictionary(b => b.BagID!.Value, b => b.BagName ?? "Nepoznato");
+
+            return agg
+                .Select(x => new TopSellingBagVM
+                {
+                    BagName = bagDict.GetValueOrDefault(x.BagId, "Nepoznato"),
+                    QuantitySold = x.QuantitySold
+                })
+                .ToList();
+        }
+
+        private static readonly Dictionary<ShippingStatusEntity, string> ShippingStatusLabels = new()
+        {
+            { ShippingStatusEntity.Pending, "Kreirano" },
+            { ShippingStatusEntity.Shipped, "Poslano" },
+            { ShippingStatusEntity.InTransit, "U tranzitu" },
+            { ShippingStatusEntity.AtCustoms, "Na carini" },
+            { ShippingStatusEntity.OutForDelivery, "U dostavi" },
+            { ShippingStatusEntity.Delivered, "Isporučeno" },
+            { ShippingStatusEntity.Returned, "Vraćeno" },
+            { ShippingStatusEntity.Cancelled, "Otkazano" }
+        };
+
+        public async Task<List<OrderStatusCountVM>> GetOrderStatusCounts(DateTime? fromDateUtc, DateTime? toDateUtc)
+        {
+            var query = _dbContext.Orders.AsQueryable();
+            if (fromDateUtc.HasValue)
+                query = query.Where(o => o.Date >= fromDateUtc.Value);
+            if (toDateUtc.HasValue)
+                query = query.Where(o => o.Date <= toDateUtc.Value);
+
+            var grouped = await query
+                .GroupBy(o => o.ShippingStatus)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            return grouped
+                .Select(x => new OrderStatusCountVM
+                {
+                    StatusName = ShippingStatusLabels.GetValueOrDefault(x.Status, x.Status.ToString()),
+                    Count = x.Count
+                })
+                .OrderByDescending(x => x.Count)
                 .ToList();
         }
     }

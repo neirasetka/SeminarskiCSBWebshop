@@ -44,5 +44,18 @@ namespace CSBWebshopSeminarski.Controllers
             var howMany = take.HasValue && take.Value > 0 ? take.Value : 6;
             return await _reportsService.GetTopSellingBags(howMany);
         }
+
+        [HttpGet("TopSellingBagsWithQuantities")]
+        public async Task<List<TopSellingBagVM>> TopSellingBagsWithQuantities([FromQuery] int? take)
+        {
+            var howMany = take.HasValue && take.Value > 0 ? take.Value : 6;
+            return await _reportsService.GetTopSellingBagsWithQuantities(howMany);
+        }
+
+        [HttpGet("OrderStatusCounts")]
+        public async Task<List<OrderStatusCountVM>> OrderStatusCounts([FromQuery] ReportsSearchRequest request)
+        {
+            return await _reportsService.GetOrderStatusCounts(request.FromDateUtc, request.ToDateUtc);
+        }
     }
 }
