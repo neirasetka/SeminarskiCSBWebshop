@@ -27,14 +27,6 @@ class BagDetailScreen extends ConsumerStatefulWidget {
 class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
   int _quantity = 1;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bagDetailProvider.notifier).fetch(widget.id);
-    });
-  }
-
   Future<void> _openEditBag(Bag bag) async {
     final bool? saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -42,13 +34,13 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
       ),
     );
     if (saved == true && mounted) {
-      ref.read(bagDetailProvider.notifier).fetch(widget.id);
+      ref.invalidate(bagDetailProvider(widget.id));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(widget.id));
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     final AsyncValue<List<BagType>> bagTypesAsync = ref.watch(bagTypesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
@@ -114,7 +106,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () =>
-                        ref.read(bagDetailProvider.notifier).fetch(widget.id),
+                        ref.invalidate(bagDetailProvider(widget.id)),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Pokušaj ponovno'),
                   ),

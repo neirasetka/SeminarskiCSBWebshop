@@ -89,19 +89,12 @@ class BagsListNotifier extends AsyncNotifier<List<Bag>> {
 final AsyncNotifierProvider<BagsListNotifier, List<Bag>> bagsListProvider =
     AsyncNotifierProvider<BagsListNotifier, List<Bag>>(BagsListNotifier.new);
 
-class BagDetailNotifier extends AutoDisposeAsyncNotifier<Bag> {
-  @override
-  Future<Bag> build() async {
-    throw UnimplementedError('Call fetch(id) first');
-  }
-
-  Future<void> fetch(int id) async {
-    final BagsApi api = ref.read(bagsApiProvider);
-    state = const AsyncLoading<Bag>();
-    state = await AsyncValue.guard(() => api.getBagById(id));
-  }
-}
-
-final AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag> bagDetailProvider =
-    AutoDisposeAsyncNotifierProvider<BagDetailNotifier, Bag>(BagDetailNotifier.new);
+/// Provider za detalje jedne torbice po ID-u.
+/// Korištenjem family providera, fetch se poziva automatski pri prvom watch-u,
+/// što sprječava grešku "Call fetch(id) first".
+final bagDetailProvider =
+    FutureProvider.autoDispose.family<Bag, int>((Ref ref, int id) async {
+  final BagsApi api = ref.read(bagsApiProvider);
+  return api.getBagById(id);
+});
 

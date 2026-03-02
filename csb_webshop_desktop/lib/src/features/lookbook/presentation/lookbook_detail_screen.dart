@@ -31,10 +31,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
   }
 
   Future<void> _loadData() async {
-    // Load bag details
-    await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
-    
-    // Load outfit ideas for this bag
+    ref.invalidate(bagDetailProvider(widget.bagId));
     await ref.read(outfitIdeasForBagProvider.notifier).loadForBag(widget.bagId);
     
     if (mounted) {
@@ -100,7 +97,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(widget.bagId));
     final OutfitIdeasListState outfitState = ref.watch(outfitIdeasForBagProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
 
