@@ -204,8 +204,16 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Opis'),
+                decoration: const InputDecoration(
+                  labelText: 'Opis',
+                  hintText: 'Unesite opis torbe...',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                ),
                 maxLines: 4,
+                minLines: 3,
+                textAlignVertical: TextAlignVertical.top,
               ),
               const SizedBox(height: 16),
               Text('Slika', style: Theme.of(context).textTheme.titleMedium),
