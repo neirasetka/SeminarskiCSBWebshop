@@ -9,7 +9,8 @@ class OutfitIdeasApi {
 
   final ApiClient _apiClient;
 
-  /// Gets all outfit ideas, optionally filtered by bagId, beltId or userId
+  /// Gets all outfit ideas, optionally filtered by bagId, beltId or userId.
+  /// Uses /search endpoint to avoid backend model binding issues.
   Future<List<OutfitIdea>> getAll({int? bagId, int? beltId, int? userId}) async {
     final List<String> params = <String>[];
     if (bagId != null) params.add('bagID=$bagId');
@@ -17,7 +18,7 @@ class OutfitIdeasApi {
     if (userId != null) params.add('userID=$userId');
     
     final String queryString = params.isNotEmpty ? '?${params.join('&')}' : '';
-    final response = await _apiClient.get('/api/OutfitIdeas$queryString');
+    final response = await _apiClient.get('/api/OutfitIdeas/search$queryString');
     
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
