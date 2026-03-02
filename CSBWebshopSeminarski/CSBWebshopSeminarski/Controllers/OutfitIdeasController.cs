@@ -16,9 +16,9 @@ namespace CSBWebshopSeminarski.Controllers
         /// </summary>
         [HttpGet]
         [AllowAnonymous]
-        public override async Task<List<OutfitIdea>> Get([FromQuery] OutfitIdeaSearchRequest search)
+        public override async Task<List<OutfitIdea>> Get([FromQuery] OutfitIdeaSearchRequest? search)
         {
-            return await _outfitIdeasService.Get(search);
+            return await _outfitIdeasService.Get(search ?? new OutfitIdeaSearchRequest());
         }
         private readonly IOutfitIdeasService _outfitIdeasService;
 

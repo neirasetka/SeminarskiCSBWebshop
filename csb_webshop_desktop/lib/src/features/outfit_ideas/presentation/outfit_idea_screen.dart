@@ -291,9 +291,15 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
               Text(outfitState.error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Pokušaj ponovo'),
+                onPressed: outfitState.isLoading ? null : _loadData,
+                icon: outfitState.isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                label: Text(outfitState.isLoading ? 'Učitavanje...' : 'Pokušaj ponovo'),
               ),
             ],
           ),

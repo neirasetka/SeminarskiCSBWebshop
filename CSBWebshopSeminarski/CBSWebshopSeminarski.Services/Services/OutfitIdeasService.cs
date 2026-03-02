@@ -21,6 +21,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<List<OutfitIdea>> Get(OutfitIdeaSearchRequest request)
         {
+            request ??= new OutfitIdeaSearchRequest();
             var query = _context.OutfitIdeas
                 .Include(x => x.Images)
                 .AsQueryable();

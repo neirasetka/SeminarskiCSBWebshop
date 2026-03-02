@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CBSWebshopSeminarski.Model.Models
 {
     public class OutfitIdea
@@ -18,10 +20,13 @@ namespace CBSWebshopSeminarski.Model.Models
         
         public DateTime? UpdatedAt { get; set; }
 
+        [JsonIgnore]
         public virtual Bag? Bag { get; set; }
         
+        [JsonIgnore]
         public virtual Belt? Belt { get; set; }
         
+        [JsonIgnore]
         public virtual User User { get; set; }
         
         public virtual ICollection<OutfitIdeaImage> Images { get; set; }
