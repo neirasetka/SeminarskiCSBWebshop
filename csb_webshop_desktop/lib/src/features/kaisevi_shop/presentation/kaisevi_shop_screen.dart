@@ -145,11 +145,13 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                         isFavorite: isFav,
                         showFavorite: !isAdmin,
                         showAddToCart: !isAdmin,
+                        showDelete: isAdmin,
                         onTap: () => _navigateToDetail(belt),
                         onToggleFavorite: () =>
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
                         onAddToCart: () => _addToCart(belt),
                         onBuyNow: () => _buyNow(belt),
+                        onDelete: isAdmin ? () => _deleteBelt(context, ref, belt) : null,
                       );
                     },
                     childCount: sortedBelts.length,
@@ -192,6 +194,37 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
         builder: (BuildContext context) => BeltDetailScreen(id: belt.id),
       ),
     );
+  }
+
+  Future<void> _deleteBelt(BuildContext context, WidgetRef ref, Belt belt) async {
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Obriši kaiš'),
+        content: Text(
+          'Da li ste sigurni da želite obrisati "${belt.name}"?',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Odustani'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('Obriši'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(beltsListProvider.notifier).remove(belt.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${belt.name} je obrisan')),
+        );
+      }
+    }
   }
 
   Future<void> _addToCart(Belt belt) async {
@@ -560,20 +593,24 @@ class _ProductCard extends StatefulWidget {
     required this.isFavorite,
     required this.showFavorite,
     required this.showAddToCart,
+    required this.showDelete,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
     required this.onBuyNow,
+    this.onDelete,
   });
 
   final Belt belt;
   final bool isFavorite;
   final bool showFavorite;
   final bool showAddToCart;
+  final bool showDelete;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback? onDelete;
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -623,6 +660,13 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                             isFavorite: widget.isFavorite,
                             onPressed: widget.onToggleFavorite,
                           ),
+                        ),
+                      // Delete button (samo za admine) - ikonica kante u gornjem desnom uglu
+                      if (widget.showDelete && widget.onDelete != null)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _DeleteButton(onPressed: widget.onDelete!),
                         ),
                       // Rating badge
                       if (widget.belt.averageRating != null)
@@ -805,6 +849,33 @@ class _FavoriteButton extends StatelessWidget {
           child: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
             color: isFavorite ? Colors.red : Colors.grey,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteButton extends StatelessWidget {
+  const _DeleteButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            Icons.delete_outline,
+            color: colorScheme.error,
             size: 20,
           ),
         ),
