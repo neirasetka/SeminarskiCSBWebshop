@@ -188,6 +188,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+// Enable buffering so request body can be read multiple times (e.g. by OutfitIdeasController.Insert)
+app.Use(async (context, next) =>
+{
+    context.Request.EnableBuffering();
+    await next();
+});
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
