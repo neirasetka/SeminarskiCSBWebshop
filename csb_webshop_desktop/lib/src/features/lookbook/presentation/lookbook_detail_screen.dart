@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -165,6 +166,32 @@ class _LookbookDetailContent extends StatelessWidget {
   final VoidCallback? onEditBag;
   final VoidCallback? onOpenOutfitIdea;
 
+  static Widget _buildBagImage(String imageUrl, ColorScheme colorScheme) {
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl.split(',').last;
+        final imageBytes = base64Decode(base64Part);
+        return Image.memory(
+          imageBytes,
+          fit: BoxFit.cover,
+        );
+      } catch (_) {
+        return Container(
+          color: colorScheme.surfaceContainerHighest,
+          child: const Center(child: Icon(Icons.image, size: 64)),
+        );
+      }
+    }
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: colorScheme.surfaceContainerHighest,
+        child: const Center(child: Icon(Icons.image, size: 64)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = bag.displayImageUrl;
@@ -208,14 +235,7 @@ class _LookbookDetailContent extends StatelessWidget {
               fit: StackFit.expand,
               children: <Widget>[
                 imageUrl != null && imageUrl.isNotEmpty
-                    ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: colorScheme.surfaceContainerHighest,
-                          child: const Center(child: Icon(Icons.image, size: 64)),
-                        ),
-                      )
+                    ? _buildBagImage(imageUrl, colorScheme)
                     : Container(
                         color: colorScheme.surfaceContainerHighest,
                         child: const Center(child: Icon(Icons.image, size: 64)),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -167,6 +169,30 @@ class _LookbookTile extends StatelessWidget {
           color: Colors.grey.shade200,
           child: const Center(child: Icon(Icons.image)),
         );
+        Widget imageWidget = placeholder;
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          if (imageUrl.startsWith('data:image')) {
+            try {
+              final String base64Part = imageUrl.split(',').last;
+              final imageBytes = base64Decode(base64Part);
+              imageWidget = Image.memory(
+                imageBytes,
+                fit: BoxFit.cover,
+              );
+            } catch (_) {
+              imageWidget = placeholder;
+            }
+          } else {
+            imageWidget = Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: Colors.grey.shade200,
+                child: const Center(child: Icon(Icons.broken_image)),
+              ),
+            );
+          }
+        }
         return Align(
           alignment: Alignment.centerLeft,
           child: ClipRRect(
@@ -174,16 +200,7 @@ class _LookbookTile extends StatelessWidget {
             child: SizedBox(
               width: imageWidth,
               height: constraints.maxHeight,
-              child: imageUrl == null || imageUrl.isEmpty
-                  ? placeholder
-                  : Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(child: Icon(Icons.broken_image)),
-                      ),
-                    ),
+              child: imageWidget,
             ),
           ),
         );

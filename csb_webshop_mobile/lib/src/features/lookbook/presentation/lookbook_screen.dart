@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -158,6 +160,28 @@ class _LookbookTile extends StatelessWidget {
 
   final Bag bag;
 
+  static Widget _buildBagImage(String? imageUrl) {
+    final Widget placeholder = Container(
+      color: Colors.grey.shade200,
+      child: const Center(child: Icon(Icons.shopping_bag, size: 48)),
+    );
+    if (imageUrl == null || imageUrl.isEmpty) return placeholder;
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl.split(',').last;
+        final imageBytes = base64Decode(base64Part);
+        return Image.memory(imageBytes, fit: BoxFit.cover);
+      } catch (_) {
+        return placeholder;
+      }
+    }
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => placeholder,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = bag.displayImageUrl;
@@ -178,19 +202,7 @@ class _LookbookTile extends StatelessWidget {
           children: <Widget>[
             // Slika torbice
             Positioned.fill(
-              child: imageUrl == null || imageUrl.isEmpty
-                  ? Container(
-                      color: Colors.grey.shade200,
-                      child: const Center(child: Icon(Icons.shopping_bag, size: 48)),
-                    )
-                  : Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(child: Icon(Icons.broken_image, size: 48)),
-                      ),
-                    ),
+              child: _buildBagImage(imageUrl),
             ),
             // Overlay s informacijama
             Positioned(
