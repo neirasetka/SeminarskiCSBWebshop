@@ -31,7 +31,7 @@ API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
 ```bash
 cd csb_webshop_desktop
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:5265 -d windows
+flutter run --dart-define=API_BASE_URL=http://localhost:5265 -d windows
 ```
 
 ### Mobilni klijent (Android Emulator)
