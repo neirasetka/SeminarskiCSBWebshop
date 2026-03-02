@@ -62,7 +62,7 @@ namespace CBSWebshopSeminarski.Services.Services
             return _mapper.Map<OutfitIdea>(entity);
         }
 
-        public async Task<OutfitIdea> GetByBagAndUser(int bagId, int userId)
+        public async Task<OutfitIdea?> GetByBagAndUser(int bagId, int userId)
         {
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
@@ -70,7 +70,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.BagID == bagId && x.UserID == userId);
 
-            return _mapper.Map<OutfitIdea>(entity);
+            return entity != null ? _mapper.Map<OutfitIdea>(entity) : null;
         }
 
         public async Task<OutfitIdea?> GetByBeltAndUser(int beltId, int userId)

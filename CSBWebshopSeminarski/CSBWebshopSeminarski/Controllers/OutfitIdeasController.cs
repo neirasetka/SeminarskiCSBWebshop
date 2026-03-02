@@ -11,6 +11,15 @@ namespace CSBWebshopSeminarski.Controllers
     [Authorize]
     public class OutfitIdeasController : BaseCRUDController<OutfitIdea, OutfitIdeaSearchRequest, OutfitIdeaUpsertRequest, OutfitIdeaUpsertRequest>
     {
+        /// <summary>
+        /// Override to allow anonymous viewing of outfit ideas (e.g. GET ?bagID=1 or ?beltID=1).
+        /// </summary>
+        [HttpGet]
+        [AllowAnonymous]
+        public override async Task<List<OutfitIdea>> Get([FromQuery] OutfitIdeaSearchRequest search)
+        {
+            return await _outfitIdeasService.Get(search);
+        }
         private readonly IOutfitIdeasService _outfitIdeasService;
 
         public OutfitIdeasController(IOutfitIdeasService service) : base(service)

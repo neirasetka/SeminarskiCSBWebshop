@@ -46,12 +46,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       await ref.read(userProfileProvider.notifier).refreshProfile();
       userId = ref.read(userProfileProvider).value?.id;
     }
-    if (userId != null) {
-      await ref.read(outfitIdeaProvider.notifier).loadForBag(
-            widget.bagId,
-            userId,
-          );
-    }
+    // Load outfit ideas: user's own when logged in, or first available when anonymous
+    await ref.read(outfitIdeaProvider.notifier).loadForBag(widget.bagId, userId);
     
     if (mounted) {
       setState(() {
