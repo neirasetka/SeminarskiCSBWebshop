@@ -1,6 +1,8 @@
+using System.Text.Json;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CSBWebshopSeminarski.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -73,6 +75,41 @@ namespace CSBWebshopSeminarski.Controllers
         public OutfitIdeasController(IOutfitIdeasService service) : base(service)
         {
             _outfitIdeasService = service;
+        }
+
+        /// <summary>
+        /// Override Insert to avoid model binding issues (rawValue/attemptedValue validation errors).
+        /// Reads request body manually and deserializes, like GetSearchInternalAsync for query params.
+        /// </summary>
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public override async Task<OutfitIdea> Insert([BindNever] OutfitIdeaUpsertRequest _)
+        {
+            using var reader = new StreamReader(Request.Body);
+            var body = await reader.ReadToEndAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var request = JsonSerializer.Deserialize<OutfitIdeaUpsertRequest>(body, options);
+            if (request == null)
+            {
+                throw new UserException("Request body is required.");
+            }
+            if (!request.BagID.HasValue && !request.BeltID.HasValue)
+            {
+                throw new UserException("Either BagID or BeltID must be set.");
+            }
+            if (request.BagID.HasValue && request.BeltID.HasValue)
+            {
+                throw new UserException("Only one of BagID or BeltID should be set.");
+            }
+            if (request.UserID < 1)
+            {
+                throw new UserException("UserID must be a valid positive integer.");
+            }
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Length < 2)
+            {
+                request.Title = "Outfit inspiracija";
+            }
+            return await _outfitIdeasService.Insert(request);
         }
 
         [HttpGet("bag/{bagId}/user/{userId}")]

@@ -16,7 +16,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<T> Insert(TInsert request)
+        public virtual async Task<T> Insert(TInsert request)
         {
             return await _service.Insert(request);
         }
