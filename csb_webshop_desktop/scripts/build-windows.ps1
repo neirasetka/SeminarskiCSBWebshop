@@ -11,7 +11,7 @@ function Build-WindowsRelease {
   param(
     [string]$Flavor = 'prod',
     [string]$Main = 'lib/main.dart',
-    [string]$ApiBaseUrl = 'http://127.0.0.1:5265',
+    [string]$ApiBaseUrl = 'http://localhost:5265',
     [string]$EnableLogging = 'false',
     [string]$StripeKey = ''
   )
