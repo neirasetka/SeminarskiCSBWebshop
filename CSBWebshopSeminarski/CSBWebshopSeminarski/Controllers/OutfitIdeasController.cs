@@ -36,15 +36,37 @@ namespace CSBWebshopSeminarski.Controllers
         private async Task<List<OutfitIdea>> GetSearchInternalAsync()
         {
             var searchReq = new OutfitIdeaSearchRequest();
+
             if (int.TryParse(Request.Query["bagID"], out var bagId) && bagId > 0)
+            {
                 searchReq.BagID = bagId;
+            }
+
             if (int.TryParse(Request.Query["beltID"], out var beltId) && beltId > 0)
+            {
                 searchReq.BeltID = beltId;
+            }
+
             if (int.TryParse(Request.Query["userID"], out var userId) && userId > 0)
+            {
                 searchReq.UserID = userId;
+            }
+
             if (Request.Query.TryGetValue("title", out var titleVal) && !string.IsNullOrWhiteSpace(titleVal))
+            {
                 searchReq.Title = titleVal;
-            return await _outfitIdeasService.Get(searchReq);
+            }
+
+            try
+            {
+                return await _outfitIdeasService.Get(searchReq);
+            }
+            catch
+            {
+                // In case of any unexpected server-side error, return an empty list instead of 500
+                // so the client can gracefully show "no outfit ideas" instead of an exception.
+                return new List<OutfitIdea>();
+            }
         }
         private readonly IOutfitIdeasService _outfitIdeasService;
 
