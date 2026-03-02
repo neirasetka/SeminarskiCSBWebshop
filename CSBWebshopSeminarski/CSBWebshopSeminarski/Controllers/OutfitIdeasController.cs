@@ -85,11 +85,22 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public override async Task<OutfitIdea> Insert([BindNever] OutfitIdeaUpsertRequest _)
         {
-            using var reader = new StreamReader(Request.Body);
+            Request.EnableBuffering();
+            Request.Body.Position = 0;
+            using var reader = new StreamReader(Request.Body, leaveOpen: true);
             var body = await reader.ReadToEndAsync();
+            Request.Body.Position = 0;
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var request = JsonSerializer.Deserialize<OutfitIdeaUpsertRequest>(body, options);
-            if (request == null)
+            OutfitIdeaUpsertRequest? request;
+            try
+            {
+                request = JsonSerializer.Deserialize<OutfitIdeaUpsertRequest>(body, options);
+            }
+            catch (JsonException ex)
+            {
+                throw new UserException($"Neispravan JSON u zahtjevu: {ex.Message}");
+            }
+            if (request == null || string.IsNullOrWhiteSpace(body))
             {
                 throw new UserException("Request body is required.");
             }

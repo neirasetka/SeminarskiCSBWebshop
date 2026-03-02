@@ -102,8 +102,7 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception(
-        'Failed to create outfit idea: ${response.statusCode}${response.body.isNotEmpty ? ' - ${response.body}' : ''}');
+    throw Exception(_parseError(response, 'Failed to create outfit idea'));
   }
 
   /// Creates a new outfit idea for a belt
@@ -128,8 +127,19 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception(
-        'Failed to create outfit idea: ${response.statusCode}${response.body.isNotEmpty ? ' - ${response.body}' : ''}');
+    throw Exception(_parseError(response, 'Failed to create outfit idea'));
+  }
+
+  static String _parseError(dynamic response, String fallback) {
+    if (response.body == null || response.body.isEmpty) {
+      return '$fallback: ${response.statusCode}';
+    }
+    try {
+      final Map<String, dynamic>? json = jsonDecode(response.body) as Map<String, dynamic>?;
+      final String? err = json?['error'] as String?;
+      if (err != null && err.isNotEmpty) return err;
+    } catch (_) {}
+    return '$fallback: ${response.statusCode} - ${response.body}';
   }
 
   /// Updates an existing outfit idea
