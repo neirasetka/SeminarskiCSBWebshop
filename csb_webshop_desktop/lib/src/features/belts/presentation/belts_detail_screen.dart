@@ -89,6 +89,13 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   context.go('/checkout');
                 }
               },
+              onOutfitIdea: () {
+                context.pushNamed(
+                  'outfitIdeaBelt',
+                  pathParameters: <String, String>{'id': belt.id.toString()},
+                  extra: belt,
+                );
+              },
               onBack: () => Navigator.of(context).pop(),
               isAdmin: isAdmin,
               onEdit: isAdmin ? () => _openEditBelt(belt) : null,
@@ -196,6 +203,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    required this.onOutfitIdea,
     required this.onBack,
     this.isAdmin = false,
     this.onEdit,
@@ -208,6 +216,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
   final bool isAdmin;
   final VoidCallback? onEdit;
@@ -268,6 +277,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
                     onBuyNow: onBuyNow,
+                    onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
                   )
                 : _NarrowLayout(
@@ -278,6 +288,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
                     onBuyNow: onBuyNow,
+                    onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
                   ),
           ),
@@ -296,6 +307,7 @@ class _WideLayout extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    required this.onOutfitIdea,
     this.onEdit,
   });
 
@@ -306,6 +318,7 @@ class _WideLayout extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
 
   @override
@@ -333,6 +346,7 @@ class _WideLayout extends StatelessWidget {
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
             onBuyNow: onBuyNow,
+            onOutfitIdea: onOutfitIdea,
           ),
         ),
       ],
@@ -349,6 +363,7 @@ class _NarrowLayout extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    required this.onOutfitIdea,
     this.onEdit,
   });
 
@@ -359,6 +374,7 @@ class _NarrowLayout extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
 
   @override
@@ -379,6 +395,7 @@ class _NarrowLayout extends StatelessWidget {
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
           onBuyNow: onBuyNow,
+          onOutfitIdea: onOutfitIdea,
         ),
       ],
     );
@@ -523,6 +540,7 @@ class _ProductDetails extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onBuyNow,
+    required this.onOutfitIdea,
   });
 
   final Belt belt;
@@ -532,6 +550,7 @@ class _ProductDetails extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
+  final VoidCallback onOutfitIdea;
 
   @override
   Widget build(BuildContext context) {
@@ -737,7 +756,24 @@ class _ProductDetails extends StatelessWidget {
               ),
             ],
           ),
-        if (showQuantityAndCart) const SizedBox(height: 32),
+        if (showQuantityAndCart) const SizedBox(height: 12),
+
+        // Outfit idea button (like torbice)
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: onOutfitIdea,
+            icon: const Icon(Icons.style_outlined),
+            label: const Text('Pogledaj outfit ideje'),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
       ],
     );
   }

@@ -4,7 +4,9 @@ namespace CBSWebshopSeminarski.Model.Models
     {
         public int OutfitIdeaID { get; set; }
         
-        public int BagID { get; set; }
+        public int? BagID { get; set; }
+        
+        public int? BeltID { get; set; }
         
         public int UserID { get; set; }
         
@@ -16,7 +18,9 @@ namespace CBSWebshopSeminarski.Model.Models
         
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual Bag Bag { get; set; }
+        public virtual Bag? Bag { get; set; }
+        
+        public virtual Belt? Belt { get; set; }
         
         public virtual User User { get; set; }
         

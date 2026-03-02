@@ -136,6 +136,13 @@ namespace CSBWebshopSeminarski.Database
                 entity.HasOne(o => o.Bag)
                     .WithMany()
                     .HasForeignKey(o => o.BagID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(o => o.Belt)
+                    .WithMany()
+                    .HasForeignKey(o => o.BeltID)
+                    .IsRequired(false)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(o => o.User)

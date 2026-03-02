@@ -24,11 +24,17 @@ namespace CBSWebshopSeminarski.Services.Services
             var query = _context.OutfitIdeas
                 .Include(x => x.Images)
                 .Include(x => x.Bag)
+                .Include(x => x.Belt)
                 .AsQueryable();
 
             if (request.BagID.HasValue && request.BagID.Value > 0)
             {
                 query = query.Where(x => x.BagID == request.BagID.Value);
+            }
+
+            if (request.BeltID.HasValue && request.BeltID.Value > 0)
+            {
+                query = query.Where(x => x.BeltID == request.BeltID.Value);
             }
 
             if (request.UserID.HasValue && request.UserID.Value > 0)
@@ -50,6 +56,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
                 .Include(x => x.Bag)
+                .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.OutfitIdeaID == id);
 
             return _mapper.Map<OutfitIdea>(entity);
@@ -60,13 +67,33 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.OutfitIdeas
                 .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
                 .Include(x => x.Bag)
+                .Include(x => x.Belt)
                 .FirstOrDefaultAsync(x => x.BagID == bagId && x.UserID == userId);
 
             return _mapper.Map<OutfitIdea>(entity);
         }
 
+        public async Task<OutfitIdea?> GetByBeltAndUser(int beltId, int userId)
+        {
+            var entity = await _context.OutfitIdeas
+                .Include(x => x.Images.OrderBy(i => i.DisplayOrder))
+                .Include(x => x.Bag)
+                .Include(x => x.Belt)
+                .FirstOrDefaultAsync(x => x.BeltID == beltId && x.UserID == userId);
+
+            return entity != null ? _mapper.Map<OutfitIdea>(entity) : null;
+        }
+
         public override async Task<OutfitIdea> Insert(OutfitIdeaUpsertRequest request)
         {
+            if (!request.BagID.HasValue && !request.BeltID.HasValue)
+            {
+                throw new ArgumentException("Either BagID or BeltID must be set.");
+            }
+            if (request.BagID.HasValue && request.BeltID.HasValue)
+            {
+                throw new ArgumentException("Only one of BagID or BeltID should be set.");
+            }
             var entity = _mapper.Map<OutfitIdeas>(request);
             entity.CreatedAt = DateTime.UtcNow;
             

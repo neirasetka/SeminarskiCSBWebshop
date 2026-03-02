@@ -4,8 +4,10 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class OutfitIdeaUpsertRequest
     {
-        [Range(1, int.MaxValue, ErrorMessage = "Bag ID must be valid.")]
-        public int BagID { get; set; }
+        /// Either BagID or BeltID must be set (for bag or belt outfit idea).
+        public int? BagID { get; set; }
+        
+        public int? BeltID { get; set; }
         
         [Required(ErrorMessage = "User ID is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]

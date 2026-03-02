@@ -9,10 +9,11 @@ class OutfitIdeasApi {
 
   final ApiClient _apiClient;
 
-  /// Gets all outfit ideas, optionally filtered by bagId or userId
-  Future<List<OutfitIdea>> getAll({int? bagId, int? userId}) async {
+  /// Gets all outfit ideas, optionally filtered by bagId, beltId or userId
+  Future<List<OutfitIdea>> getAll({int? bagId, int? beltId, int? userId}) async {
     final List<String> params = <String>[];
     if (bagId != null) params.add('bagID=$bagId');
+    if (beltId != null) params.add('beltID=$beltId');
     if (userId != null) params.add('userID=$userId');
     
     final String queryString = params.isNotEmpty ? '?${params.join('&')}' : '';
@@ -53,8 +54,23 @@ class OutfitIdeasApi {
         'Failed to load outfit idea for bag: ${response.statusCode}');
   }
 
-  /// Creates a new outfit idea
-  Future<OutfitIdea> create({
+  /// Gets outfit idea for a specific belt and user
+  Future<OutfitIdea?> getByBeltAndUser(int beltId, int userId) async {
+    final response =
+        await _apiClient.get('/api/OutfitIdeas/belt/$beltId/user/$userId');
+    
+    if (response.statusCode == 200) {
+      return OutfitIdea.fromJson(
+          json.decode(response.body) as Map<String, dynamic>);
+    } else if (response.statusCode == 404) {
+      return null;
+    }
+    throw Exception(
+        'Failed to load outfit idea for belt: ${response.statusCode}');
+  }
+
+  /// Creates a new outfit idea for a bag
+  Future<OutfitIdea> createForBag({
     required int bagId,
     required int userId,
     String? title,
@@ -77,11 +93,36 @@ class OutfitIdeasApi {
     throw Exception('Failed to create outfit idea: ${response.statusCode}');
   }
 
+  /// Creates a new outfit idea for a belt
+  Future<OutfitIdea> createForBelt({
+    required int beltId,
+    required int userId,
+    String? title,
+    String? description,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'beltID': beltId,
+      'userID': userId,
+      'title': title,
+      'description': description,
+    };
+
+    final response =
+        await _apiClient.post('/api/OutfitIdeas', body: json.encode(body));
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return OutfitIdea.fromJson(
+          json.decode(response.body) as Map<String, dynamic>);
+    }
+    throw Exception('Failed to create outfit idea: ${response.statusCode}');
+  }
+
   /// Updates an existing outfit idea
   Future<OutfitIdea> update(int id, {String? title, String? description}) async {
     final OutfitIdea existing = await getById(id);
     final Map<String, dynamic> body = <String, dynamic>{
       'bagID': existing.bagId,
+      'beltID': existing.beltId,
       'userID': existing.userId,
       'title': title ?? existing.title,
       'description': description ?? existing.description,

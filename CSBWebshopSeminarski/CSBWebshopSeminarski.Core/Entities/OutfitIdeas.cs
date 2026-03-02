@@ -12,7 +12,9 @@ namespace CSBWebshopSeminarski.Core.Entities
         [Key]
         public int OutfitIdeaID { get; set; }
         
-        public int BagID { get; set; }
+        public int? BagID { get; set; }
+        
+        public int? BeltID { get; set; }
         
         public int UserID { get; set; }
         
@@ -24,7 +26,9 @@ namespace CSBWebshopSeminarski.Core.Entities
         
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual Bags Bag { get; set; }
+        public virtual Bags? Bag { get; set; }
+        
+        public virtual Belts? Belt { get; set; }
         
         public virtual Users User { get; set; }
         

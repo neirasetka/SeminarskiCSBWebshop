@@ -21,6 +21,8 @@ import '../features/reports/presentation/reports_screen.dart';
 import '../features/bags/domain/bag.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
+import '../features/outfit_ideas/presentation/outfit_idea_belt_screen.dart';
+import '../features/belts/domain/belt.dart';
 import '../features/torbice_shop/presentation/torbice_shop_screen.dart';
 import '../features/kaisevi_shop/presentation/kaisevi_shop_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
@@ -211,6 +213,18 @@ final GoRouter appRouter = GoRouter(
             final Bag? initialBag = state.extra is Bag ? state.extra as Bag : null;
             return AuthGate(
               child: OutfitIdeaScreen(bagId: bagId, initialBag: initialBag),
+            );
+          },
+        ),
+        GoRoute(
+          path: 'belts/:id/outfit-idea',
+          name: 'outfitIdeaBelt',
+          builder: (BuildContext context, GoRouterState state) {
+            final String? idParam = state.pathParameters['id'];
+            final int beltId = int.tryParse(idParam ?? '') ?? 0;
+            final Belt? initialBelt = state.extra is Belt ? state.extra as Belt : null;
+            return AuthGate(
+              child: OutfitIdeaBeltScreen(beltId: beltId, initialBelt: initialBelt),
             );
           },
         ),

@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-/// Model representing outfit inspiration for a specific bag.
+/// Model representing outfit inspiration for a bag or belt.
 class OutfitIdea {
   OutfitIdea({
     required this.outfitIdeaId,
-    required this.bagId,
+    this.bagId,
+    this.beltId,
     required this.userId,
     this.title,
     this.description,
@@ -14,7 +15,8 @@ class OutfitIdea {
   });
 
   final int outfitIdeaId;
-  final int bagId;
+  final int? bagId;
+  final int? beltId;
   final int userId;
   final String? title;
   final String? description;
@@ -25,7 +27,8 @@ class OutfitIdea {
   factory OutfitIdea.fromJson(Map<String, dynamic> json) {
     return OutfitIdea(
       outfitIdeaId: json['outfitIdeaID'] as int? ?? 0,
-      bagId: json['bagID'] as int? ?? 0,
+      bagId: json['bagID'] as int?,
+      beltId: json['beltID'] as int?,
       userId: json['userID'] as int? ?? 0,
       title: json['title'] as String?,
       description: json['description'] as String?,
@@ -47,6 +50,7 @@ class OutfitIdea {
     return <String, dynamic>{
       'outfitIdeaID': outfitIdeaId,
       'bagID': bagId,
+      'beltID': beltId,
       'userID': userId,
       'title': title,
       'description': description,
@@ -56,6 +60,7 @@ class OutfitIdea {
   OutfitIdea copyWith({
     int? outfitIdeaId,
     int? bagId,
+    int? beltId,
     int? userId,
     String? title,
     String? description,
@@ -66,6 +71,7 @@ class OutfitIdea {
     return OutfitIdea(
       outfitIdeaId: outfitIdeaId ?? this.outfitIdeaId,
       bagId: bagId ?? this.bagId,
+      beltId: beltId ?? this.beltId,
       userId: userId ?? this.userId,
       title: title ?? this.title,
       description: description ?? this.description,

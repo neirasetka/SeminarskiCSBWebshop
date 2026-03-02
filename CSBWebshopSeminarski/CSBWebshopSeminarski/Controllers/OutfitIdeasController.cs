@@ -29,6 +29,17 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(result);
         }
 
+        [HttpGet("belt/{beltId}/user/{userId}")]
+        public async Task<ActionResult<OutfitIdea>> GetByBeltAndUser(int beltId, int userId)
+        {
+            var result = await _outfitIdeasService.GetByBeltAndUser(beltId, userId);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+
         [HttpPost("{outfitIdeaId}/images")]
         public async Task<ActionResult<OutfitIdeaImage>> AddImage(int outfitIdeaId, [FromBody] OutfitIdeaImageUpsertRequest request)
         {

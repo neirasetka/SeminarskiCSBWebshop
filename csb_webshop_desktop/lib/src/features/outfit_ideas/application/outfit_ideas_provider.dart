@@ -125,8 +125,42 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final OutfitIdea idea = await _api.create(
+      final OutfitIdea idea = await _api.createForBag(
         bagId: bagId,
+        userId: userId,
+        title: title,
+        description: description,
+      );
+      state = state.copyWith(outfitIdea: idea, isLoading: false);
+      return idea;
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+      return null;
+    }
+  }
+
+  /// Loads outfit idea for a specific belt and user
+  Future<void> loadForBelt(int beltId, int userId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final OutfitIdea? idea = await _api.getByBeltAndUser(beltId, userId);
+      state = state.copyWith(outfitIdea: idea, isLoading: false, clearOutfitIdea: idea == null);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
+  }
+
+  /// Creates a new outfit idea for a belt
+  Future<OutfitIdea?> createOutfitIdeaForBelt({
+    required int beltId,
+    required int userId,
+    String? title,
+    String? description,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final OutfitIdea idea = await _api.createForBelt(
+        beltId: beltId,
         userId: userId,
         title: title,
         description: description,
