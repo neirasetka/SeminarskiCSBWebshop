@@ -144,6 +144,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                         belt: belt,
                         isFavorite: isFav,
                         showFavorite: !isAdmin,
+                        showAddToCart: !isAdmin,
                         onTap: () => _navigateToDetail(belt),
                         onToggleFavorite: () =>
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
@@ -558,6 +559,7 @@ class _ProductCard extends StatefulWidget {
     required this.belt,
     required this.isFavorite,
     required this.showFavorite,
+    required this.showAddToCart,
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
@@ -567,6 +569,7 @@ class _ProductCard extends StatefulWidget {
   final Belt belt;
   final bool isFavorite;
   final bool showFavorite;
+  final bool showAddToCart;
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
@@ -687,27 +690,29 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                                 color: colorScheme.primary,
                               ),
                             ),
-                            const Spacer(),
-                            // Add to cart icon button
-                            IconButton(
-                              onPressed: widget.onAddToCart,
-                              icon: const Icon(Icons.add_shopping_cart, size: 20),
-                              tooltip: 'Dodaj u korpu',
-                              style: IconButton.styleFrom(
-                                foregroundColor: colorScheme.primary,
+                            if (widget.showAddToCart) ...[
+                              const Spacer(),
+                              // Add to cart icon button (sakriveno za admine)
+                              IconButton(
+                                onPressed: widget.onAddToCart,
+                                icon: const Icon(Icons.add_shopping_cart, size: 20),
+                                tooltip: 'Dodaj u korpu',
+                                style: IconButton.styleFrom(
+                                  foregroundColor: colorScheme.primary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            // Buy now button
-                            FilledButton(
-                              onPressed: widget.onBuyNow,
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                minimumSize: const Size(0, 36),
-                                backgroundColor: Colors.green.shade600,
+                              const SizedBox(width: 4),
+                              // Buy now button (sakriveno za admine)
+                              FilledButton(
+                                onPressed: widget.onBuyNow,
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  minimumSize: const Size(0, 36),
+                                  backgroundColor: Colors.green.shade600,
+                                ),
+                                child: const Text('Naruči'),
                               ),
-                              child: const Text('Naruči'),
-                            ),
+                            ],
                           ],
                         ),
                       ],
