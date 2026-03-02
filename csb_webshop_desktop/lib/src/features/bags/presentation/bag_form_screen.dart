@@ -174,9 +174,13 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
                 textInputAction: TextInputAction.next,
                 validator: (String? value) {
                   if (value == null || value.trim().isEmpty) return 'Cijena je obavezna';
-                  final double? parsed = double.tryParse(value.replaceAll(',', '.'));
+                  final String normalized = value.replaceAll(',', '.').trim();
+                  final double? parsed = double.tryParse(normalized);
                   if (parsed == null) return 'Unesite ispravan broj';
                   if (parsed <= 0) return 'Cijena mora biti veća od 0';
+                  final List<String> parts = normalized.split('.');
+                  if (parts.length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
+                  if (parts.length == 2 && parts[1].length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
                   return null;
                 },
               ),

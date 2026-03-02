@@ -341,10 +341,13 @@ Future<bool?> _showBagEditDialog(BuildContext context, WidgetRef ref, {required 
                               const TextInputType.numberWithOptions(decimal: true),
                           validator: (String? v) {
                             if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
-                            final double? price =
-                                double.tryParse(v.replaceAll(',', '.'));
+                            final String normalized = v.replaceAll(',', '.').trim();
+                            final double? price = double.tryParse(normalized);
                             if (price == null) return 'Unesite ispravan broj';
                             if (price <= 0) return 'Cijena mora biti veća od 0';
+                            final List<String> parts = normalized.split('.');
+                            if (parts.length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
+                            if (parts.length == 2 && parts[1].length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
                             return null;
                           },
                         ),
