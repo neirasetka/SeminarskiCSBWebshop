@@ -75,10 +75,14 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     if (userId == null) {
       userId = ref.read(outfitIdeaProvider).outfitIdea?.userId;
     }
-    if (userId == null) {
+    if (userId == null || (userId ?? 0) < 1) {
       _showError(
         'Korisnički ID nije dostupan. Pokušajte osvježiti stranicu ili se odjaviti i ponovo prijaviti.',
       );
+      return;
+    }
+    if (widget.bagId < 1) {
+      _showError('Neispravna torbica.');
       return;
     }
 

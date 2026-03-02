@@ -76,21 +76,24 @@ class OutfitIdeasApi {
     String? title,
     String? description,
   }) async {
+    // Explicitly set beltID: null so backend knows this is a bag outfit idea, not belt
     final Map<String, dynamic> body = <String, dynamic>{
       'bagID': bagId,
+      'beltID': null,
       'userID': userId,
-      'title': title,
+      'title': title ?? 'Outfit inspiracija',
       'description': description,
     };
 
     final response =
         await _apiClient.post('/api/OutfitIdeas', body: json.encode(body));
-    
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception('Failed to create outfit idea: ${response.statusCode}');
+    throw Exception(
+        'Failed to create outfit idea: ${response.statusCode}${response.body.isNotEmpty ? ' - ${response.body}' : ''}');
   }
 
   /// Creates a new outfit idea for a belt
@@ -100,21 +103,24 @@ class OutfitIdeasApi {
     String? title,
     String? description,
   }) async {
+    // Explicitly set bagID: null so backend knows this is a belt outfit idea, not bag
     final Map<String, dynamic> body = <String, dynamic>{
+      'bagID': null,
       'beltID': beltId,
       'userID': userId,
-      'title': title,
+      'title': title ?? 'Outfit inspiracija',
       'description': description,
     };
 
     final response =
         await _apiClient.post('/api/OutfitIdeas', body: json.encode(body));
-    
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception('Failed to create outfit idea: ${response.statusCode}');
+    throw Exception(
+        'Failed to create outfit idea: ${response.statusCode}${response.body.isNotEmpty ? ' - ${response.body}' : ''}');
   }
 
   /// Updates an existing outfit idea
