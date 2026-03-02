@@ -3,6 +3,7 @@ using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -12,12 +13,27 @@ namespace CSBWebshopSeminarski.Controllers
     public class OutfitIdeasController : BaseCRUDController<OutfitIdea, OutfitIdeaSearchRequest, OutfitIdeaUpsertRequest, OutfitIdeaUpsertRequest>
     {
         /// <summary>
-        /// Override to allow anonymous viewing of outfit ideas (e.g. GET ?bagID=1 or ?beltID=1).
-        /// Uses dedicated route to avoid model binding conflicts with base Get([FromQuery]).
+        /// Override base Get to avoid model binding issues (rawValue/attemptedValue validation errors).
+        /// Reads query params manually instead of [FromQuery] binding.
+        /// </summary>
+        [HttpGet]
+        [AllowAnonymous]
+        public override async Task<List<OutfitIdea>> Get([BindNever] OutfitIdeaSearchRequest search)
+        {
+            return await GetSearchInternalAsync();
+        }
+
+        /// <summary>
+        /// Same as Get - allows /api/OutfitIdeas/search?beltID=1 for explicit search path.
         /// </summary>
         [HttpGet("search")]
         [AllowAnonymous]
         public async Task<List<OutfitIdea>> GetSearch()
+        {
+            return await GetSearchInternalAsync();
+        }
+
+        private async Task<List<OutfitIdea>> GetSearchInternalAsync()
         {
             var searchReq = new OutfitIdeaSearchRequest();
             if (int.TryParse(Request.Query["bagID"], out var bagId) && bagId > 0)
