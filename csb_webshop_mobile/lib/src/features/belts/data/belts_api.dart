@@ -77,9 +77,9 @@ class BeltsApi {
       'Code': code,
       'Price': price,
       'Description': description,
-      if (beltTypeId != null) 'BeltTypeID': beltTypeId,
-      if (imageBase64 != null && imageBase64.isNotEmpty) 'Image': imageBase64,
-      if (userId != null) 'UserID': userId,
+      'BeltTypeID': beltTypeId ?? 0,
+      'Image': imageBase64 ?? '',
+      'UserID': userId ?? 0,
     };
     final http.Response response = await _apiClient.put('$_beltsPath/$id', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {
