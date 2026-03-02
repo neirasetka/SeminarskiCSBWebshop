@@ -27,14 +27,6 @@ class BeltDetailScreen extends ConsumerStatefulWidget {
 class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
   int _quantity = 1;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(beltDetailProvider.notifier).fetch(widget.id);
-    });
-  }
-
   Future<void> _openEditBelt(Belt belt) async {
     final bool? saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -42,13 +34,13 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
       ),
     );
     if (saved == true && mounted) {
-      ref.read(beltDetailProvider.notifier).fetch(widget.id);
+      ref.invalidate(beltDetailProvider(widget.id));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
+    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(widget.id));
     final AsyncValue<List<BeltType>> beltTypesAsync = ref.watch(beltTypesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -119,7 +111,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () =>
-                        ref.read(beltDetailProvider.notifier).fetch(widget.id),
+                        ref.invalidate(beltDetailProvider(widget.id)),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Pokušaj ponovno'),
                   ),

@@ -87,19 +87,12 @@ class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
 final AsyncNotifierProvider<BeltsListNotifier, List<Belt>> beltsListProvider =
     AsyncNotifierProvider<BeltsListNotifier, List<Belt>>(BeltsListNotifier.new);
 
-class BeltDetailNotifier extends AutoDisposeAsyncNotifier<Belt> {
-  @override
-  Future<Belt> build() async {
-    throw UnimplementedError('Call fetch(id) first');
-  }
-
-  Future<void> fetch(int id) async {
-    final BeltsApi api = ref.read(beltsApiProvider);
-    state = const AsyncLoading<Belt>();
-    state = await AsyncValue.guard(() => api.getBeltById(id));
-  }
-}
-
-final AutoDisposeAsyncNotifierProvider<BeltDetailNotifier, Belt> beltDetailProvider =
-    AutoDisposeAsyncNotifierProvider<BeltDetailNotifier, Belt>(BeltDetailNotifier.new);
+/// Provider za detalje jednog kaiša po ID-u.
+/// Korištenjem family providera, fetch se poziva automatski pri prvom watch-u,
+/// što sprječava grešku "Call fetch(id) first".
+final beltDetailProvider =
+    FutureProvider.autoDispose.family<Belt, int>((Ref ref, int id) async {
+  final BeltsApi api = ref.read(beltsApiProvider);
+  return api.getBeltById(id);
+});
 

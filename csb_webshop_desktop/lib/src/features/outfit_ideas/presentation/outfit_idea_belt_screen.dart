@@ -37,7 +37,6 @@ class _OutfitIdeaBeltScreenState extends ConsumerState<OutfitIdeaBeltScreen> {
 
   Future<void> _loadData() async {
     ref.read(outfitIdeaProvider.notifier).clear();
-    await ref.read(beltDetailProvider.notifier).fetch(widget.beltId);
 
     final AuthSession? session = ref.read(authControllerProvider).value;
     int? userId = session?.userId;
@@ -230,7 +229,7 @@ class _OutfitIdeaBeltScreenState extends ConsumerState<OutfitIdeaBeltScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
+    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(widget.beltId));
     final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
