@@ -6,6 +6,7 @@ using CSBWebshopSeminarski.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -120,7 +121,23 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 request.Title = "Outfit inspiracija";
             }
-            return await _outfitIdeasService.Insert(request);
+            try
+            {
+                return await _outfitIdeasService.Insert(request);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new UserException(ex.Message);
+            }
+            catch (DbUpdateException ex)
+            {
+                var inner = ex.InnerException?.Message ?? ex.Message;
+                if (inner.Contains("FK_") || inner.Contains("foreign key"))
+                    throw new UserException("Greška pri kreiranju outfit ideje: referencirani kaiš ili korisnik ne postoji u bazi.");
+                if (inner.Contains("duplicate") || inner.Contains("unique"))
+                    throw new UserException("Greška pri kreiranju outfit ideje: outfit ideja za ovaj kaiš i korisnika već postoji.");
+                throw new UserException($"Greška pri kreiranju outfit ideje: {inner}");
+            }
         }
 
         [HttpGet("bag/{bagId}/user/{userId}")]

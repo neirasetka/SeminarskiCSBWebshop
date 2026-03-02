@@ -87,6 +87,22 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new ArgumentException("Only one of BagID or BeltID should be set.");
             }
+            // Validate foreign keys exist before insert
+            var userExists = await _context.Users.AnyAsync(u => u.UserID == request.UserID);
+            if (!userExists)
+                throw new ArgumentException("Korisnik sa tim ID-om ne postoji.");
+            if (request.BeltID.HasValue)
+            {
+                var beltExists = await _context.Belts.AnyAsync(b => b.BeltID == request.BeltID.Value);
+                if (!beltExists)
+                    throw new ArgumentException("Kaiš sa tim ID-om ne postoji.");
+            }
+            if (request.BagID.HasValue)
+            {
+                var bagExists = await _context.Bags.AnyAsync(b => b.BagID == request.BagID.Value);
+                if (!bagExists)
+                    throw new ArgumentException("Torba sa tim ID-om ne postoji.");
+            }
             var entity = _mapper.Map<OutfitIdeas>(request);
             entity.CreatedAt = DateTime.UtcNow;
             

@@ -104,7 +104,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
               title: 'Outfit inspiracija',
             );
         if (created == null) {
-          _showError('Greška pri kreiranju outfit ideje');
+          final String? apiError = ref.read(outfitIdeaProvider).error;
+          _showError(apiError ?? 'Greška pri kreiranju outfit ideje');
           return;
         }
       }
