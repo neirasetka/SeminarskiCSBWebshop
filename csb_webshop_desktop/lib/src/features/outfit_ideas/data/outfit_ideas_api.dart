@@ -76,13 +76,12 @@ class OutfitIdeasApi {
     String? title,
     String? description,
   }) async {
-    // Explicitly set beltID: null so backend knows this is a bag outfit idea, not belt
+    // Backend expects PascalCase; omit beltID for bag outfit ideas
     final Map<String, dynamic> body = <String, dynamic>{
-      'bagID': bagId,
-      'beltID': null,
-      'userID': userId,
-      'title': title ?? 'Outfit inspiracija',
-      'description': description,
+      'BagID': bagId,
+      'UserID': userId,
+      'Title': title ?? 'Outfit inspiracija',
+      'Description': description ?? '',
     };
 
     final response =
@@ -103,13 +102,12 @@ class OutfitIdeasApi {
     String? title,
     String? description,
   }) async {
-    // Explicitly set bagID: null so backend knows this is a belt outfit idea, not bag
+    // Backend expects PascalCase; omit bagID for belt outfit ideas
     final Map<String, dynamic> body = <String, dynamic>{
-      'bagID': null,
-      'beltID': beltId,
-      'userID': userId,
-      'title': title ?? 'Outfit inspiracija',
-      'description': description,
+      'BeltID': beltId,
+      'UserID': userId,
+      'Title': title ?? 'Outfit inspiracija',
+      'Description': description ?? '',
     };
 
     final response =
@@ -127,11 +125,11 @@ class OutfitIdeasApi {
   Future<OutfitIdea> update(int id, {String? title, String? description}) async {
     final OutfitIdea existing = await getById(id);
     final Map<String, dynamic> body = <String, dynamic>{
-      'bagID': existing.bagId,
-      'beltID': existing.beltId,
-      'userID': existing.userId,
-      'title': title ?? existing.title,
-      'description': description ?? existing.description,
+      'BagID': existing.bagId,
+      'BeltID': existing.beltId,
+      'UserID': existing.userId,
+      'Title': title ?? existing.title,
+      'Description': description ?? existing.description,
     };
 
     final response =
@@ -162,10 +160,10 @@ class OutfitIdeasApi {
   }) async {
     final String imageBase64 = base64Encode(imageBytes);
     final Map<String, dynamic> body = <String, dynamic>{
-      'outfitIdeaID': outfitIdeaId,
+      'OutfitIdeaID': outfitIdeaId,
       'Image': imageBase64,
-      'caption': caption,
-      'displayOrder': displayOrder,
+      'Caption': caption,
+      'DisplayOrder': displayOrder,
     };
 
     final response = await _apiClient.post(

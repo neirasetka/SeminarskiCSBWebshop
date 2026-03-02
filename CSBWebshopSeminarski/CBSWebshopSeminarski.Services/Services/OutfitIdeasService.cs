@@ -127,8 +127,16 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new Exception("Outfit idea not found");
             }
 
-            var imageEntity = _mapper.Map<OutfitIdeaImages>(request);
-            imageEntity.CreatedAt = DateTime.UtcNow;
+            var imageEntity = new OutfitIdeaImages
+            {
+                OutfitIdeaID = request.OutfitIdeaID,
+                Image = !string.IsNullOrWhiteSpace(request.Image)
+                    ? Convert.FromBase64String(request.Image)
+                    : Array.Empty<byte>(),
+                Caption = request.Caption,
+                DisplayOrder = request.DisplayOrder,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.OutfitIdeaImages.Add(imageEntity);
             
