@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -202,8 +201,10 @@ class _LookbookDetailContent extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 350,
           pinned: true,
-          leading: Builder(
-            builder: (BuildContext context) => buildBackButtonWithConfirmation(context),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => context.pop(),
+            tooltip: 'Nazad',
           ),
           actions: <Widget>[
             if (isAdmin && onEditBag != null)
