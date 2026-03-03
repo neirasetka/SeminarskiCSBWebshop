@@ -21,7 +21,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Buyer, Admin")]
-        public async Task<OrderItem> Insert([FromBody] OrderItemUpsertRequest request)
+        public override async Task<OrderItem> Insert([FromBody] OrderItemUpsertRequest request)
         {
             if (request == null)
                 throw new UserException("Zahtjev za dodavanje stavke nije valjan.");
