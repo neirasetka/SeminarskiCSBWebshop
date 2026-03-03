@@ -37,6 +37,23 @@ namespace CBSWebshopSeminarski.Services.Services
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
                 throw new ArgumentException("Order item must have either BagID or BeltID.");
 
+            // Ako klijent pošalje cijenu 0, dohvati pravu cijenu iz artikla (Bag ili Belt)
+            if (request.Price <= 0)
+            {
+                if (request.BagID.HasValue)
+                {
+                    var bag = await _context.Bags.FindAsync(request.BagID.Value);
+                    if (bag != null)
+                        request.Price = bag.Price;
+                }
+                else if (request.BeltID.HasValue)
+                {
+                    var belt = await _context.Belts.FindAsync(request.BeltID.Value);
+                    if (belt != null)
+                        request.Price = belt.Price;
+                }
+            }
+
             var entity = _mapper.Map<OrderItems>(request);
 
             _context.Set<OrderItems>().Add(entity);

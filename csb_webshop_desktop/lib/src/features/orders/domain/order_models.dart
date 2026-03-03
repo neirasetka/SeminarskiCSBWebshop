@@ -28,7 +28,7 @@ class OrderItemModel {
       bagId: _toNullableInt(json['BagID']),
       beltId: _toNullableInt(json['BeltID']),
       quantity: _toInt(json['Quantity'] ?? 1),
-      price: _toDouble(json['Price'] ?? 0),
+      price: _toDouble(json['Price'] ?? json['price'] ?? 0),
       discount: _toNullableDouble(json['Discount']),
       name: (json['Name'] ?? json['name'])?.toString(),
       code: (json['Code'] ?? json['code'])?.toString(),
