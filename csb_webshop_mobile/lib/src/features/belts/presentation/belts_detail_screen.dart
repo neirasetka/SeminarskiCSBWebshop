@@ -9,7 +9,6 @@ import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
-import '../../auth/application/admin_role_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BeltDetailScreen extends ConsumerStatefulWidget {
@@ -30,24 +29,16 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
     });
   }
 
-  Future<void> _openEditBelt(Belt belt) async {
-    final bool? saved = await _showBeltEditDialog(context, ref, existing: belt);
-    if (saved == true && mounted) {
-      await ref.read(beltDetailProvider.notifier).fetch(widget.id);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
-    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     return Scaffold(
       appBar: AppBar(title: const Text('Detalji kaiša')),
       body: beltAsync.when(
         data: (Belt belt) => _BeltDetailBody(
           belt: belt,
-          isAdmin: isAdmin,
-          onEdit: isAdmin ? () => _openEditBelt(belt) : null,
+          isAdmin: false,
+          onEdit: null,
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace st) => Padding(

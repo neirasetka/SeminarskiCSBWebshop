@@ -11,7 +11,7 @@ function Build-WindowsRelease {
   param(
     [string]$Flavor = 'prod',
     [string]$Main = 'lib/main.dart',
-    [string]$ApiBaseUrl = 'http://localhost:5265',
+    [string]$BaseUrl = 'http://localhost:5265',
     [string]$EnableLogging = 'false',
     [string]$StripeKey = ''
   )
@@ -22,7 +22,7 @@ function Build-WindowsRelease {
 
   $defines = @(
     "--dart-define=FLAVOR=$Flavor",
-    "--dart-define=API_BASE_URL=$ApiBaseUrl",
+    "--dart-define=baseUrl=$BaseUrl",
     "--dart-define=ENABLE_LOGGING=$EnableLogging",
     "--dart-define=STRIPE_PUBLISHABLE_KEY=$StripeKey"
   ) -join ' '

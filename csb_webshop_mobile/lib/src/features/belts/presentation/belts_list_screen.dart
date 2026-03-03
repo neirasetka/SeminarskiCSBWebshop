@@ -6,7 +6,6 @@ import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import 'belts_detail_screen.dart';
-import '../../auth/application/admin_role_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BeltsListScreen extends ConsumerStatefulWidget {
@@ -35,27 +34,11 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
-    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
-    final bool isAdmin = isAdminAsync.value ?? false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Katalog kaiševa'),
-        actions: <Widget>[
-          if (isAdmin)
-            IconButton(
-              onPressed: () => _showManageBeltTypesDialog(context, ref),
-              icon: const Icon(Icons.category),
-              tooltip: 'Upravljanje tipovima',
-            ),
-        ],
       ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              onPressed: () => _showBeltFormDialog(context, ref),
-              child: const Icon(Icons.add),
-            )
-          : null,
       body: Column(
         children: <Widget>[
           Padding(
@@ -144,26 +127,6 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                   ),
                               ],
                             ),
-                            if (isAdmin)
-                              PopupMenuButton<String>(
-                                onSelected: (String value) async {
-                                  if (value == 'edit') {
-                                    await _showBeltFormDialog(context, ref, existing: belt);
-                                  } else if (value == 'delete') {
-                                    final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${belt.name}"?');
-                                    if (ok == true) {
-                                      await ref.read(beltsListProvider.notifier).remove(belt.id);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proizvod obrisan')));
-                                      }
-                                    }
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
-                                  PopupMenuItem<String>(value: 'edit', child: Text('Uredi')),
-                                  PopupMenuItem<String>(value: 'delete', child: Text('Obriši')),
-                                ],
-                              ),
                           ],
                         ),
                         onTap: () {

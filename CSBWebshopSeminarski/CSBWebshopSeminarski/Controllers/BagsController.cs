@@ -29,7 +29,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin, Buyer")]
+        [Authorize(Roles = "Admin")]
         public async Task<Bag> Insert(BagUpsertRequest request)
         {
             return await _service.Insert(request);

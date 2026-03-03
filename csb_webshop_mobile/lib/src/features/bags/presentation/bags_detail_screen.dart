@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
-import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
@@ -30,18 +29,10 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
     });
   }
 
-  Future<void> _openEditBag(Bag bag) async {
-    final bool? saved = await _showBagEditDialog(context, ref, existing: bag);
-    if (saved == true && mounted) {
-      await ref.read(bagDetailProvider.notifier).fetch(widget.id);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
-    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalji torbe'),
@@ -53,14 +44,14 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
             bag: bag,
             isFavorite: isFav,
             onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
-            onAddToCart: isAdmin
-                ? null
-                : () async {
-                    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)));
-                    }
-                  },
+            onAddToCart: () async {
+              await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
+                );
+              }
+            },
             onOutfitIdea: () {
               context.pushNamed(
                 'outfitIdea',
@@ -68,8 +59,8 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                 queryParameters: <String, String>{'name': bag.name},
               );
             },
-            isAdmin: isAdmin,
-            onEdit: isAdmin ? () => _openEditBag(bag) : null,
+            isAdmin: false,
+            onEdit: null,
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

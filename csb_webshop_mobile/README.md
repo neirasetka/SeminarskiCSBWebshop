@@ -54,12 +54,29 @@ Android product flavors are configured: `dev`, `prod`.
 
 Runtime configuration is passed via `--dart-define` and consumed by `lib/environment.dart`.
 
+### Base URL (konfigurabilno)
+
+Base URL API-ja je konfigurabilan kroz `--dart-define=baseUrl=...`. Korisno za:
+- **Fizički mobilni uređaj**: `localhost` ne radi – koristi IP računala s backendom
+- **Različit port**: zadano je `http://localhost:5265`, možeš promijeniti port ili cijeli URL
+
+```bash
+# Primjer: backend na 192.168.1.10, port 5265
+flutter run --dart-define=baseUrl=http://192.168.1.10:5265
+
+# Primjer: backend na drugom portu
+flutter run --dart-define=baseUrl=http://localhost:3000
+
+# Build za produkciju s custom URL-om
+flutter build apk --dart-define=baseUrl=https://api.tvojadomena.com
+```
+
 ### Run examples
 
 - Dev:
-  - Android: `flutter run --flavor dev -t lib/main.dart --dart-define=FLAVOR=dev --dart-define=API_BASE_URL=https://dev.api.example.com --dart-define=ENABLE_LOGGING=true`
+  - Android: `flutter run --flavor dev -t lib/main.dart --dart-define=FLAVOR=dev --dart-define=baseUrl=https://dev.api.example.com --dart-define=ENABLE_LOGGING=true`
 - Prod:
-  - Android: `flutter run --flavor prod -t lib/main.dart --dart-define=FLAVOR=prod --dart-define=API_BASE_URL=https://api.example.com --dart-define=ENABLE_LOGGING=false`
+  - Android: `flutter run --flavor prod -t lib/main.dart --dart-define=FLAVOR=prod --dart-define=baseUrl=https://api.example.com --dart-define=ENABLE_LOGGING=false`
 
 Note: Building/running Android requires the Android SDK and accepting licenses.
 
@@ -73,7 +90,7 @@ Quick build (PowerShell):
 
 ```
 cd scripts
-./build-windows.ps1 -Flavor prod -Main lib/main.dart -ApiBaseUrl https://api.example.com -EnableLogging false -StripeKey "pk_test_xxx"
+./build-windows.ps1 -Flavor prod -Main lib/main.dart -BaseUrl https://api.example.com -EnableLogging false -StripeKey "pk_test_xxx"
 ```
 
 Manual build:
@@ -82,7 +99,7 @@ Manual build:
 flutter pub get
 flutter build windows --release --flavor prod -t lib/main.dart \
   --dart-define=FLAVOR=prod \
-  --dart-define=API_BASE_URL=https://api.example.com \
+  --dart-define=baseUrl=https://api.example.com \
   --dart-define=ENABLE_LOGGING=false \
   --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 ```

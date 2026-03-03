@@ -7,7 +7,7 @@ import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/domain/bag_type.dart';
-import '../../outfit_ideas/presentation/outfit_idea_screen.dart';
+import 'lookbook_detail_screen.dart';
 
 class LookbookScreen extends ConsumerStatefulWidget {
   const LookbookScreen({super.key});
@@ -188,10 +188,9 @@ class _LookbookTile extends StatelessWidget {
     
     return InkWell(
       onTap: () {
-        // Direktan link na Outfit Idea screen
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => OutfitIdeaScreen(bagId: bag.id, bagName: bag.name),
+            builder: (_) => LookbookDetailScreen(bagId: bag.id),
           ),
         );
       },

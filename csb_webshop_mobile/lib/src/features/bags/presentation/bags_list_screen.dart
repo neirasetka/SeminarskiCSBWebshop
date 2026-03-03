@@ -9,7 +9,6 @@ import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
 import 'bags_detail_screen.dart';
-import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
@@ -52,28 +51,11 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
-    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
-    final bool isAdmin = isAdminAsync.value ?? false;
-    // no pagination
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Katalog torbi'),
-        actions: <Widget>[
-          if (isAdmin)
-            IconButton(
-              onPressed: () => _showManageBagTypesDialog(context, ref),
-              icon: const Icon(Icons.category),
-              tooltip: 'Upravljanje tipovima',
-            ),
-        ],
       ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              onPressed: () => _showBagFormDialog(context, ref),
-              child: const Icon(Icons.add),
-            )
-          : null,
       body: Column(
         children: <Widget>[
           Padding(
@@ -140,19 +122,18 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                               tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
                               onPressed: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
                             ),
-                            if (!isAdmin)
-                              IconButton(
-                                icon: const Icon(Icons.add_shopping_cart),
-                                tooltip: 'Dodaj u korpu',
-                                onPressed: () async {
-                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
-                                    );
-                                  }
-                                },
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.add_shopping_cart),
+                              tooltip: 'Dodaj u korpu',
+                              onPressed: () async {
+                                await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
+                                  );
+                                }
+                              },
+                            ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -169,26 +150,6 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                                   ),
                               ],
                             ),
-                            if (isAdmin)
-                              PopupMenuButton<String>(
-                                onSelected: (String value) async {
-                                  if (value == 'edit') {
-                                    await _showBagFormDialog(context, ref, existing: bag);
-                                  } else if (value == 'delete') {
-                                    final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${bag.name}"?');
-                                    if (ok == true) {
-                                      await ref.read(bagsListProvider.notifier).remove(bag.id);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proizvod obrisan')));
-                                      }
-                                    }
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                  const PopupMenuItem<String>(value: 'edit', child: Text('Uredi')),
-                                  const PopupMenuItem<String>(value: 'delete', child: Text('Obriši')),
-                                ],
-                              ),
                           ],
                         ),
                         onTap: () {

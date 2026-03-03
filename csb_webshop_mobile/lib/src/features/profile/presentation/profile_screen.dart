@@ -6,8 +6,6 @@ import '../domain/user_profile.dart';
 import 'profile_update_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
-import '../../giveaways/presentation/giveaways_list_screen.dart';
-import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -89,7 +87,6 @@ class _ProfileDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Widget adminSection = _AdminActions();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
@@ -230,8 +227,6 @@ class _ProfileDetails extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        adminSection,
       ],
     );
   }
@@ -264,33 +259,3 @@ class _InfoTile extends StatelessWidget {
     );
   }
 }
-
-class _AdminActions extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
-    return isAdminAsync.when(
-      data: (bool isAdmin) {
-        if (!isAdmin) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Divider(height: 24),
-            const Text('Admin', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen(forAdmin: true)),
-              ),
-              icon: const Icon(Icons.celebration_outlined),
-              label: const Text('Upravljanje giveawayima'),
-            ),
-          ],
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-}
-

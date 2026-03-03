@@ -163,6 +163,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost("{outfitIdeaId}/images")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<OutfitIdeaImage>> AddImage(int outfitIdeaId, [FromBody] OutfitIdeaImageUpsertRequest request)
         {
             request.OutfitIdeaID = outfitIdeaId;
@@ -171,6 +172,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpDelete("images/{imageId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> RemoveImage(int imageId)
         {
             var success = await _outfitIdeasService.RemoveImage(imageId);

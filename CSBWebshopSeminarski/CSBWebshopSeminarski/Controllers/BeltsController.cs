@@ -29,7 +29,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin, Buyer")]
+        [Authorize(Roles = "Admin")]
         public async Task<Belt> Insert(BeltUpsertRequest request)
         {
             return await _service.Insert(request);

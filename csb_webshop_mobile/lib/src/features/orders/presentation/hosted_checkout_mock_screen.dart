@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../environment.dart';
 import '../application/cart_provider.dart';
 import '../domain/order_models.dart';
 
@@ -76,16 +77,45 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
   }
 
   Future<void> _processPayment() async {
-    if (!_formKey.currentState!.validate()) return;
-    
+    if (!mounted) return;
     setState(() => _isProcessing = true);
 
-    // Simulacija procesiranja plaćanja
+    final CartNotifier cartNotifier = ref.read(cartProvider.notifier);
+    final bool stripeConfigured =
+        EnvironmentConfig.stripePublishableKey.isNotEmpty &&
+        EnvironmentConfig.stripePublishableKey.startsWith('pk_');
+
+    if (stripeConfigured) {
+      try {
+        await cartNotifier.startCheckout();
+        if (mounted) {
+          cartNotifier.resetCartAfterPayment();
+          context.go('/checkout/success');
+        }
+        return;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Stripe plaćanje nije uspjelo. Koristi se simulacija.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    }
+
+    if (!mounted) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _isProcessing = false);
+      return;
+    }
+
     await Future<void>.delayed(const Duration(seconds: 2));
 
     if (mounted) {
       setState(() => _isProcessing = false);
-      ref.read(cartProvider.notifier).resetCartAfterPayment();
+      cartNotifier.resetCartAfterPayment();
       context.go('/checkout/success');
     }
   }

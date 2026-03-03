@@ -2,10 +2,14 @@ class EnvironmentConfig {
   EnvironmentConfig._();
 
   static const String flavor = String.fromEnvironment('FLAVOR', defaultValue: 'prod');
-  static const String apiBaseUrl = String.fromEnvironment(
+  /// Konfigurabilna base URL. Postavi s: --dart-define=baseUrl=http://192.168.1.1:5265
+  static const String baseUrl = String.fromEnvironment(
     'baseUrl',
-    defaultValue: String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5265'),
+    defaultValue: 'http://localhost:5265',
   );
+
+  /// Alias za kompatibilnost
+  static const String apiBaseUrl = baseUrl;
   static const bool enableLogging = bool.fromEnvironment('ENABLE_LOGGING', defaultValue: false);
   static const String stripePublishableKey = String.fromEnvironment(
     'STRIPE_PUBLISHABLE_KEY',

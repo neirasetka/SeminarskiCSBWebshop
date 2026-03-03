@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:go_router/go_router.dart';
-
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
-import '../../announcements/presentation/add_announcement_screen.dart';
 import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
@@ -130,7 +127,7 @@ class _MainMenuButton extends StatelessWidget {
   }
 }
 
-/// Home Screen sa glavnim meni gumbima
+/// Home Screen sa glavnim meni gumbima (buyer-only na mobilu)
 class _HomeMenuScreen extends StatelessWidget {
   const _HomeMenuScreen({
     required this.onTorbice,
@@ -147,13 +144,12 @@ class _HomeMenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: <Widget>[
           const SizedBox(height: 20),
-          // Glavni meni - 2x2 grid
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
@@ -464,7 +460,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  setState(() => _index = 3);
+                  setState(() => _index = 4);
                 },
               ),
               ListTile(
