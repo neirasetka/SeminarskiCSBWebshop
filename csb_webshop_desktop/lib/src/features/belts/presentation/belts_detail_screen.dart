@@ -184,9 +184,9 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
           FilledButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              context.go('/checkout');
+              context.go('/cart');
             },
-            child: const Text('Idi na plaćanje'),
+            child: const Text('NARUČI'),
           ),
         ],
       ),

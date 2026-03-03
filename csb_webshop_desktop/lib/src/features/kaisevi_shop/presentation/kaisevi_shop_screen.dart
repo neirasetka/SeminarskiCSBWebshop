@@ -237,6 +237,13 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
           ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'NARUČI',
+            textColor: Colors.white,
+            onPressed: () {
+              context.go('/cart');
+            },
+          ),
         ),
       );
       }

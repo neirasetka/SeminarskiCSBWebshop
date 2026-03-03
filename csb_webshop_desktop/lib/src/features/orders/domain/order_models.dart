@@ -59,7 +59,7 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final List<OrderItemModel> items = <OrderItemModel>[];
-    final Object? rawItems = json['OrderItems'] ?? json['items'];
+    final Object? rawItems = json['OrderItems'] ?? json['orderItems'] ?? json['items'];
     if (rawItems is List) {
       for (final Object e in rawItems) {
         if (e is Map<String, dynamic>) items.add(OrderItemModel.fromJson(e));

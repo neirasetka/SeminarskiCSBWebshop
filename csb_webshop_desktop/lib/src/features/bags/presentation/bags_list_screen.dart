@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
 import '../application/bags_provider.dart';
@@ -163,7 +164,13 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                                     await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
+                                        SnackBar(
+                                          content: const Text('Artikal uspješno dodan u korpu'),
+                                          action: SnackBarAction(
+                                            label: 'NARUČI',
+                                            onPressed: () => context.go('/cart'),
+                                          ),
+                                        ),
                                       );
                                     }
                                   } catch (e, st) {

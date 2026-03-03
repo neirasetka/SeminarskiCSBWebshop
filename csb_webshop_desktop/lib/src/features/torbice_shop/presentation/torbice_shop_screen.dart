@@ -245,7 +245,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             label: 'NARUČI',
             textColor: Colors.white,
             onPressed: () {
-              context.go('/checkout');
+              context.go('/cart');
             },
           ),
         ),

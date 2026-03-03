@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
 import '../application/belts_provider.dart';
@@ -138,7 +139,13 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                     await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
+                                        SnackBar(
+                                          content: const Text('Artikal uspješno dodan u korpu'),
+                                          action: SnackBarAction(
+                                            label: 'NARUČI',
+                                            onPressed: () => context.go('/cart'),
+                                          ),
+                                        ),
                                       );
                                     }
                                   } catch (e, st) {
