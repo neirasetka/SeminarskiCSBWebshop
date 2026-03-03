@@ -56,7 +56,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
             onAddToCart: () async {
               await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dodano u korpu')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu')));
               }
             },
             onOutfitIdea: () {

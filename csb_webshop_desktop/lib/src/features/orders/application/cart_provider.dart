@@ -48,6 +48,17 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
+  Future<void> clearCart() async {
+    final OrderModel? order = state.value;
+    if (order == null) {
+      state = const AsyncValue.data(null);
+      return;
+    }
+    final int userId = (await _profileApi.getMe()).id;
+    await _api.cancelActiveCart(userId: userId);
+    await refresh();
+  }
+
   Future<void> addBeltToCart({required int beltId, required double price, int quantity = 1}) async {
     OrderModel? order = state.value;
     if (order == null) {

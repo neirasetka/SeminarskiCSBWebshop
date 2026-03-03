@@ -169,5 +169,20 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> CancelActiveCartAsync(int userId)
+        {
+            var order = await GetActiveCartByUser(userId);
+            if (order == null) return false;
+            var entity = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderID == order.OrderID);
+            if (entity == null) return false;
+            _context.OrderItems.RemoveRange(entity.OrderItems);
+            await _context.SaveChangesAsync();
+            _context.Orders.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

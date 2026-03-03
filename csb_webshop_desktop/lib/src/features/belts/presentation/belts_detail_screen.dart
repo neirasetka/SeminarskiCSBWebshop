@@ -140,7 +140,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Dodano u korpu!',
+              'Artikal uspješno dodan u korpu!',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

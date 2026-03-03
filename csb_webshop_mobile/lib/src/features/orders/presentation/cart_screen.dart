@@ -50,13 +50,31 @@ class CartScreen extends ConsumerWidget {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go('/checkout'),
-                    icon: const Icon(Icons.payment),
-                    label: const Text('Nastavi na plaćanje'),
-                  ),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await ref.read(cartProvider.notifier).clearCart();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Korpa je ispražnjena')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.remove_shopping_cart),
+                        label: const Text('Poništi'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => context.push('/checkout'),
+                        icon: const Icon(Icons.payment),
+                        label: const Text('Plati'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

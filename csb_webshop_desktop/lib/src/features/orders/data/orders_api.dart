@@ -100,6 +100,12 @@ class OrdersApi {
     throw Exception('Failed to update payment status: ${response.statusCode}');
   }
 
+  Future<void> cancelActiveCart({required int userId}) async {
+    final http.Response response = await _apiClient.delete('$_ordersPath/Active?userId=$userId');
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    throw Exception('Failed to cancel cart: ${response.statusCode}');
+  }
+
   Future<Map<String, dynamic>> confirmMockCheckout() async {
     // Calls the mock node server running on localhost:4242
     final http.Response response = await _apiClient.post('http://localhost:4242/checkout/confirm');

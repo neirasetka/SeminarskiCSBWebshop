@@ -9,6 +9,7 @@ import '../features/auth/presentation/auth_gate.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/orders/domain/order_models.dart';
+import '../features/orders/presentation/cart_screen.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/orders/presentation/payment_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
@@ -100,6 +101,13 @@ final GoRouter appRouter = GoRouter(
           name: 'favoriti',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: FavoritesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'cart',
+          name: 'cart',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: CartScreen(),
           ),
         ),
         GoRoute(

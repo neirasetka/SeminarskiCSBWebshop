@@ -57,6 +57,20 @@ namespace CSBWebshopSeminarski.Controllers
             public PaymentStatus Status { get; set; }
         }
 
+        [HttpDelete("Active")]
+        [Authorize(Roles = "Buyer")]
+        public async Task<ActionResult> CancelActiveCart([FromQuery] int userId)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != userId)
+            {
+                return Forbid();
+            }
+            var ok = await _service.CancelActiveCartAsync(userId);
+            if (!ok) return NoContent();
+            return NoContent();
+        }
+
         [HttpPatch("{orderId:int}/payment-status")]
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)

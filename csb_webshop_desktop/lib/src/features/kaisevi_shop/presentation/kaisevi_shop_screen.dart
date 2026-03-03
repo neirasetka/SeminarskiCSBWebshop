@@ -230,7 +230,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
             children: <Widget>[
               const Icon(Icons.check_circle, color: Colors.white),
               const SizedBox(width: 12),
-              Expanded(child: Text('${belt.name} dodano u korpu')),
+              Expanded(child: Text('Artikal uspješno dodan u korpu')),
             ],
           ),
           behavior: SnackBarBehavior.floating,

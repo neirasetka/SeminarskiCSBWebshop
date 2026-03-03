@@ -234,7 +234,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             children: <Widget>[
               const Icon(Icons.check_circle, color: Colors.white),
               const SizedBox(width: 12),
-              Expanded(child: Text('${bag.name} dodano u korpu')),
+              Expanded(child: Text('Artikal uspješno dodan u korpu')),
             ],
           ),
           behavior: SnackBarBehavior.floating,
