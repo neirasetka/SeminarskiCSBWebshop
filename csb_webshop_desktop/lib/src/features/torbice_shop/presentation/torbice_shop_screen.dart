@@ -718,7 +718,7 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                               FilledButton.icon(
                                 onPressed: widget.onAddToCart,
                                 icon: const Icon(Icons.add_shopping_cart, size: 18),
-                                label: const Text('Kupi'),
+                                label: const Text('Dodaj u korpu'),
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(horizontal: 12),
                                   minimumSize: const Size(0, 36),
