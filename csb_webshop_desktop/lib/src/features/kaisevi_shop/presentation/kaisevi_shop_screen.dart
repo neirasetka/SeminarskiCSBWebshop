@@ -241,7 +241,9 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
             label: 'NARUČI',
             textColor: Colors.white,
             onPressed: () {
-              context.go('/cart');
+              if (mounted) {
+                context.go('/cart');
+              }
             },
           ),
         ),
