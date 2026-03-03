@@ -79,6 +79,7 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
       }
 
       if (mounted) {
+        ref.read(cartProvider.notifier).resetCartAfterPayment();
         context.go('/checkout/success');
       }
     } catch (e) {

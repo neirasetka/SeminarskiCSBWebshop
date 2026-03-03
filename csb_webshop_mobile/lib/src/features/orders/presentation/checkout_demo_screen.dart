@@ -55,6 +55,7 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
       await ordersApi.updatePaymentStatus(orderId: order.id, status: 'Paid');
 
       if (mounted) {
+        ref.read(cartProvider.notifier).resetCartAfterPayment();
         context.go('/checkout/success');
       }
     } catch (e) {

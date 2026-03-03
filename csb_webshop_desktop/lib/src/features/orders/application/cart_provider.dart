@@ -70,6 +70,11 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
+  /// Resets local cart state after successful payment (does not call backend).
+  void resetCartAfterPayment() {
+    state = const AsyncValue.data(null);
+  }
+
   Future<void> clearCart() async {
     final OrderModel? order = state.value;
     if (order == null) {

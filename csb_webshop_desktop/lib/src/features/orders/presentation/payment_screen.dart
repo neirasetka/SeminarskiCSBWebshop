@@ -99,6 +99,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           );
 
       if (mounted) {
+        ref.read(cartProvider.notifier).resetCartAfterPayment();
         context.go('/checkout/success');
       }
     } catch (e, _) {

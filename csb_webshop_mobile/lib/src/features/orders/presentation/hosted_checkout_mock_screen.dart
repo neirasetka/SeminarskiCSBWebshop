@@ -85,6 +85,7 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
 
     if (mounted) {
       setState(() => _isProcessing = false);
+      ref.read(cartProvider.notifier).resetCartAfterPayment();
       context.go('/checkout/success');
     }
   }
