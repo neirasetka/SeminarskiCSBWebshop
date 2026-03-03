@@ -617,12 +617,11 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-/// Hero slika torbice iste visine kao info panel, lijevo u redu.
+/// Zakucana standardna naslovna slika – uvijek ista, iz lokalnog asseta.
 class _HeroBagImage extends StatelessWidget {
   const _HeroBagImage();
 
-  static const String _bagImageUrl =
-      'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';
+  static const String _heroAssetPath = 'assets/images/home.jpg';
 
   @override
   Widget build(BuildContext context) {
@@ -632,8 +631,8 @@ class _HeroBagImage extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
-      child: Image.network(
-        _bagImageUrl,
+      child: Image.asset(
+        _heroAssetPath,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,

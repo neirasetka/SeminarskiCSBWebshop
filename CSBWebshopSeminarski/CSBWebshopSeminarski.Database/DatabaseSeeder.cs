@@ -7,11 +7,47 @@ namespace CSBWebshopSeminarski.Database
 {
     public static class DatabaseSeeder
     {
-        /// <summary>Minimal 1x1 PNG (siva piksel) da se u listama i detaljima prikaže slika umjesto "Slika nije dostupna".</summary>
+        /// <summary>Minimal 1x1 PNG (siva piksel) – fallback kad nema datoteke.</summary>
         private static byte[] GetPlaceholderImageBytes()
         {
             const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
             return Convert.FromBase64String(base64);
+        }
+
+        /// <summary>Učitava sliku iz SeedData/Images. Pokušava {baseName}.jpg, .png, .jpeg, .webp. Ako ne postoji, vraća placeholder.</summary>
+        private static byte[] TryLoadImageBytes(string baseName, ILogger logger)
+        {
+            var extensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var dirs = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, "SeedData", "Images"),
+                Path.Combine(Directory.GetCurrentDirectory(), "SeedData", "Images"),
+            };
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir)) continue;
+                foreach (var ext in extensions)
+                {
+                    var path = Path.Combine(dir, baseName + ext);
+                    if (File.Exists(path))
+                    {
+                        try
+                        {
+                            var bytes = File.ReadAllBytes(path);
+                            if (bytes.Length > 0)
+                            {
+                                logger.LogInformation("Loaded seed image: {Path}", path);
+                                return bytes;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Failed to load seed image: {Path}", path);
+                        }
+                    }
+                }
+            }
+            return GetPlaceholderImageBytes();
         }
         public static async Task SeedAllAsync(CocoSunBagsWebshopDbContext context, ILogger logger)
         {
@@ -132,7 +168,7 @@ namespace CSBWebshopSeminarski.Database
                 Description = "Spacious everyday tote bag.",
                 Code = "BAG-001",
                 Price = 129.99f,
-                Image = GetPlaceholderImageBytes(),
+                Image = TryLoadImageBytes("bag1", logger),
                 UserID = ownerUserId
             };
             await context.Bags.AddAsync(bag);
@@ -156,7 +192,7 @@ namespace CSBWebshopSeminarski.Database
                 Description = "Genuine leather belt with metal buckle.",
                 Code = "BELT-001",
                 Price = 49.99f,
-                Image = GetPlaceholderImageBytes(),
+                Image = TryLoadImageBytes("belt1", logger),
                 UserID = ownerUserId
             };
             await context.Belts.AddAsync(belt);
@@ -337,7 +373,7 @@ namespace CSBWebshopSeminarski.Database
                         SortOrder = 1,
                         IsFeatured = true,
                         CreatedAt = DateTime.UtcNow,
-                        Image = GetPlaceholderImageBytes(),
+                        Image = TryLoadImageBytes("lookbook1", logger),
                         BagID = bag.BagID,
                         Occasion = OccasionType.Weekend,
                         Style = StyleType.Minimalist,
@@ -351,7 +387,7 @@ namespace CSBWebshopSeminarski.Database
                         SortOrder = 2,
                         IsFeatured = false,
                         CreatedAt = DateTime.UtcNow,
-                        Image = GetPlaceholderImageBytes(),
+                        Image = TryLoadImageBytes("lookbook2", logger),
                         BeltID = belt.BeltID,
                         Occasion = OccasionType.Work,
                         Style = StyleType.Classic,

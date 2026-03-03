@@ -25,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="SeedData\Images\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CBSWebshopSeminarski.Model\CBSWebshopSeminarski.Model.csproj" />
     <ProjectReference Include="..\CBSWebshopSeminarski.Services\CBSWebshopSeminarski.Services.csproj" />
     <ProjectReference Include="..\CSBWebshopSeminarski.Core\CSBWebshopSeminarski.Core.csproj" />
