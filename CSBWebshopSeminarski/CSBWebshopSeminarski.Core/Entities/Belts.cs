@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CSBWebshopSeminarski.Core.Entities
 {
@@ -7,21 +7,23 @@ namespace CSBWebshopSeminarski.Core.Entities
         public Belts()
         {
             Reviews = new HashSet<Reviews>();
+            Favorites = new HashSet<Favorites>();
+            Rates = new HashSet<Rates>();
         }
 
         [Key]
         public int BeltID { get; set; }
-        public string BeltName { get; set; }
+        public string BeltName { get; set; } = null!;
         public int BeltTypeID { get; set; }
-        public string Description { get; set; }
-        public string Code { get; set; }
+        public string Description { get; set; } = null!;
+        public string Code { get; set; } = null!;
         public float Price { get; set; }
-        public byte[] Image { get; set; }
+        public byte[] Image { get; set; } = null!;
         public int UserID { get; set; }
-        public Users User { get; set; }
-        public virtual ICollection<Reviews> Reviews { get; set; }
-        public virtual ICollection<Favorites> Favorites { get; set; }
-        public ICollection<Rates> Rates { get; set; }
-        public virtual BeltTypes BeltType { get; set; }
+        public Users User { get; set; } = null!;
+        public virtual ICollection<Reviews> Reviews { get; set; } = null!;
+        public virtual ICollection<Favorites> Favorites { get; set; } = null!;
+        public ICollection<Rates> Rates { get; set; } = null!;
+        public virtual BeltTypes BeltType { get; set; } = null!;
     }
 }

@@ -7,7 +7,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         [Key]
         public int TrackingEventID { get; set; }
         public int OrderID { get; set; }
-        public Orders Order { get; set; }
+        public Orders Order { get; set; } = null!;
 
         public ShippingStatus Status { get; set; }
         public string? Message { get; set; }

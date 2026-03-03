@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CSBWebshopSeminarski.Core.Entities
 {
@@ -6,16 +6,16 @@ namespace CSBWebshopSeminarski.Core.Entities
     {
         [Key]
         public int UserID { get; set; }
-        public string Name { get; set; }
-        public string Surname { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
-        public string UserName { get; set; }
-        public string PasswordHash { get; set; }
-        public string PasswordSalt { get; set; }
-        public byte[] Image { get; set; }
-        public virtual ICollection<UserRoles> UserRoles { get; set; }
-        public virtual ICollection<Reviews> Reviews { get; set; }
-        public virtual ICollection<Rates> Rates { get; set; }
+        public string Name { get; set; } = null!;
+        public string Surname { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string Phone { get; set; } = null!;
+        public string UserName { get; set; } = null!;
+        public string PasswordHash { get; set; } = null!;
+        public string PasswordSalt { get; set; } = null!;
+        public byte[] Image { get; set; } = null!;
+        public virtual ICollection<UserRoles> UserRoles { get; set; } = null!;
+        public virtual ICollection<Reviews> Reviews { get; set; } = null!;
+        public virtual ICollection<Rates> Rates { get; set; } = null!;
     }
 }

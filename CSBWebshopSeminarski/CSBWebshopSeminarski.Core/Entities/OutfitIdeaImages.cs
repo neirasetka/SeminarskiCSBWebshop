@@ -10,7 +10,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int OutfitIdeaID { get; set; }
         
         /// Image stored as byte array
-        public byte[] Image { get; set; }
+        public byte[] Image { get; set; } = null!;
         
         /// Optional caption for the image
         public string? Caption { get; set; }
@@ -20,6 +20,6 @@ namespace CSBWebshopSeminarski.Core.Entities
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public virtual OutfitIdeas OutfitIdea { get; set; }
+        public virtual OutfitIdeas OutfitIdea { get; set; } = null!;
     }
 }

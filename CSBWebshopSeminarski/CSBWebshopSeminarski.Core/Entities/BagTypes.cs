@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CSBWebshopSeminarski.Core.Entities
 {
@@ -6,6 +6,6 @@ namespace CSBWebshopSeminarski.Core.Entities
     {
         [Key]
         public int BagTypeID { get; set; }
-        public string BagName { get; set; }
+        public string BagName { get; set; } = null!;
     }
 }

@@ -16,6 +16,6 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int? Quantity { get; set; }
         public virtual Bags? Bag { get; set; }
         public virtual Belts? Belt { get; set; }
-        public virtual Orders Order { get; set; }
+        public virtual Orders Order { get; set; } = null!;
     }
 }

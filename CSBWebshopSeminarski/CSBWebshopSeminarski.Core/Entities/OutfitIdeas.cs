@@ -30,8 +30,8 @@ namespace CSBWebshopSeminarski.Core.Entities
         
         public virtual Belts? Belt { get; set; }
         
-        public virtual Users User { get; set; }
+        public virtual Users User { get; set; } = null!;
         
-        public virtual ICollection<OutfitIdeaImages> Images { get; set; }
+        public virtual ICollection<OutfitIdeaImages> Images { get; set; } = null!;
     }
 }

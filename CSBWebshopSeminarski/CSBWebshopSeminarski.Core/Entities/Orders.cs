@@ -11,12 +11,12 @@ namespace CSBWebshopSeminarski.Core.Entities
         }
         [Key]
         public int OrderID { get; set; }
-        public string OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = null!;
         public DateTime Date { get; set; }
         public float Price { get; set; }
         public int UserID { get; set; }
-        public Users User { get; set; }
-        public ICollection<OrderItems> OrderItems { get; set; }
+        public Users User { get; set; } = null!;
+        public ICollection<OrderItems> OrderItems { get; set; } = null!;
 
         // Payment
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
@@ -27,6 +27,6 @@ namespace CSBWebshopSeminarski.Core.Entities
         public ShippingStatus ShippingStatus { get; set; } = ShippingStatus.Pending;
         public DateTime? LastStatusUpdate { get; set; }
         public DateTime? EstimatedDeliveryDate { get; set; }
-        public ICollection<TrackingEvents> TrackingEvents { get; set; }
+        public ICollection<TrackingEvents> TrackingEvents { get; set; } = null!;
     }
 }
