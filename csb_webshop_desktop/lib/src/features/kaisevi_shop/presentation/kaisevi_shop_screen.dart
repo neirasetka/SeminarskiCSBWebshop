@@ -11,6 +11,7 @@ import '../../belts/application/belts_provider.dart';
 import '../../belts/application/belt_types_provider.dart';
 import '../../belts/domain/belt.dart';
 import '../../belts/domain/belt_type.dart';
+import '../../belts/presentation/belt_form_screen.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
@@ -37,6 +38,20 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
     await ref
         .read(beltsListProvider.notifier)
         .refresh(beltTypeId: _selectedBeltTypeId, query: _searchController.text.trim());
+  }
+
+  Future<void> _openBeltForm(BuildContext context) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => const BeltFormScreen(),
+      ),
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kaiš dodan')),
+      );
+      _onRefresh();
+    }
   }
 
   List<Belt> _sortBelts(List<Belt> belts) {
@@ -70,6 +85,13 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () => _openBeltForm(context),
+              tooltip: 'Dodaj kaiš',
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: CustomScrollView(
         slivers: <Widget>[
           // Hero header

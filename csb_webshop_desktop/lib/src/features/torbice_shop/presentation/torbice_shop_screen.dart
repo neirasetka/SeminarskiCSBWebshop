@@ -11,6 +11,7 @@ import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/domain/bag_type.dart';
+import '../../bags/presentation/bag_form_screen.dart';
 import '../../bags/presentation/bags_detail_screen.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
@@ -38,6 +39,20 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
     await ref
         .read(bagsListProvider.notifier)
         .refresh(bagTypeId: _selectedBagTypeId, query: _searchController.text.trim());
+  }
+
+  Future<void> _openBagForm(BuildContext context) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => const BagFormScreen(),
+      ),
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Torba dodana')),
+      );
+      _onRefresh();
+    }
   }
 
   List<Bag> _sortBags(List<Bag> bags) {
@@ -71,6 +86,13 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () => _openBagForm(context),
+              tooltip: 'Dodaj torbicu',
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: CustomScrollView(
         slivers: <Widget>[
           // Hero header
