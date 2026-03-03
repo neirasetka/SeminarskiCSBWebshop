@@ -1,4 +1,4 @@
-﻿namespace CBSWebshopSeminarski.Model.Models
+namespace CBSWebshopSeminarski.Model.Models
 {
     public class OrderItem
     {
@@ -6,7 +6,7 @@
         public int OrderID { get; set; }
         public int BagID { get; set; }
         public int BeltID { get; set; }
-        public Belt Bag { get; set; }
+        public Bag Bag { get; set; }
         public Belt Belt { get; set; }
         public Order Order { get; set; }
         public int Quantity { get; set; }

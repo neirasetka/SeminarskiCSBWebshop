@@ -73,7 +73,8 @@ class OrdersApi {
       return json.decode(response.body) as Map<String, dynamic>;
     }
     final String errorDetail = _parseErrorResponse(response);
-    throw Exception('Greška pri dodavanju u korpu${errorDetail.isNotEmpty ? ': $errorDetail' : ': ${response.statusCode}'}');
+    final String message = errorDetail.isNotEmpty ? errorDetail : 'Greška pri dodavanju u korpu (${response.statusCode})';
+    throw Exception(message);
   }
 
   Future<Map<String, dynamic>> createPaymentIntent({

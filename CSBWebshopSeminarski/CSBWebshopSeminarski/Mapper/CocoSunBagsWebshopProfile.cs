@@ -53,7 +53,10 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<ShippingStatusModel, ShippingStatusEntity>()
                 .ConvertUsing(src => (ShippingStatusEntity)src);
 
-            CreateMap<OrderItems, OrderItem>().ReverseMap();
+            CreateMap<OrderItems, OrderItem>()
+                .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID));
+            CreateMap<OrderItem, OrderItems>()
+                .ForMember(d => d.OrderItemID, o => o.MapFrom(s => s.OrderItemsID));
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();
 
             CreateMap<Roles, Role>();
