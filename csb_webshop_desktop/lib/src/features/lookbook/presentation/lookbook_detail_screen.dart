@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -102,8 +101,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
     final OutfitIdeasListState outfitState = ref.watch(outfitIdeasForBagProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
         body: !_isInitialized
             ? const Center(child: CircularProgressIndicator())
             : bagAsync.when(
@@ -142,7 +140,6 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
                   ),
                 ),
               ),
-      ),
     );
   }
 }
