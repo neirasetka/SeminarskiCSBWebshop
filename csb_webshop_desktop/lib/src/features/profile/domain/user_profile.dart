@@ -31,7 +31,7 @@ class UserProfile {
         ? 'data:image/png;base64,$imageData'
         : null;
     return UserProfile(
-      id: _toInt(json['UserID'] ?? json['id'] ?? json['ID'] ?? 0),
+      id: _toInt(json['UserID'] ?? json['userID'] ?? json['id'] ?? json['ID'] ?? 0),
       username: (json['UserName'] ?? json['username'] ?? '').toString(),
       firstName: (json['Name'] ?? json['FirstName'] ?? json['firstName'] ?? '').toString(),
       lastName: (json['Surname'] ?? json['LastName'] ?? json['lastName'] ?? '').toString(),

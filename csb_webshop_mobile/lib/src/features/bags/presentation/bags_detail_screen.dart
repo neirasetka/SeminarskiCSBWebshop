@@ -53,12 +53,14 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
             bag: bag,
             isFavorite: isFav,
             onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
-            onAddToCart: () async {
-              await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu')));
-              }
-            },
+            onAddToCart: isAdmin
+                ? null
+                : () async {
+                    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu')));
+                    }
+                  },
             onOutfitIdea: () {
               context.pushNamed(
                 'outfitIdea',
@@ -154,15 +156,16 @@ class _BagDetailBody extends StatelessWidget {
           const SizedBox(height: 8),
           Text(bag.description),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onAddToCart,
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('Dodaj u korpu'),
+          if (onAddToCart != null)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onAddToCart,
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Dodaj u korpu'),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+          if (onAddToCart != null) const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

@@ -48,7 +48,8 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to create order: ${response.statusCode}');
+    final String errorDetail = _parseErrorResponse(response);
+    throw Exception('Failed to create order: ${response.statusCode}${errorDetail.isNotEmpty ? ': $errorDetail' : ''}');
   }
 
   Future<Map<String, dynamic>> addItem({
@@ -98,6 +99,29 @@ class OrdersApi {
     final http.Response response = await _apiClient.patch('$_ordersPath/$orderId/payment-status', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to update payment status: ${response.statusCode}');
+  }
+
+  static String _parseErrorResponse(http.Response response) {
+    if (response.body.isEmpty) return '';
+    try {
+      final Map<String, dynamic>? data = json.decode(response.body) as Map<String, dynamic>?;
+      if (data == null) return '';
+      final Object? err = data['error'] ?? data['message'] ?? data['title'];
+      if (err != null) return err.toString();
+      final Object? errors = data['errors'];
+      if (errors is Map) {
+        final List<String> parts = <String>[];
+        for (final MapEntry<dynamic, dynamic> e in errors.entries) {
+          final Object? v = e.value;
+          final String msg = v is List ? v.join(', ') : v.toString();
+          parts.add('${e.key}: $msg');
+        }
+        return parts.join('; ');
+      }
+      return '';
+    } catch (_) {
+      return '';
+    }
   }
 
   Future<void> cancelActiveCart({required int userId}) async {

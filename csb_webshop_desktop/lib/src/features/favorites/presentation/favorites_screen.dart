@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/presentation/bags_detail_screen.dart';
 import '../../belts/domain/belt.dart';
@@ -16,6 +17,8 @@ class FavoritesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<FavoritesListResult> asyncResult =
         ref.watch(favoritesListProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
+    final bool showAddToCart = !isAdmin;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -94,7 +97,7 @@ class FavoritesScreen extends ConsumerWidget {
                         onRemoveFavorite: () => ref
                             .read(favoritesProvider.notifier)
                             .toggleBag(bag.id),
-                        onAddToCart: () => _addBagToCart(context, ref, bag),
+                        onAddToCart: showAddToCart ? () => _addBagToCart(context, ref, bag) : null,
                       );
                     },
                   ),
@@ -127,7 +130,7 @@ class FavoritesScreen extends ConsumerWidget {
                         onRemoveFavorite: () => ref
                             .read(beltFavoritesProvider.notifier)
                             .toggleBelt(belt.id),
-                        onAddToCart: () => _addBeltToCart(context, ref, belt),
+                        onAddToCart: showAddToCart ? () => _addBeltToCart(context, ref, belt) : null,
                       );
                     },
                   ),
@@ -205,13 +208,13 @@ class _FavoriteBagCard extends StatelessWidget {
     required this.bag,
     required this.onTap,
     required this.onRemoveFavorite,
-    required this.onAddToCart,
+    this.onAddToCart,
   });
 
   final Bag bag;
   final VoidCallback onTap;
   final VoidCallback onRemoveFavorite;
-  final VoidCallback onAddToCart;
+  final VoidCallback? onAddToCart;
 
   @override
   Widget build(BuildContext context) {
@@ -287,15 +290,16 @@ class _FavoriteBagCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        FilledButton.icon(
-                          onPressed: onAddToCart,
-                          icon: const Icon(Icons.add_shopping_cart, size: 16),
-                          label: const Text('Kupi'),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            minimumSize: const Size(0, 32),
+                        if (onAddToCart != null)
+                          FilledButton.icon(
+                            onPressed: onAddToCart,
+                            icon: const Icon(Icons.add_shopping_cart, size: 16),
+                            label: const Text('Kupi'),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              minimumSize: const Size(0, 32),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],
@@ -314,13 +318,13 @@ class _FavoriteBeltCard extends StatelessWidget {
     required this.belt,
     required this.onTap,
     required this.onRemoveFavorite,
-    required this.onAddToCart,
+    this.onAddToCart,
   });
 
   final Belt belt;
   final VoidCallback onTap;
   final VoidCallback onRemoveFavorite;
-  final VoidCallback onAddToCart;
+  final VoidCallback? onAddToCart;
 
   @override
   Widget build(BuildContext context) {
@@ -396,15 +400,16 @@ class _FavoriteBeltCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        FilledButton.icon(
-                          onPressed: onAddToCart,
-                          icon: const Icon(Icons.add_shopping_cart, size: 16),
-                          label: const Text('Kupi'),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            minimumSize: const Size(0, 32),
+                        if (onAddToCart != null)
+                          FilledButton.icon(
+                            onPressed: onAddToCart,
+                            icon: const Icon(Icons.add_shopping_cart, size: 16),
+                            label: const Text('Kupi'),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              minimumSize: const Size(0, 32),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],

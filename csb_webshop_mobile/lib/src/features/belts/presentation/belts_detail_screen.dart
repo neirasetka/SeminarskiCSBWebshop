@@ -118,20 +118,22 @@ class _BeltDetailBody extends ConsumerWidget {
           const Text('Opis', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(belt.description),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu')));
-                }
-              },
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('Dodaj u korpu'),
+          if (!isAdmin) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu')));
+                  }
+                },
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Dodaj u korpu'),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

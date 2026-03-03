@@ -115,18 +115,19 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            IconButton(
-                              icon: const Icon(Icons.add_shopping_cart),
-                              tooltip: 'Dodaj u korpu',
-                              onPressed: () async {
-                                await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
-                                  );
-                                }
-                              },
-                            ),
+                            if (!isAdmin)
+                              IconButton(
+                                icon: const Icon(Icons.add_shopping_cart),
+                                tooltip: 'Dodaj u korpu',
+                                onPressed: () async {
+                                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
+                                    );
+                                  }
+                                },
+                              ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
