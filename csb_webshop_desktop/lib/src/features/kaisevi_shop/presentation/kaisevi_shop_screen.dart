@@ -10,7 +10,6 @@ import '../../belts/application/belts_provider.dart';
 import '../../belts/application/belt_types_provider.dart';
 import '../../belts/domain/belt.dart';
 import '../../belts/domain/belt_type.dart';
-import '../../belts/presentation/belts_detail_screen.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
@@ -189,11 +188,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
   }
 
   void _navigateToDetail(Belt belt) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => BeltDetailScreen(id: belt.id),
-      ),
-    );
+    context.push('/kaisevi/${belt.id}');
   }
 
   Future<void> _deleteBelt(BuildContext context, WidgetRef ref, Belt belt) async {
@@ -303,28 +298,20 @@ class _ShopHeader extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Back button row
+            // Title section (isti dizajn kao torbice)
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 24, 0),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Row(
                 children: <Widget>[
                   IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: 'Nazad',
                     onPressed: onBackPressed,
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: colorScheme.onPrimaryContainer,
+                    style: IconButton.styleFrom(
+                      foregroundColor: colorScheme.onPrimaryContainer,
                     ),
-                    tooltip: 'Nazad na početnu',
                   ),
-                  const Spacer(),
-                ],
-              ),
-            ),
-            // Title section
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-              child: Row(
-                children: <Widget>[
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -736,25 +723,24 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                             ),
                             if (widget.showAddToCart) ...[
                               const Spacer(),
-                              // Add to cart icon button (sakriveno za admine)
-                              IconButton(
+                              FilledButton.icon(
                                 onPressed: widget.onAddToCart,
-                                icon: const Icon(Icons.add_shopping_cart, size: 20),
-                                tooltip: 'Dodaj u korpu',
-                                style: IconButton.styleFrom(
-                                  foregroundColor: colorScheme.primary,
+                                icon: const Icon(Icons.add_shopping_cart, size: 18),
+                                label: const Text('Dodaj u korpu'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  minimumSize: const Size(0, 36),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              // Buy now button (sakriveno za admine)
+                              const SizedBox(width: 8),
                               FilledButton(
                                 onPressed: widget.onBuyNow,
                                 style: FilledButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
                                   minimumSize: const Size(0, 36),
                                   backgroundColor: Colors.green.shade600,
                                 ),
-                                child: const Text('Kupi'),
+                                child: const Text('Naruči'),
                               ),
                             ],
                           ],

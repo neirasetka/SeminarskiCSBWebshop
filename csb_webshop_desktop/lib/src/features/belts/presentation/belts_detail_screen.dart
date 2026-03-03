@@ -11,8 +11,8 @@ import '../application/belts_provider.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt.dart';
 import '../domain/belt_type.dart';
-import '../../orders/application/cart_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
+import '../../orders/application/cart_provider.dart';
 import 'belt_form_screen.dart';
 
 class BeltDetailScreen extends ConsumerStatefulWidget {
@@ -41,6 +41,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(widget.id));
+    final AsyncValue<Set<int>> favoritesAsync = ref.watch(beltFavoritesProvider);
     final AsyncValue<List<BeltType>> beltTypesAsync = ref.watch(beltTypesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -50,6 +51,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
         backgroundColor: colorScheme.surface,
         body: beltAsync.when(
           data: (Belt belt) {
+            final bool isFav = favoritesAsync.value?.contains(belt.id) ?? false;
             final String? beltTypeName = beltTypesAsync.value
                 ?.where((BeltType t) => t.id == belt.beltTypeId)
                 .map((BeltType t) => t.name)
@@ -58,9 +60,13 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
             return _CustomerBeltDetailBody(
               belt: belt,
               beltTypeName: beltTypeName,
+              isFavorite: isFav,
+              showFavorite: !isAdmin,
               showQuantityAndCart: !isAdmin,
               quantity: _quantity,
               onQuantityChanged: (int qty) => setState(() => _quantity = qty),
+              onToggleFavorite: () =>
+                  ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
               onAddToCart: () async {
                 for (int i = 0; i < _quantity; i++) {
                   await ref
@@ -89,7 +95,6 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                 );
               },
               onBack: () => Navigator.of(context).pop(),
-              isAdmin: isAdmin,
               onEdit: isAdmin ? () => _openEditBelt(belt) : null,
             );
           },
@@ -190,27 +195,31 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   const _CustomerBeltDetailBody({
     required this.belt,
     required this.beltTypeName,
+    required this.isFavorite,
+    required this.showFavorite,
     required this.showQuantityAndCart,
     required this.quantity,
     required this.onQuantityChanged,
+    required this.onToggleFavorite,
     required this.onAddToCart,
     required this.onBuyNow,
     required this.onOutfitIdea,
     required this.onBack,
-    this.isAdmin = false,
     this.onEdit,
   });
 
   final Belt belt;
   final String? beltTypeName;
+  final bool isFavorite;
+  final bool showFavorite;
   final bool showQuantityAndCart;
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
+  final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
   final VoidCallback onBuyNow;
   final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
-  final bool isAdmin;
   final VoidCallback? onEdit;
 
   @override
@@ -221,7 +230,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
 
     return CustomScrollView(
       slivers: <Widget>[
-        // Custom App Bar
+        // Custom App Bar (isti dizajn kao torbice)
         SliverAppBar(
           pinned: true,
           backgroundColor: colorScheme.surface,
@@ -238,7 +247,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
             onPressed: onBack,
           ),
           actions: <Widget>[
-            if (isAdmin && onEdit != null)
+            if (onEdit != null)
               IconButton(
                 icon: Container(
                   padding: const EdgeInsets.all(8),
@@ -251,6 +260,23 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                 onPressed: onEdit,
                 tooltip: 'Uredi kaiš (slika, podaci)',
               ),
+            if (showFavorite)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : colorScheme.onSurface,
+                  ),
+                ),
+                onPressed: onToggleFavorite,
+                tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+              ),
+            if (showFavorite) const SizedBox(width: 8),
           ],
         ),
         // Content
@@ -552,18 +578,18 @@ class _ProductDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        // Category badge
+        // Category badge (isti dizajn kao torbice)
         if (beltTypeName != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: colorScheme.secondaryContainer,
+              color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               beltTypeName!,
               style: textTheme.labelMedium?.copyWith(
-                color: colorScheme.onSecondaryContainer,
+                color: colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -697,56 +723,51 @@ class _ProductDetails extends StatelessWidget {
           ),
         if (showQuantityAndCart) const SizedBox(height: 24),
 
-        // Action buttons row (hidden for admin)
+        // Dodaj u korpu (isto kao torbice)
         if (showQuantityAndCart)
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: OutlinedButton.icon(
-                    onPressed: onAddToCart,
-                    icon: const Icon(Icons.add_shopping_cart, size: 22),
-                    label: const Text(
-                      'Dodaj u korpu',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      side: BorderSide(color: colorScheme.primary, width: 2),
-                    ),
-                  ),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: onAddToCart,
+              icon: const Icon(Icons.add_shopping_cart, size: 24),
+              label: Text(
+                'Dodaj u korpu  -  ${(belt.price * quantity).toStringAsFixed(2)} KM',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: FilledButton.icon(
-                    onPressed: onBuyNow,
-                    icon: const Icon(Icons.shopping_bag, size: 22),
-                    label: Text(
-                      'Kupi  ${(belt.price * quantity).toStringAsFixed(2)} KM',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-            ],
+            ),
+          ),
+        if (showQuantityAndCart) const SizedBox(height: 12),
+        // Naruči (samo za kaiseve)
+        if (showQuantityAndCart)
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: onBuyNow,
+              icon: const Icon(Icons.shopping_bag, size: 24),
+              label: Text(
+                'Naruči  -  ${(belt.price * quantity).toStringAsFixed(2)} KM',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
           ),
         if (showQuantityAndCart) const SizedBox(height: 12),
 
