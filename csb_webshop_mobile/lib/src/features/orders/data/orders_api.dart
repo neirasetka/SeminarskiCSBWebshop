@@ -72,7 +72,8 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to add item: ${response.statusCode}');
+    final String errorDetail = _parseErrorResponse(response);
+    throw Exception('Greška pri dodavanju u korpu${errorDetail.isNotEmpty ? ': $errorDetail' : ': ${response.statusCode}'}');
   }
 
   Future<Map<String, dynamic>> createPaymentIntent({
