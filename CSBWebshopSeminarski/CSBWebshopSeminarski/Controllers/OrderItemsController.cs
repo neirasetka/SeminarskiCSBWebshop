@@ -20,7 +20,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Buyer, Admin")]
+        [Authorize] // Svaki prijavljeni korisnik može dodati u korpu (Buyer, Admin, itd.)
         public override async Task<OrderItem> Insert([FromBody] OrderItemUpsertRequest request)
         {
             if (request == null)
