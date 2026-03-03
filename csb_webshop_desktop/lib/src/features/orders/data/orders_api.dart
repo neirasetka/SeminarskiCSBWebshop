@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/api_exception.dart';
 
 class OrdersApi {
   OrdersApi({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
@@ -73,8 +74,14 @@ class OrdersApi {
       return json.decode(response.body) as Map<String, dynamic>;
     }
     final String errorDetail = _parseErrorResponse(response);
-    final String message = errorDetail.isNotEmpty ? errorDetail : 'Greška pri dodavanju u korpu (${response.statusCode})';
-    throw Exception(message);
+    final String message = errorDetail.isNotEmpty
+        ? errorDetail
+        : 'Greška pri dodavanju u korpu';
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: message,
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
   }
 
   Future<Map<String, dynamic>> createPaymentIntent({
@@ -108,7 +115,8 @@ class OrdersApi {
     try {
       final Map<String, dynamic>? data = json.decode(response.body) as Map<String, dynamic>?;
       if (data == null) return '';
-      final Object? err = data['error'] ?? data['message'] ?? data['title'];
+      // error, message, title, detail (ProblemDetails)
+      final Object? err = data['error'] ?? data['message'] ?? data['title'] ?? data['detail'];
       if (err != null) return err.toString();
       final Object? errors = data['errors'];
       if (errors is Map) {

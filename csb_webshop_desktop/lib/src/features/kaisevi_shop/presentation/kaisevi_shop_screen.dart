@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api_exception.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../belts/application/belts_provider.dart';
 import '../../belts/application/belt_types_provider.dart';
@@ -240,15 +241,20 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
       );
       }
     } catch (e, st) {
+      final String displayMsg = ApiException.formatForDisplay(e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Greška pri dodavanju u korpu: $e'),
+            content: Text('Greška: $displayMsg'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
-      debugPrint('Add to cart error: $e\n$st');
+      if (e is ApiException && e.rawBody != null) {
+        debugPrint('Add to cart API error [${e.statusCode}]: ${e.rawBody}\n$st');
+      } else {
+        debugPrint('Add to cart error: $e\n$st');
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/belts_provider.dart';
@@ -68,13 +69,25 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
               onToggleFavorite: () =>
                   ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
               onAddToCart: () async {
-                for (int i = 0; i < _quantity; i++) {
-                  await ref
-                      .read(cartProvider.notifier)
-                      .addBeltToCart(beltId: belt.id, price: belt.price);
-                }
-                if (context.mounted) {
-                  _showAddedToCartDialog(context, belt);
+                try {
+                  for (int i = 0; i < _quantity; i++) {
+                    await ref
+                        .read(cartProvider.notifier)
+                        .addBeltToCart(beltId: belt.id, price: belt.price);
+                  }
+                  if (context.mounted) {
+                    _showAddedToCartDialog(context, belt);
+                  }
+                } catch (e, st) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                  debugPrint('Add to cart error: $e\n$st');
                 }
               },
               onOutfitIdea: () {

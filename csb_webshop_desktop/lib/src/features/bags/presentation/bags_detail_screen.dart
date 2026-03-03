@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/bags_provider.dart';
@@ -69,13 +70,25 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                   ref.read(favoritesProvider.notifier).toggleBag(bag.id),
               onEdit: isAdmin ? () => _openEditBag(bag) : null,
               onAddToCart: () async {
-                for (int i = 0; i < _quantity; i++) {
-                  await ref
-                      .read(cartProvider.notifier)
-                      .addBagToCart(bagId: bag.id, price: bag.price);
-                }
-                if (context.mounted) {
-                  _showAddedToCartDialog(context, bag);
+                try {
+                  for (int i = 0; i < _quantity; i++) {
+                    await ref
+                        .read(cartProvider.notifier)
+                        .addBagToCart(bagId: bag.id, price: bag.price);
+                  }
+                  if (context.mounted) {
+                    _showAddedToCartDialog(context, bag);
+                  }
+                } catch (e, st) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                  debugPrint('Add to cart error: $e\n$st');
                 }
               },
               onOutfitIdea: () {

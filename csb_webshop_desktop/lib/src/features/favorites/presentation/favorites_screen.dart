@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/presentation/bags_detail_screen.dart';
@@ -178,27 +179,53 @@ class FavoritesScreen extends ConsumerWidget {
 
   static Future<void> _addBagToCart(
       BuildContext context, WidgetRef ref, Bag bag) async {
-    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${bag.name} dodano u korpu'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    try {
+      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${bag.name} dodano u korpu'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e, st) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      debugPrint('Add to cart error: $e\n$st');
     }
   }
 
   static Future<void> _addBeltToCart(
       BuildContext context, WidgetRef ref, Belt belt) async {
-    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${belt.name} dodano u korpu'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    try {
+      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${belt.name} dodano u korpu'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e, st) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      debugPrint('Add to cart error: $e\n$st');
     }
   }
 }

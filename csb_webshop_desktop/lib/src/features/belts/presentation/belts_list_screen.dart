@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
@@ -133,11 +134,23 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                 icon: const Icon(Icons.add_shopping_cart),
                                 tooltip: 'Dodaj u korpu',
                                 onPressed: () async {
-                                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
-                                    );
+                                  try {
+                                    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
+                                      );
+                                    }
+                                  } catch (e, st) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                      );
+                                    }
+                                    debugPrint('Add to cart error: $e\n$st');
                                   }
                                 },
                               ),
