@@ -16,8 +16,8 @@ namespace CBSWebshopSeminarski.Model.Requests
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = null!;
         
-        [Phone(ErrorMessage = "Please enter a valid phone number.")]
-        public string Phone { get; set; } = null!;
+        /// <summary>Optional. No format validation to avoid blocking registration when empty or informal input.</summary>
+        public string Phone { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Username is required.")]
         [MinLength(3, ErrorMessage = "Username must have at least 3 characters.")]
@@ -27,7 +27,8 @@ namespace CBSWebshopSeminarski.Model.Requests
         public string Password { get; set; } = null!;
         
         public string PasswordConfirmation { get; set; } = null!;
-        public byte[] Image { get; set; } = null!;
+        /// <summary>Optional for registration. Service uses empty array when null.</summary>
+        public byte[]? Image { get; set; }
         public List<int> Roles { get; set; } = new List<int>();
         public List<int> RolesDelete { get; set; } = new List<int>();
     }

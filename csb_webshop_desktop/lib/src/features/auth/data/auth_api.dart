@@ -60,12 +60,34 @@ class AuthApi {
     String errorMessage = 'Registracija nije uspjela';
     try {
       final dynamic errorData = json.decode(response.body);
-      if (errorData is Map && errorData.containsKey('error')) {
-        errorMessage = errorData['error'].toString();
-      } else if (errorData is Map && errorData.containsKey('message')) {
-        errorMessage = errorData['message'].toString();
-      } else if (errorData is Map && errorData.containsKey('title')) {
-        errorMessage = errorData['title'].toString();
+      if (errorData is Map) {
+        if (errorData.containsKey('error')) {
+          errorMessage = errorData['error'].toString();
+        } else if (errorData.containsKey('message')) {
+          errorMessage = errorData['message'].toString();
+        } else if (errorData.containsKey('errors') && errorData['errors'] is Map) {
+          // ASP.NET Core validation: { "errors": { "Email": ["Invalid email"], "Password": [...] } }
+          final Map<String, dynamic> errors =
+              errorData['errors'] as Map<String, dynamic>;
+          final List<String> messages = <String>[];
+          for (final MapEntry<String, dynamic> e in errors.entries) {
+            if (e.value is List) {
+              for (final dynamic msg in e.value as List<dynamic>) {
+                if (msg != null) messages.add(msg.toString());
+              }
+            } else if (e.value != null) {
+              messages.add(e.value.toString());
+            }
+          }
+          if (messages.isNotEmpty) {
+            errorMessage = messages.join('\n');
+          } else {
+            errorMessage =
+                errorData['title']?.toString() ?? errorMessage;
+          }
+        } else if (errorData.containsKey('title')) {
+          errorMessage = errorData['title'].toString();
+        }
       } else if (errorData is String) {
         errorMessage = errorData;
       }
