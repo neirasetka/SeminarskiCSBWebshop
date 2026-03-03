@@ -39,20 +39,20 @@ class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
     state = await AsyncValue.guard(() => api.getEventById(id));
   }
 
-  Future<void> participate(int userId) async {
+  Future<void> participate({required String name, required String email}) async {
     final int? id = _id;
     if (id == null) return;
     final EventsApi api = ref.read(eventsApiProvider);
-    // Optimistic update
     final EventModel? current = state.valueOrNull;
     if (current != null) {
-      state = AsyncData<EventModel>(current.copyWith(
-        isParticipating: true,
-        participants: <int>{...(current.participants ?? <int>[]), userId}.toList(),
-      ));
+      state = AsyncData<EventModel>(current.copyWith(isParticipating: true));
     }
     try {
-      final EventModel updated = await api.participate(eventId: id, userId: userId);
+      final EventModel updated = await api.participate(
+        eventId: id,
+        name: name,
+        email: email,
+      );
       state = AsyncData<EventModel>(updated);
     } catch (e, st) {
       state = AsyncError<EventModel>(e, st);

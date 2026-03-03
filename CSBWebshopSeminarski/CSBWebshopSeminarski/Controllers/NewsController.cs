@@ -1,4 +1,5 @@
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,34 @@ namespace CSBWebshopSeminarski.Controllers
                 ProductName = n.ProductName,
                 Price = n.Price,
                 Color = n.Color
+            });
+        }
+
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<NewsItemDto>> Update(int id, [FromBody] UpdateNewsRequest request)
+        {
+            var entity = await _context.News.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(request.Title))
+                entity.Title = request.Title;
+            if (!string.IsNullOrWhiteSpace(request.Body))
+                entity.Body = request.Body;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new NewsItemDto
+            {
+                Id = entity.Id,
+                PublishedAtUtc = entity.PublishedAtUtc,
+                Title = entity.Title,
+                Body = entity.Body,
+                Segment = entity.Segment,
+                LaunchDate = entity.LaunchDate,
+                ProductName = entity.ProductName,
+                Price = entity.Price,
+                Color = entity.Color
             });
         }
     }

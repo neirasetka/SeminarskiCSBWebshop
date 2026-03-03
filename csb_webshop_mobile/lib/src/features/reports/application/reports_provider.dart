@@ -1,18 +1,31 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/reports_api.dart';
 import '../domain/report_models.dart';
 
-final Provider<ReportsApi> reportsApiProvider = Provider<ReportsApi>((Ref ref) => ReportsApi());
+/// Mobile reports use mock data only. Reports with real API are admin-only on desktop.
+final Provider<List<TopSellingBagEntry>> topSellingBagsWithQuantitiesProvider =
+    Provider<List<TopSellingBagEntry>>((Ref ref) => _mockTopBags);
 
-final FutureProvider<List<TopSellingBagEntry>> topSellingBagsWithQuantitiesProvider =
-    FutureProvider<List<TopSellingBagEntry>>((Ref ref) async {
-  final api = ref.read(reportsApiProvider);
-  return api.getTopSellingBagsWithQuantities(take: 6);
-});
+final Provider<List<OrderStatusCountEntry>> orderStatusCountsProvider =
+    Provider<List<OrderStatusCountEntry>>((Ref ref) => _mockOrderStatuses);
 
-final FutureProvider<List<OrderStatusCountEntry>> orderStatusCountsProvider =
-    FutureProvider<List<OrderStatusCountEntry>>((Ref ref) async {
-  final api = ref.read(reportsApiProvider);
-  return api.getOrderStatusCounts();
-});
+const List<double> _mockMonthlySales = <double>[
+  1200, 1500, 1800, 1300, 2200, 2700, 3000, 2800, 2600, 2400, 2000, 1900,
+];
+
+final Provider<List<double>> monthlySalesProvider =
+    Provider<List<double>>((Ref ref) => _mockMonthlySales);
+
+const List<TopSellingBagEntry> _mockTopBags = <TopSellingBagEntry>[
+  TopSellingBagEntry(bagName: 'LEA', quantitySold: 45),
+  TopSellingBagEntry(bagName: 'MIA', quantitySold: 32),
+  TopSellingBagEntry(bagName: 'SOFIA', quantitySold: 28),
+  TopSellingBagEntry(bagName: 'EVA', quantitySold: 22),
+  TopSellingBagEntry(bagName: 'NORA', quantitySold: 18),
+];
+
+const List<OrderStatusCountEntry> _mockOrderStatuses = <OrderStatusCountEntry>[
+  OrderStatusCountEntry(statusName: 'Isporučeno', count: 12),
+  OrderStatusCountEntry(statusName: 'U obradi', count: 5),
+  OrderStatusCountEntry(statusName: 'Poslano', count: 3),
+];

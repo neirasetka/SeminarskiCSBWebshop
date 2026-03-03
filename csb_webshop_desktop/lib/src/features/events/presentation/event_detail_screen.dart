@@ -116,10 +116,13 @@ class _EventBody extends ConsumerWidget {
         userAsync.when(
           data: (UserProfile? user) {
             return ElevatedButton.icon(
-              onPressed: participating || user == null
+                  onPressed: participating || user == null
                   ? null
                   : () async {
-                      await ref.read(eventDetailProvider.notifier).participate(user.id);
+                      await ref.read(eventDetailProvider.notifier).participate(
+                        name: user.fullName,
+                        email: user.email,
+                      );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Prijava uspješna')),

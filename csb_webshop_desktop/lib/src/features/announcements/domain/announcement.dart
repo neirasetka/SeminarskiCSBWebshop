@@ -23,6 +23,24 @@ class Announcement {
     );
   }
 
+  /// Parses from News API response (publishedAtUtc, segment).
+  factory Announcement.fromNewsJson(Map<String, dynamic> json) {
+    final String? publishedRaw = (json['publishedAtUtc'] ?? json['publishedAt']) as String?;
+    final String segment = (json['segment'] as String?) ?? '';
+    return Announcement(
+      id: _toInt(json['id'] ?? json['Id']),
+      title: (json['title'] ?? json['Title'] ?? '') as String,
+      body: (json['body'] ?? json['Body'] ?? '') as String,
+      publishedAt: publishedRaw != null ? DateTime.parse(publishedRaw) : DateTime.now(),
+      type: AnnouncementTypeExtension.fromSegment(segment),
+    );
+  }
+
+  static int _toInt(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
@@ -37,6 +55,18 @@ class Announcement {
 enum AnnouncementType { announcement, update, info }
 
 extension AnnouncementTypeExtension on AnnouncementType {
+  static AnnouncementType fromSegment(String? segment) {
+    switch (segment?.toLowerCase()) {
+      case 'newcollectionsubscribers':
+        return AnnouncementType.announcement;
+      case 'giveawaysubscribers':
+        return AnnouncementType.info;
+      case 'allsubscribers':
+      default:
+        return AnnouncementType.update;
+    }
+  }
+
   static AnnouncementType fromString(String value) {
     switch (value.toLowerCase()) {
       case 'announcement':

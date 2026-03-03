@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 import '../../../core/api_client.dart';
 import '../domain/report_models.dart';
 
-/// API client for reports (admin-only endpoints).
+/// API client for reports. Not used on mobile - mobile uses mock data only.
+/// Reports with real API are admin-only on desktop.
 class ReportsApi {
   ReportsApi({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
@@ -13,7 +14,7 @@ class ReportsApi {
 
   static const String _reportsPath = '/api/Reports';
 
-  /// Gets top-selling bags with quantities (for reports pie chart).
+  /// Gets top-selling bags with quantities. Admin-only on backend.
   Future<List<TopSellingBagEntry>> getTopSellingBagsWithQuantities({int take = 6}) async {
     final http.Response response = await _apiClient.get('$_reportsPath/TopSellingBagsWithQuantities?take=$take');
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -25,7 +26,7 @@ class ReportsApi {
     throw Exception('Failed to load top selling bags: ${response.statusCode}');
   }
 
-  /// Gets order status counts (for reports pie chart).
+  /// Gets order status counts. Admin-only on backend.
   Future<List<OrderStatusCountEntry>> getOrderStatusCounts({DateTime? fromDateUtc, DateTime? toDateUtc}) async {
     final List<String> query = <String>[];
     if (fromDateUtc != null) query.add('FromDateUtc=${Uri.encodeComponent(fromDateUtc.toUtc().toIso8601String())}');
