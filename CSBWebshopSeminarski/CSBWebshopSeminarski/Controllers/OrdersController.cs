@@ -4,6 +4,7 @@ using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -60,6 +61,15 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                var order = await _service.GetById(orderId);
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || order.UserID != currentUserId)
+                {
+                    return Forbid();
+                }
+            }
             var ok = await _service.SetPaymentStatusAsync(orderId, request.Status);
             if (!ok) return NotFound();
             return NoContent();

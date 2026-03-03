@@ -3,6 +3,7 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
+using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -35,6 +36,15 @@ namespace CSBWebshopSeminarski.Controllers
             if (order == null)
             {
                 return NotFound("Order not found");
+            }
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || order.UserID != currentUserId)
+                {
+                    return Forbid();
+                }
             }
 
             var amount = request.AmountInCents > 0 ? request.AmountInCents : (long)(order.Price * 100);
