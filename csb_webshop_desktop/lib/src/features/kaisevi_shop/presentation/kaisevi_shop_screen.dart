@@ -149,7 +149,6 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                         onToggleFavorite: () =>
                             ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
                         onAddToCart: () => _addToCart(belt),
-                        onBuyNow: () => _buyNow(belt),
                         onDelete: isAdmin ? () => _deleteBelt(this.context, ref, belt) : null,
                       );
                     },
@@ -225,7 +224,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
   Future<void> _addToCart(Belt belt) async {
     await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: <Widget>[
@@ -236,24 +235,11 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
           ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'NARUČI',
-            textColor: Colors.white,
-            onPressed: () {
-              context.go('/checkout');
-            },
-          ),
         ),
       );
     }
   }
 
-  Future<void> _buyNow(Belt belt) async {
-    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-    if (mounted) {
-      context.go('/checkout');
-    }
-  }
 }
 
 class _ShopHeader extends ConsumerWidget {
@@ -584,7 +570,6 @@ class _ProductCard extends StatefulWidget {
     required this.onTap,
     required this.onToggleFavorite,
     required this.onAddToCart,
-    required this.onBuyNow,
     this.onDelete,
   });
 
@@ -596,7 +581,6 @@ class _ProductCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
   final VoidCallback? onDelete;
 
   @override
@@ -731,16 +715,6 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                                   padding: const EdgeInsets.symmetric(horizontal: 12),
                                   minimumSize: const Size(0, 36),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              FilledButton(
-                                onPressed: widget.onBuyNow,
-                                style: FilledButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  minimumSize: const Size(0, 36),
-                                  backgroundColor: Colors.green.shade600,
-                                ),
-                                child: const Text('Naruči'),
                               ),
                             ],
                           ],
