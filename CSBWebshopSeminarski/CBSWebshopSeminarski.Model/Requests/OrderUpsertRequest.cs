@@ -13,7 +13,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         public DateTime Date { get; set; }
         
         [Required(ErrorMessage = "Price is required.")]
-        [Range(0.01, float.MaxValue, ErrorMessage = "Price must be greater than 1.")]
+        [Range(0, float.MaxValue, ErrorMessage = "Price must be zero or greater.")]
         public float Price { get; set; }
         
         [Required(ErrorMessage = "User ID is required.")]
