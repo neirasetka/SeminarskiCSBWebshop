@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/back_confirmation_dialog.dart';
+import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
