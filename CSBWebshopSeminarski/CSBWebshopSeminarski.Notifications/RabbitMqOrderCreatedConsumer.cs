@@ -27,10 +27,14 @@ namespace CSBWebshopSeminarski.Notifications
             var host = _configuration["RabbitMQ:HostName"] ?? "localhost";
             var exchange = _configuration["RabbitMQ:Exchange"] ?? "webshop.events";
             var routingKey = _configuration["RabbitMQ:OrderCreatedRoutingKey"] ?? "orders.created";
+            var userName = _configuration["RabbitMQ:UserName"] ?? "guest";
+            var password = _configuration["RabbitMQ:Password"] ?? "guest";
 
             var factory = new ConnectionFactory
             {
                 HostName = host,
+                UserName = userName,
+                Password = password,
                 DispatchConsumersAsync = true
             };
             _connection = factory.CreateConnection();

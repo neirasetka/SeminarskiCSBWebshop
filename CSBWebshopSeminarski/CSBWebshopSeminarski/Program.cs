@@ -112,9 +112,11 @@ builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.IEventPub
     var logger = sp.GetRequiredService<ILogger<Program>>();
     var host = configuration["RabbitMQ:HostName"] ?? "localhost";
     var exchange = configuration["RabbitMQ:Exchange"] ?? "webshop.events";
+    var userName = configuration["RabbitMQ:UserName"] ?? "guest";
+    var password = configuration["RabbitMQ:Password"] ?? "guest";
     try
     {
-        return new CBSWebshopSeminarski.Services.Services.RabbitMqEventPublisher(host, exchange);
+        return new CBSWebshopSeminarski.Services.Services.RabbitMqEventPublisher(host, exchange, userName, password);
     }
     catch (Exception ex)
     {

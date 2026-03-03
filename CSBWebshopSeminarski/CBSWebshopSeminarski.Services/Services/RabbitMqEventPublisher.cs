@@ -11,12 +11,14 @@ namespace CBSWebshopSeminarski.Services.Services
         private readonly IModel _channel;
         private readonly string _exchangeName;
 
-        public RabbitMqEventPublisher(string hostName, string exchangeName)
+        public RabbitMqEventPublisher(string hostName, string exchangeName, string? userName = null, string? password = null)
         {
             _exchangeName = exchangeName;
             var factory = new ConnectionFactory
             {
                 HostName = hostName,
+                UserName = userName ?? "guest",
+                Password = password ?? "guest",
                 DispatchConsumersAsync = true
             };
             _connection = factory.CreateConnection();
