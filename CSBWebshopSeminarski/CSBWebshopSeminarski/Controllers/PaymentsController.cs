@@ -20,6 +20,21 @@ namespace CSBWebshopSeminarski.Controllers
             _db = db;
         }
 
+        private static Dictionary<string, string> GetCheckoutMetadata(int orderId, string orderNumber, int userId, string? receiptEmail)
+        {
+            var metadata = new Dictionary<string, string>
+            {
+                { "order_id", orderId.ToString() },
+                { "order_number", orderNumber },
+                { "user_id", userId.ToString() }
+            };
+            if (!string.IsNullOrWhiteSpace(receiptEmail))
+            {
+                metadata["receipt_email"] = receiptEmail;
+            }
+            return metadata;
+        }
+
         /// <summary>
         /// Create Stripe PaymentIntent for a given Order.
         /// </summary>
@@ -52,17 +67,23 @@ namespace CSBWebshopSeminarski.Controllers
             var amount = request.AmountInCents > 0 ? request.AmountInCents : (long)(order.Price * 100);
             var currency = string.IsNullOrWhiteSpace(request.Currency) ? "eur" : request.Currency!;
 
+            var metadata = new Dictionary<string, string>
+            {
+                {"order_id", order.OrderID.ToString()},
+                {"order_number", order.OrderNumber },
+                {"user_id", order.UserID.ToString() }
+            };
+            if (!string.IsNullOrWhiteSpace(request.ReceiptEmail))
+            {
+                metadata["receipt_email"] = request.ReceiptEmail;
+            }
+
             var paymentIntentService = new PaymentIntentService();
             var createOptions = new PaymentIntentCreateOptions
             {
                 Amount = amount,
                 Currency = currency,
-                Metadata = new Dictionary<string, string>
-                {
-                    {"order_id", order.OrderID.ToString()},
-                    {"order_number", order.OrderNumber },
-                    {"user_id", order.UserID.ToString() }
-                },
+                Metadata = metadata,
                 ReceiptEmail = request.ReceiptEmail,
                 AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
                 {
@@ -145,12 +166,7 @@ namespace CSBWebshopSeminarski.Controllers
                 },
                 PaymentIntentData = new SessionPaymentIntentDataOptions
                 {
-                    Metadata = new Dictionary<string, string>
-                    {
-                        { "order_id", order.OrderID.ToString() },
-                        { "order_number", order.OrderNumber },
-                        { "user_id", order.UserID.ToString() }
-                    }
+                    Metadata = GetCheckoutMetadata(order.OrderID, order.OrderNumber, order.UserID, request.ReceiptEmail)
                 }
             };
 

@@ -8,10 +8,12 @@ namespace CBSWebshopSeminarski.Services.Services
     public class PaymentsService : IPaymentsService
     {
         private readonly CocoSunBagsWebshopDbContext _db;
+        private readonly EmailService _emailService;
 
-        public PaymentsService(CocoSunBagsWebshopDbContext db)
+        public PaymentsService(CocoSunBagsWebshopDbContext db, EmailService emailService)
         {
             _db = db;
+            _emailService = emailService;
         }
 
         public async Task HandlePaymentSucceededAsync(string paymentIntentId, IDictionary<string, string> metadata)
@@ -50,6 +52,26 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _db.Purchases.Add(purchase);
             await _db.SaveChangesAsync();
+
+            var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
+                ? email
+                : order.User?.Email;
+            if (!string.IsNullOrWhiteSpace(receiptEmail))
+            {
+                try
+                {
+                    var subject = $"Potvrda narudžbe #{order.OrderNumber}";
+                    var message = $"Hvala na kupovini!\n\n" +
+                        $"Vaša narudžba #{order.OrderNumber} je uspješno primljena.\n" +
+                        $"Ukupan iznos: {order.Price:N2} €.\n\n" +
+                        $"S poštovanjem,\nCocoSunBags tim";
+                    await _emailService.SendEmailAsync(receiptEmail, subject, message);
+                }
+                catch
+                {
+                    // Log but don't fail – order is already paid
+                }
+            }
         }
 
         public async Task HandlePaymentFailedAsync(string paymentIntentId, IDictionary<string, string> metadata, string failureMessage)

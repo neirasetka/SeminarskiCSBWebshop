@@ -10,19 +10,16 @@ namespace CSBWebshopSeminarski.Notifications
     {
         private readonly ILogger<RabbitMqOrderCreatedConsumer> _logger;
         private readonly IConfiguration _configuration;
-        private readonly CBSWebshopSeminarski.Services.Services.EmailService _emailService;
         private IConnection? _connection;
         private IModel? _channel;
         private string _queueName = string.Empty;
 
         public RabbitMqOrderCreatedConsumer(
             ILogger<RabbitMqOrderCreatedConsumer> logger,
-            IConfiguration configuration,
-            CBSWebshopSeminarski.Services.Services.EmailService emailService)
+            IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
-            _emailService = emailService;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -63,12 +60,8 @@ namespace CSBWebshopSeminarski.Notifications
                     if (evt != null)
                     {
                         _logger.LogInformation("Received OrderCreatedEvent: {OrderNumber}", evt.OrderNumber);
-                        if (!string.IsNullOrWhiteSpace(evt.UserEmail))
-                        {
-                            var subject = $"Order Confirmation #{evt.OrderNumber}";
-                            var message = $"Thank you for your order #{evt.OrderNumber}. Total: {evt.Amount}.";
-                            await _emailService.SendEmailAsync(evt.UserEmail, subject, message);
-                        }
+                        // Order confirmation email is sent when payment succeeds (PaymentsService.HandlePaymentSucceededAsync),
+                        // not when the cart/order is first created.
                     }
                     _channel!.BasicAck(ea.DeliveryTag, multiple: false);
                 }
