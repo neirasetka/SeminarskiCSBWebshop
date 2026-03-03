@@ -47,5 +47,7 @@ flutter emulators --launch "Pixel 2 API 35"
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
 ```
 
-### Testna kreditna kartica
-- Broj kartice: 5555 5555 5555 4444
+### Testna kreditna kartica (Stripe Test mode)
+- Broj kartice: **4242 4242 4242 4242**
+- Datum isteka: bilo koji budući datum (npr. 12/34)
+- CVC: bilo koje 3 cifre
