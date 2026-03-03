@@ -103,6 +103,37 @@ class OrdersApi {
     throw Exception('Failed to create payment intent: ${response.statusCode}');
   }
 
+  Future<Map<String, dynamic>> createCheckoutSession({
+    required int orderId,
+    String? receiptEmail,
+    String? successUrl,
+    String? cancelUrl,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'OrderID': orderId,
+      if (receiptEmail != null) 'ReceiptEmail': receiptEmail,
+      if (successUrl != null) 'SuccessUrl': successUrl,
+      if (cancelUrl != null) 'CancelUrl': cancelUrl,
+    };
+    final http.Response response = await _apiClient.post(
+      '$_paymentsPath/create-checkout-session',
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to create checkout session: ${response.statusCode}');
+  }
+
+  Future<Map<String, dynamic>?> getOrder({required int orderId}) async {
+    final http.Response response = await _apiClient.get('$_ordersPath/$orderId');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    if (response.statusCode == 404) return null;
+    throw Exception('Failed to get order: ${response.statusCode}');
+  }
+
   Future<void> updatePaymentStatus({required int orderId, required String status}) async {
     final Map<String, dynamic> body = <String, dynamic>{'status': status};
     final http.Response response = await _apiClient.patch('$_ordersPath/$orderId/payment-status', body: json.encode(body));

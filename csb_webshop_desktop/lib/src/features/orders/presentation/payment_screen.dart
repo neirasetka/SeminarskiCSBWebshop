@@ -14,6 +14,19 @@ class PaymentScreen extends ConsumerStatefulWidget {
   ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
 }
 
+String _formatPaymentError(Object e) {
+  final String s = e.toString();
+  if (s.contains('MissingPluginException') || s.contains('flutter.stripe')) {
+    return 'Stripe plaćanje nije dostupno na ovoj platformi. '
+        'Koristite Android ili iOS aplikaciju za plaćanje putem kartice.';
+  }
+  if (e is Exception) {
+    final String msg = s.replaceFirst(RegExp(r'^Exception:\s*'), '');
+    if (msg.isNotEmpty) return msg;
+  }
+  return 'Greška pri plaćanju: $e';
+}
+
 class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
@@ -88,12 +101,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       if (mounted) {
         context.go('/checkout/success');
       }
-    } catch (e) {
+    } catch (e, _) {
       if (mounted) {
+        final String message = _formatPaymentError(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Greška pri plaćanju: $e'),
+            content: Text(message),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

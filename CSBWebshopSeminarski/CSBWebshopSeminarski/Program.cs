@@ -234,6 +234,32 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
     }
 });
 
+app.MapGet("/checkout-success", () => Results.Content(
+    """
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><title>Plaćanje uspješno</title></head>
+    <body style="font-family:sans-serif;text-align:center;padding:40px;">
+    <h1 style="color:green;">✓ Plaćanje uspješno!</h1>
+    <p>Zatvorite ovaj prozor i vratite se u aplikaciju.</p>
+    <p><small>CSB Webshop</small></p>
+    </body>
+    </html>
+    """, "text/html"));
+
+app.MapGet("/checkout-cancel", () => Results.Content(
+    """
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><title>Plaćanje otkazano</title></head>
+    <body style="font-family:sans-serif;text-align:center;padding:40px;">
+    <h1 style="color:orange;">Plaćanje otkazano</h1>
+    <p>Zatvorite ovaj prozor i vratite se u aplikaciju.</p>
+    <p><small>CSB Webshop</small></p>
+    </body>
+    </html>
+    """, "text/html"));
+
 app.MapControllers();
 
 // Seed roles and default admin user on startup

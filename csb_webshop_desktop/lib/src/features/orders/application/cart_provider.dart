@@ -1,10 +1,29 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../profile/data/profile_api.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+
+/// Stripe Payment Sheet podržava samo Android, iOS i Web.
+/// Na Windows/macOS/Linux desktopu nema native implementacije.
+bool get _isStripeSupportedPlatform {
+  if (kIsWeb) return true;
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+    case TargetPlatform.iOS:
+      return true;
+    case TargetPlatform.windows:
+    case TargetPlatform.macOS:
+    case TargetPlatform.linux:
+      return false;
+    default:
+      return false;
+  }
+}
 
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
@@ -86,13 +105,18 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     if (order == null) {
       throw Exception('Nema korpe za plaćanje');
     }
-    // Use profile email if not provided
+
     String? receiptEmail = email;
     try {
       if (receiptEmail == null || receiptEmail.isEmpty) {
         receiptEmail = (await _profileApi.getMe()).email;
       }
     } catch (_) {}
+
+    if (!_isStripeSupportedPlatform) {
+      return _startHostedCheckout(order: order, receiptEmail: receiptEmail);
+    }
+
     final int amountInCents = (order.amount * 100).round();
     final Map<String, dynamic> resp = await _api.createPaymentIntent(
       orderId: order.id,
@@ -101,7 +125,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       receiptEmail: receiptEmail,
     );
     final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
-    // Prepare and present PaymentSheet
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
@@ -109,14 +132,53 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       ),
     );
     await Stripe.instance.presentPaymentSheet();
-    // Mark as paid
     await _api.updatePaymentStatus(orderId: order.id, status: 'Paid');
-    // Refresh cart (should be empty/none if you move order out of Pending). For now reload state.
     await refresh();
     return <String, String>{
       'clientSecret': clientSecret,
       'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
     };
+  }
+
+  Future<Map<String, String>> _startHostedCheckout({
+    required OrderModel order,
+    String? receiptEmail,
+  }) async {
+    final Map<String, dynamic> resp = await _api.createCheckoutSession(
+      orderId: order.id,
+      receiptEmail: receiptEmail,
+    );
+    final String url = (resp['Url'] ?? resp['url'] ?? '').toString();
+    if (url.isEmpty) {
+      throw Exception('Nije moguće kreirati checkout sesiju');
+    }
+
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Nije moguće otvoriti preglednik za plaćanje');
+    }
+
+    const Duration pollInterval = Duration(seconds: 3);
+    const Duration timeout = Duration(minutes: 10);
+    final DateTime deadline = DateTime.now().add(timeout);
+
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(pollInterval);
+      final Map<String, dynamic>? orderData = await _api.getOrder(orderId: order.id);
+      if (orderData == null) continue;
+      final String? status =
+          (orderData['PaymentStatus'] ?? orderData['paymentStatus'])?.toString();
+      if (status != null &&
+          (status.toLowerCase() == 'paid' || status == '1')) {
+        await refresh();
+        return <String, String>{'sessionId': resp['SessionId']?.toString() ?? ''};
+      }
+    }
+
+    throw Exception(
+      'Plaćanje nije dovršeno u predviđenom vremenu. '
+      'Ako ste platili, provjerite status narudžbe.',
+    );
   }
 }
 
