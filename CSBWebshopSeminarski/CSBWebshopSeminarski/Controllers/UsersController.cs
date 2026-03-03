@@ -21,16 +21,18 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost("Authenticate")]
         [AllowAnonymous]
-        public async Task<User> Authenticate(UserAuthenticationRequest request)
+        public async Task<ActionResult<User>> Authenticate(UserAuthenticationRequest request)
         {
-            return await _service.Authenticate(request);
+            var user = await _service.Authenticate(request);
+            return user == null ? Unauthorized() : user;
         }
 
         [HttpPost("Login")]
         [AllowAnonymous]
-        public async Task<User> Login(UserAuthenticationRequest request)
+        public async Task<ActionResult<User>> Login(UserAuthenticationRequest request)
         {
-            return await _service.Authenticate(request);
+            var user = await _service.Authenticate(request);
+            return user == null ? Unauthorized() : user;
         }
 
         [HttpPost("Register")]

@@ -41,7 +41,7 @@ namespace CBSWebshopSeminarski.Model.Models
                 catch (ArgumentException)
                 {
                     var dict = new Dictionary<string, string>();
-                    dict.Add("id", metaToken.ToString());
+                    dict.Add("id", metaToken.ToString() ?? string.Empty);
                     return dict;
                 }
             }
