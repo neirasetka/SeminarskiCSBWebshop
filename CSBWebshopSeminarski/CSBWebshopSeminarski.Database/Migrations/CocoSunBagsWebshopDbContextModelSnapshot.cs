@@ -349,10 +349,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderItemID"));
 
-                    b.Property<int>("BagID")
+                    b.Property<int?>("BagID")
                         .HasColumnType("int");
 
-                    b.Property<int>("BeltID")
+                    b.Property<int?>("BeltID")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("Discount")

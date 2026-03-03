@@ -162,6 +162,21 @@ namespace CSBWebshopSeminarski.Database
             });
 
             modelBuilder.Entity<Orders>().Property(o => o.ShippingStatus).HasConversion<int>();
+
+            modelBuilder.Entity<OrderItems>(entity =>
+            {
+                entity.HasOne(oi => oi.Bag)
+                    .WithMany()
+                    .HasForeignKey(oi => oi.BagID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(oi => oi.Belt)
+                    .WithMany()
+                    .HasForeignKey(oi => oi.BeltID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

@@ -222,8 +222,9 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
   }
 
   Future<void> _addToCart(Belt belt) async {
-    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
-    if (mounted) {
+    try {
+      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -237,6 +238,17 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
           duration: const Duration(seconds: 4),
         ),
       );
+      }
+    } catch (e, st) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Greška pri dodavanju u korpu: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      debugPrint('Add to cart error: $e\n$st');
     }
   }
 

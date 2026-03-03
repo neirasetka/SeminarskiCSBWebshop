@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
@@ -72,7 +72,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var beltType = await _context.BeltTypes.Where(i => i.BeltTypeID == ID).FirstOrDefaultAsync();
             var belt = await _context.Belts.Where(i => i.BeltTypeID == beltType.BeltTypeID).ToListAsync();
-            var orderItems = await _context.OrderItems.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
+            var orderItems = await _context.OrderItems.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var reviews = await _context.Reviews.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var rates = await _context.Rates.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var favorites = await _context.Favorites.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();

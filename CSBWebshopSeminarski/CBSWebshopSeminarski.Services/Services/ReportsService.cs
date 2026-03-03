@@ -113,9 +113,9 @@ namespace CBSWebshopSeminarski.Services.Services
             var productAgg = await orderItems
                 .Select(oi => new
                 {
-                    ProductType = oi.Bag != null && oi.Bag.BagID != null ? "Bag" : "Belt",
-                    ProductId = oi.Bag != null && oi.Bag.BagID != null ? oi.Bag.BagID.Value : oi.Belt.BeltID,
-                    ProductName = oi.Bag != null && oi.Bag.BagID != null ? oi.Bag.BagName : oi.Belt.BeltName,
+                    ProductType = oi.BagID.HasValue ? "Bag" : "Belt",
+                    ProductId = oi.BagID ?? oi.BeltID ?? 0,
+                    ProductName = oi.Bag != null ? (oi.Bag.BagName ?? "") : (oi.Belt != null ? oi.Belt.BeltName ?? "" : ""),
                     Quantity = oi.Quantity ?? 0,
                     LineRevenue = (decimal)(oi.Price ?? 0f) * (decimal)(oi.Quantity ?? 0)
                 })
@@ -139,7 +139,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<List<Bag>> GetTopSellingBags(int take = 6)
         {
             var topBagIds = await _dbContext.OrderItems
-                .Where(oi => oi.BagID > 0)
+                .Where(oi => oi.BagID.HasValue && oi.BagID > 0)
                 .GroupBy(oi => oi.BagID)
                 .Select(g => new { BagId = g.Key, TotalQuantity = g.Sum(x => x.Quantity ?? 0) })
                 .OrderByDescending(x => x.TotalQuantity)
@@ -167,8 +167,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<List<TopSellingBagVM>> GetTopSellingBagsWithQuantities(int take = 6)
         {
             var agg = await _dbContext.OrderItems
-                .Where(oi => oi.BagID > 0)
-                .GroupBy(oi => oi.BagID)
+                .Where(oi => oi.BagID.HasValue && oi.BagID > 0)
+                .GroupBy(oi => oi.BagID!.Value)
                 .Select(g => new { BagId = g.Key, QuantitySold = g.Sum(x => x.Quantity ?? 0) })
                 .OrderByDescending(x => x.QuantitySold)
                 .Take(take)
@@ -196,8 +196,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<List<TopSellingBeltVM>> GetTopSellingBeltsWithQuantities(int take = 6)
         {
             var agg = await _dbContext.OrderItems
-                .Where(oi => oi.BeltID > 0)
-                .GroupBy(oi => oi.BeltID)
+                .Where(oi => oi.BeltID.HasValue && oi.BeltID > 0)
+                .GroupBy(oi => oi.BeltID!.Value)
                 .Select(g => new { BeltId = g.Key, QuantitySold = g.Sum(x => x.Quantity ?? 0) })
                 .OrderByDescending(x => x.QuantitySold)
                 .Take(take)

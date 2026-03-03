@@ -226,9 +226,10 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
   }
 
   Future<void> _addToCart(Bag bag) async {
-    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    try {
+      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: <Widget>[
@@ -248,6 +249,17 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
           ),
         ),
       );
+      }
+    } catch (e, st) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Greška pri dodavanju u korpu: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      debugPrint('Add to cart error: $e\n$st');
     }
   }
 }

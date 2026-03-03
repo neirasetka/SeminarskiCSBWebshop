@@ -34,6 +34,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)
         {
+            if (!request.BagID.HasValue && !request.BeltID.HasValue)
+                throw new ArgumentException("Order item must have either BagID or BeltID.");
+
             var entity = _mapper.Map<OrderItems>(request);
 
             _context.Set<OrderItems>().Add(entity);
