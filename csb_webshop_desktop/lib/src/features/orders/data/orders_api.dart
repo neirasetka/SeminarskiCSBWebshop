@@ -69,7 +69,7 @@ class OrdersApi {
       'Price': price,
       if (discount != null) 'Discount': discount,
     };
-    final http.Response response = await _apiClient.post(_orderItemsPath, body: json.encode(body));
+    final http.Response response = await _apiClient.post('$_orderItemsPath/AddToCart', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }

@@ -19,9 +19,13 @@ namespace CSBWebshopSeminarski.Controllers
             _logger = logger;
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Buyer, Admin")] // Eksplicitno dozvoli Buyer i Admin (preuzimanje od BaseCRUDController)
-        public override async Task<OrderItem> Insert([FromBody] OrderItemUpsertRequest request)
+        /// <summary>
+        /// Dodavanje stavke u korpu. Zaseban endpoint jer BaseCRUDController.Insert ima [Authorize(Roles = "Admin")]
+        /// koji se zbraja s ovim atributom - zato Buyer ne bi prolazio na standardnom POST.
+        /// </summary>
+        [HttpPost("AddToCart")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<OrderItem> AddToCart([FromBody] OrderItemUpsertRequest request)
         {
             if (request == null)
                 throw new UserException("Zahtjev za dodavanje stavke nije valjan.");
