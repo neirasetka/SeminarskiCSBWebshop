@@ -77,16 +77,6 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   _showAddedToCartDialog(context, belt);
                 }
               },
-              onBuyNow: () async {
-                for (int i = 0; i < _quantity; i++) {
-                  await ref
-                      .read(cartProvider.notifier)
-                      .addBeltToCart(beltId: belt.id, price: belt.price);
-                }
-                if (context.mounted) {
-                  context.go('/checkout');
-                }
-              },
               onOutfitIdea: () {
                 context.pushNamed(
                   'outfitIdeaBelt',
@@ -202,7 +192,6 @@ class _CustomerBeltDetailBody extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onToggleFavorite,
     required this.onAddToCart,
-    required this.onBuyNow,
     required this.onOutfitIdea,
     required this.onBack,
     this.onEdit,
@@ -217,7 +206,6 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onToggleFavorite;
   final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
   final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
   final VoidCallback? onEdit;
@@ -294,7 +282,6 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
-                    onBuyNow: onBuyNow,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
                   )
@@ -305,7 +292,6 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     quantity: quantity,
                     onQuantityChanged: onQuantityChanged,
                     onAddToCart: onAddToCart,
-                    onBuyNow: onBuyNow,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
                   ),
@@ -324,7 +310,6 @@ class _WideLayout extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
-    required this.onBuyNow,
     required this.onOutfitIdea,
     this.onEdit,
   });
@@ -335,7 +320,6 @@ class _WideLayout extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
 
@@ -363,7 +347,6 @@ class _WideLayout extends StatelessWidget {
             quantity: quantity,
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
-            onBuyNow: onBuyNow,
             onOutfitIdea: onOutfitIdea,
           ),
         ),
@@ -380,7 +363,6 @@ class _NarrowLayout extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
-    required this.onBuyNow,
     required this.onOutfitIdea,
     this.onEdit,
   });
@@ -391,7 +373,6 @@ class _NarrowLayout extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
 
@@ -412,7 +393,6 @@ class _NarrowLayout extends StatelessWidget {
           quantity: quantity,
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
-          onBuyNow: onBuyNow,
           onOutfitIdea: onOutfitIdea,
         ),
       ],
@@ -557,7 +537,6 @@ class _ProductDetails extends StatelessWidget {
     required this.quantity,
     required this.onQuantityChanged,
     required this.onAddToCart,
-    required this.onBuyNow,
     required this.onOutfitIdea,
   });
 
@@ -567,7 +546,6 @@ class _ProductDetails extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
   final VoidCallback onOutfitIdea;
 
   @override
@@ -739,30 +717,6 @@ class _ProductDetails extends StatelessWidget {
                 ),
               ),
               style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        if (showQuantityAndCart) const SizedBox(height: 12),
-        // Naruči (samo za kaiseve)
-        if (showQuantityAndCart)
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton.icon(
-              onPressed: onBuyNow,
-              icon: const Icon(Icons.shopping_bag, size: 24),
-              label: Text(
-                'Naruči  -  ${(belt.price * quantity).toStringAsFixed(2)} KM',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.green.shade600,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

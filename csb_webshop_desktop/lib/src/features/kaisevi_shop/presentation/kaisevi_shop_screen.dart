@@ -698,22 +698,27 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                         const Spacer(),
                         Row(
                           children: <Widget>[
-                            Text(
-                              '${widget.belt.price.toStringAsFixed(2)} KM',
-                              style: textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
+                            Flexible(
+                              child: Text(
+                                '${widget.belt.price.toStringAsFixed(2)} KM',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (widget.showAddToCart) ...[
-                              const Spacer(),
-                              FilledButton.icon(
-                                onPressed: widget.onAddToCart,
-                                icon: const Icon(Icons.add_shopping_cart, size: 18),
-                                label: const Text('Dodaj u korpu'),
-                                style: FilledButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  minimumSize: const Size(0, 36),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: FilledButton.icon(
+                                  onPressed: widget.onAddToCart,
+                                  icon: const Icon(Icons.add_shopping_cart, size: 18),
+                                  label: const Text('Dodaj u korpu'),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    minimumSize: const Size(0, 36),
+                                  ),
                                 ),
                               ),
                             ],
