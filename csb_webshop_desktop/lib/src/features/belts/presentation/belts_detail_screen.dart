@@ -731,7 +731,7 @@ class _ProductDetails extends StatelessWidget {
                     onPressed: onBuyNow,
                     icon: const Icon(Icons.shopping_bag, size: 22),
                     label: Text(
-                      'Naruči  ${(belt.price * quantity).toStringAsFixed(2)} KM',
+                      'Kupi  ${(belt.price * quantity).toStringAsFixed(2)} KM',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

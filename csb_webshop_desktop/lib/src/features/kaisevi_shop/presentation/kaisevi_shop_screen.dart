@@ -754,7 +754,7 @@ class _ProductCardState extends State<_ProductCard> with SingleTickerProviderSta
                                   minimumSize: const Size(0, 36),
                                   backgroundColor: Colors.green.shade600,
                                 ),
-                                child: const Text('Naruči'),
+                                child: const Text('Kupi'),
                               ),
                             ],
                           ],
