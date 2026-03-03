@@ -27,8 +27,8 @@ namespace CBSWebshopSeminarski.Model.Models
         public virtual Belt? Belt { get; set; }
         
         [JsonIgnore]
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
         
-        public virtual ICollection<OutfitIdeaImage> Images { get; set; }
+        public virtual ICollection<OutfitIdeaImage> Images { get; set; } = null!;
     }
 }

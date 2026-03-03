@@ -15,8 +15,8 @@ namespace CBSWebshopSeminarski.Services.Services
         private const int Pbkdf2SaltSize = 16;
         private const int Pbkdf2KeySize = 32;
 
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public UsersService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;
@@ -75,6 +75,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<User> Update(int ID, UserUpsertRequest request)
         {
             var entity = _context.Users.Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"User with ID {ID} not found.");
 
             _context.Users.Attach(entity);
             _context.Users.Update(entity);
@@ -127,6 +129,9 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Users.
                 Include(i => i.UserRoles).Include(i => i.Reviews).Include(i => i.Rates).
                 FirstOrDefaultAsync(i => i.UserID == ID);
+
+            if (entity == null)
+                return false;
 
             if (entity.UserRoles.Count != 0)
                 _context.UserRoles.RemoveRange(entity.UserRoles);
@@ -187,7 +192,7 @@ namespace CBSWebshopSeminarski.Services.Services
             return Convert.ToBase64String(key);
         }
 
-        public async Task<User> Authenticate(UserAuthenticationRequest request)
+        public async Task<User?> Authenticate(UserAuthenticationRequest request)
         {
             var user = await _context.Users
                 .Include(i => i.UserRoles)
@@ -236,7 +241,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Bag>>(list.Select(i => i.Bag).ToList());
+            return _mapper.Map<List<Bag>>(list.Select(i => i.Bag!).ToList());
         }
 
         public async Task<Bag> InsertLikedBags(int ID, int BagID)
@@ -250,7 +255,8 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.Favorites.AddAsync(entity);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<Bag>(entity.Bag);
+            var bag = await _context.Bags.FindAsync(BagID);
+            return _mapper.Map<Bag>(bag!);
         }
 
         public async Task<Bag> DeleteLikedBags(int ID, int BagID)
@@ -259,12 +265,14 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Where(i => i.UserID == ID && i.BagID == BagID).Include(i => i.Bag)
                 .SingleOrDefaultAsync();
 
-            if (entity != null)
-            {
-                _context.Favorites.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-            return _mapper.Map<Bag>(entity.Bag);
+            if (entity == null)
+                throw new ArgumentException("Favorite not found.");
+
+            _context.Favorites.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            var bag = await _context.Bags.FindAsync(BagID);
+            return _mapper.Map<Bag>(bag!);
         }
 
         public async Task<List<Belt>> GetLikedBelts(int ID, BeltSearchRequest request)
@@ -281,7 +289,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Belt>>(list.Select(i => i.Belt).ToList());
+            return _mapper.Map<List<Belt>>(list.Select(i => i.Belt!).ToList());
         }
 
         public async Task<Belt> InsertLikedBelts(int ID, int BeltID)
@@ -295,7 +303,8 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.Favorites.AddAsync(entity);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<Belt>(entity.Belt);
+            var belt = await _context.Belts.FindAsync(BeltID);
+            return _mapper.Map<Belt>(belt!);
         }
 
         public async Task<Belt> DeleteLikedBelts(int ID, int BeltID)
@@ -304,12 +313,14 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Where(i => i.UserID == ID && i.BeltID == BeltID).Include(i => i.Belt)
                 .SingleOrDefaultAsync();
 
-            if (entity != null)
-            {
-                _context.Favorites.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-            return _mapper.Map<Belt>(entity.Belt);
+            if (entity == null)
+                throw new ArgumentException("Favorite not found.");
+
+            _context.Favorites.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            var belt = await _context.Belts.FindAsync(BeltID);
+            return _mapper.Map<Belt>(belt!);
         }
     }
 }

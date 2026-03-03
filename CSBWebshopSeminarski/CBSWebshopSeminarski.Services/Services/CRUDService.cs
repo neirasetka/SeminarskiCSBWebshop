@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
 
@@ -7,8 +7,8 @@ namespace CBSWebshopSeminarski.Services.Services
     public class CRUDService<TModel, TSearch, TDatabase, TInsert, TUpdate> : BaseService<TModel, TSearch, TDatabase>,
         ICRUDService<TModel, TSearch, TInsert, TUpdate> where TDatabase : class
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public CRUDService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;
@@ -27,6 +27,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public virtual async Task<TModel> Update(int ID, TUpdate request)
         {
             var entity = _context.Set<TDatabase>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Entity with ID {ID} not found.");
             _context.Set<TDatabase>().Attach(entity);
             _context.Set<TDatabase>().Update(entity);
 
@@ -40,13 +42,15 @@ namespace CBSWebshopSeminarski.Services.Services
         public virtual async Task<bool> Delete(int ID)
         {
             var entity = _context.Set<TDatabase>().Find(ID);
+            if (entity == null)
+                return false;
             try
             {
                 _context.Set<TDatabase>().Remove(entity);
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }

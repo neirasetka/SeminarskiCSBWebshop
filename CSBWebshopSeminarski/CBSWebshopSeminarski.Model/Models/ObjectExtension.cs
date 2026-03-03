@@ -6,27 +6,25 @@ namespace CBSWebshopSeminarski.Model.Models
 {
     public static class ObjectExtension
     {
-        private static Newtonsoft.Json.JsonSerializer jsonSerializerSettings;
+        private static readonly Newtonsoft.Json.JsonSerializer jsonSerializerSettings = CreateJsonSerializer();
+
+        private static Newtonsoft.Json.JsonSerializer CreateJsonSerializer()
+        {
+            var s = new Newtonsoft.Json.JsonSerializer
+            {
+                PreserveReferencesHandling = PreserveReferencesHandling.None,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            return s;
+        }
 
         public static Newtonsoft.Json.JsonSerializer GetJsonSerializerSettings()
         {
             return jsonSerializerSettings;
         }
 
-        static ObjectExtension()
-        {
-            Newtonsoft.Json.JsonSerializer jsonSerializer = GetJsonSerializerSettings(new Newtonsoft.Json.JsonSerializer());
-            GetJsonSerializerSettings().PreserveReferencesHandling = PreserveReferencesHandling.None;
-            GetJsonSerializerSettings().ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-            GetJsonSerializerSettings().NullValueHandling = NullValueHandling.Ignore;
-        }
-
-        private static Newtonsoft.Json.JsonSerializer GetJsonSerializerSettings(Newtonsoft.Json.JsonSerializer jsonSerializer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static IDictionary<string, string> ToKeyValue(this object metaToken)
+        public static IDictionary<string, string>? ToKeyValue(this object metaToken)
         {
             if (metaToken == null)
             {
@@ -57,7 +55,7 @@ namespace CBSWebshopSeminarski.Model.Models
                     if (childContent != null)
                     {
                         contentData = contentData.Concat(childContent)
-                            .ToDictionary(k => k.Key, v => v.Value);
+                            .ToDictionary(k => k.Key, v => v.Value ?? string.Empty);
                     }
                 }
 
@@ -74,12 +72,14 @@ namespace CBSWebshopSeminarski.Model.Models
                 jValue?.ToString("u", CultureInfo.InvariantCulture) :
                 jValue?.ToString(CultureInfo.InvariantCulture);
 
-            return new Dictionary<string, string> { { token.Path, value } };
+            return new Dictionary<string, string> { { token.Path, value ?? string.Empty } };
         }
 
         public static async Task<string> ToQueryString(this object metaToken)
         {
             var keyValueContent = metaToken.ToKeyValue();
+            if (keyValueContent == null)
+                return string.Empty;
             var formUrlEncodedContent = new FormUrlEncodedContent(keyValueContent);
             var urlEncodedString = await formUrlEncodedContent.ReadAsStringAsync();
 

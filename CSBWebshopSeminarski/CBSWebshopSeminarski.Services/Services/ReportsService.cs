@@ -154,13 +154,13 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var bags = await _dbContext.Bags
                 .Include(b => b.BagType)
-                .Where(b => topBagIds.Contains(b.BagID.Value))
+                .Where(b => b.BagID.HasValue && topBagIds.Contains(b.BagID.Value))
                 .ToListAsync();
 
-            var bagDict = bags.ToDictionary(b => b.BagID);
+            var bagDict = bags.Where(b => b.BagID.HasValue).ToDictionary(b => b.BagID!.Value);
             return topBagIds
-                .Where(id => bagDict.ContainsKey(id))
-                .Select(id => _mapper.Map<Bag>(bagDict[id]))
+                .Where(id => id.HasValue && bagDict.ContainsKey(id.Value))
+                .Select(id => _mapper.Map<Bag>(bagDict[id!.Value]))
                 .ToList();
         }
 
@@ -179,7 +179,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var bagIds = agg.Select(x => x.BagId).ToList();
             var bags = await _dbContext.Bags
-                .Where(b => bagIds.Contains(b.BagID.Value))
+                .Where(b => b.BagID.HasValue && bagIds.Contains(b.BagID.Value))
                 .Select(b => new { b.BagID, b.BagName })
                 .ToListAsync();
             var bagDict = bags.ToDictionary(b => b.BagID!.Value, b => b.BagName ?? "Nepoznato");

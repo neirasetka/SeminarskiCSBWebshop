@@ -7,7 +7,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         public int OrderID { get; set; }
         
         [Required(ErrorMessage = "Order ID is required.")]
-        public string OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = null!;
         
         [Required(ErrorMessage = "Date is required.")]
         public DateTime Date { get; set; }

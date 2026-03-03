@@ -15,9 +15,9 @@ namespace CBSWebshopSeminarski.Model.Requests
         [Required(ErrorMessage = "Comment is required.")]
         [MinLength(3, ErrorMessage = "Comment must be at least 3 characters long.")]
         [MaxLength(1000, ErrorMessage = "A comment can have a maximum of 1000 characters.")]
-        public string Comment { get; set; }
+        public string Comment { get; set; } = null!;
         
-        public User Users { get; set; }
+        public User Users { get; set; } = null!;
         
         [Required(ErrorMessage = "Date is required.")]
         public DateTime Date { get; set; }

@@ -44,7 +44,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             public string Token { get; set; } = string.Empty;
             public DateTime ExpiresUtc { get; set; }
-            public User User { get; set; }
+            public User User { get; set; } = null!;
         }
 
         [HttpPost("Token")]

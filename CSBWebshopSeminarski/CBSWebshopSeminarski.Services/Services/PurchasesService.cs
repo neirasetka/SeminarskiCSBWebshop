@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class PurchasesService : CRUDService<Purchase, PurchaseSearchRequest, Purchases, PurchaseUpsertRequest, PurchaseUpsertRequest>
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public PurchasesService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;

@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class OrderItemsService : CRUDService<OrderItem, OrderItemSearchRequest, OrderItems, OrderItemUpsertRequest, OrderItemUpsertRequest>
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
 
         public OrderItemsService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
@@ -25,10 +25,10 @@ namespace CBSWebshopSeminarski.Services.Services
            .AsQueryable();
             if (request?.OrderID != 0)
             {
-                query = query.Where(x => x.OrderID == request.OrderID);
+                query = query.Where(x => x.OrderID == request!.OrderID);
             }
 
-            var list = query.ToList();
+            var list = await query.ToListAsync();
             return _mapper.Map<List<OrderItem>>(list);
         }
 
@@ -64,8 +64,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OrderItem> Update(int ID, OrderItemUpsertRequest request)
         {
-
             var entity = _context.Set<OrderItems>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Order item with ID {ID} not found.");
             _context.Set<OrderItems>().Attach(entity);
             _context.Set<OrderItems>().Update(entity);
 

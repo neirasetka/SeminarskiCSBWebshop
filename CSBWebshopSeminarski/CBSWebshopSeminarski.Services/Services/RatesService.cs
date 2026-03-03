@@ -67,6 +67,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Rate> Update(int ID, RateUpsertRequest request)
         {
             var entity = _context.Set<Rates>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Rate with ID {ID} not found.");
             _context.Set<Rates>().Attach(entity);
             _context.Set<Rates>().Update(entity);
 

@@ -1,8 +1,8 @@
-﻿namespace CBSWebshopSeminarski.Model.Models
+namespace CBSWebshopSeminarski.Model.Models
 {
     public class BeltType
     {
         public int BeltTypeID { get; set; }
-        public string BeltName { get; set; }
+        public string BeltName { get; set; } = null!;
     }
 }

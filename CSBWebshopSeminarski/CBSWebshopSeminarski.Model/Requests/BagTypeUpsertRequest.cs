@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class BagTypeUpsertRequest
     {
         [Required]
-        public string BagName { get; set; }
+        public string BagName { get; set; } = null!;
     }
 }

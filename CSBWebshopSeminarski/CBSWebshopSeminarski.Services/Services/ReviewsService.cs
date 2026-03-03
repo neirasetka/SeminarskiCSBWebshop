@@ -84,6 +84,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Review> Update(int ID, ReviewUpsertRequest request)
         {
             var entity = _context.Set<Reviews>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Review with ID {ID} not found.");
             _context.Set<Reviews>().Attach(entity);
             _context.Set<Reviews>().Update(entity);
 

@@ -1,4 +1,4 @@
-﻿namespace CBSWebshopSeminarski.Model.Requests
+namespace CBSWebshopSeminarski.Model.Requests
 {
     public class TransactionSearchRequest
     {
@@ -6,6 +6,6 @@
         public int OrderID { get; set; }
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
-        public string OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = null!;
     }
 }

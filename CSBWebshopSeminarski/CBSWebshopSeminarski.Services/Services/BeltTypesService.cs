@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class BeltTypesService : CRUDService<BeltType, BeltTypeSearchRequest, BeltTypes, BeltTypeUpsertRequest, BeltTypeUpsertRequest>
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public BeltTypesService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;
@@ -53,12 +53,16 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<BeltType> Update(int ID, BeltTypeUpsertRequest request)
         {
             var vrsta = await _context.BeltTypes.FindAsync(ID);
+            if (vrsta == null)
+                throw new ArgumentException($"Belt type with ID {ID} not found.");
             if (await _context.BeltTypes.AnyAsync(i => i.BeltName == request.BeltName) && request.BeltName != vrsta.BeltName)
             {
                 throw new Exception("Belt already exists!");
             }
 
             var entity = _context.Set<BeltTypes>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Belt type with ID {ID} not found.");
             _context.Set<BeltTypes>().Attach(entity);
             _context.Set<BeltTypes>().Update(entity);
 
@@ -71,11 +75,13 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<bool> Delete(int ID)
         {
             var beltType = await _context.BeltTypes.Where(i => i.BeltTypeID == ID).FirstOrDefaultAsync();
+            if (beltType == null)
+                return false;
             var belt = await _context.Belts.Where(i => i.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var orderItems = await _context.OrderItems.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
-            var reviews = await _context.Reviews.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
-            var rates = await _context.Rates.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
-            var favorites = await _context.Favorites.Where(i => i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
+            var reviews = await _context.Reviews.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
+            var rates = await _context.Rates.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
+            var favorites = await _context.Favorites.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
 
             if (beltType != null)
             {

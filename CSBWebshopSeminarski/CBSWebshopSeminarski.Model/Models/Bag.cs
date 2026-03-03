@@ -1,4 +1,4 @@
-﻿namespace CBSWebshopSeminarski.Model.Models
+namespace CBSWebshopSeminarski.Model.Models
 {
     public class Bag
     {
@@ -7,10 +7,10 @@
         public string Code { get; set; } = "Code";
         public float Price { get; set; }
         public string Description { get; set; } = "Description";
-        public byte[] Image { get; set; }
+        public byte[] Image { get; set; } = null!;
         public int BagTypeID { get; set; }
-        public BagType BagType { get; set; }
+        public BagType BagType { get; set; } = null!;
         public int UserID { get; set; }
-        public User Users { get; set; }
+        public User Users { get; set; } = null!;
     }
 }

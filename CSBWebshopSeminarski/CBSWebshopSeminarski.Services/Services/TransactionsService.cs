@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class TransactionsService : CRUDService<Transaction, TransactionSearchRequest, Transactions, TransactionUpsertRequest, TransactionUpsertRequest>
 {
-    private readonly CocoSunBagsWebshopDbContext _context;
-    private readonly IMapper _mapper;
+    private new readonly CocoSunBagsWebshopDbContext _context;
+    private new readonly IMapper _mapper;
     public TransactionsService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
     {
         _context = context;
@@ -59,6 +59,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<Transaction> Update(int ID, TransactionUpsertRequest request)
         {
             var entity = _context.Set<Transactions>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Transaction with ID {ID} not found.");
             _context.Set<Transactions>().Attach(entity);
             _context.Set<Transactions>().Update(entity);
 

@@ -1,7 +1,7 @@
-﻿namespace CBSWebshopSeminarski.Model.Requests
+namespace CBSWebshopSeminarski.Model.Requests
 {
     public class OrderSearchRequest
     {
-        public string OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = null!;
     }
 }

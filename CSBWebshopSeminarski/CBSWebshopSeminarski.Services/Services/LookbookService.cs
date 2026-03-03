@@ -10,8 +10,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class LookbookService : CRUDService<LookbookItem, LookbookSearchRequest, LookbookItems, LookbookUpsertRequest, LookbookUpsertRequest>, ILookbookService
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
 
         public LookbookService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
@@ -83,6 +83,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<LookbookItem> Update(int ID, LookbookUpsertRequest request)
         {
             var entity = await _context.LookbookItems.FindAsync(ID);
+            if (entity == null)
+                throw new ArgumentException($"Lookbook item with ID {ID} not found.");
             _context.Set<LookbookItems>().Attach(entity);
             _context.Set<LookbookItems>().Update(entity);
             _mapper.Map(request, entity);

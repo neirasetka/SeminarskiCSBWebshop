@@ -11,8 +11,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class OrdersService : CRUDService<Order, OrderSearchRequest, Orders, OrderUpsertRequest, OrderUpsertRequest>, IOrderService
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         private readonly IEventPublisher _eventPublisher;
 
         public OrdersService(CocoSunBagsWebshopDbContext context, IMapper mapper, IEventPublisher eventPublisher) : base(context, mapper)
@@ -33,7 +33,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(x => x.OrderNumber.StartsWith(request.OrderNumber));
             }
 
-            var list = query.ToList();
+            var list = await query.ToListAsync();
 
             List<Orders> result = new List<Orders>();
 
@@ -94,8 +94,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<Order> Update(int ID, OrderUpsertRequest request)
         {
-
             var entity = _context.Set<Orders>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Order with ID {ID} not found.");
             _context.Set<Orders>().Attach(entity);
             _context.Set<Orders>().Update(entity);
 

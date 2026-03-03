@@ -6,7 +6,7 @@ namespace CBSWebshopSeminarski.Model.Models
         
         public int OutfitIdeaID { get; set; }
         
-        public byte[] Image { get; set; }
+        public byte[] Image { get; set; } = null!;
         
         public string? Caption { get; set; }
         

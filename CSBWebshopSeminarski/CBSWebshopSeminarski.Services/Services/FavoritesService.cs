@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class FavoritesService : CRUDService<Favorite, FavoriteSearchRequest, Favorites, FavoriteUpsertRequest, FavoriteUpsertRequest>
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
 
         public FavoritesService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
@@ -42,6 +42,8 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<Favorite> Update(int ID, FavoriteUpsertRequest request)
         {
             var entity = _context.Set<Favorites>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Favorite with ID {ID} not found.");
             _context.Set<Favorites>().Attach(entity);
             _context.Set<Favorites>().Update(entity);
 

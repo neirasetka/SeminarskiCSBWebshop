@@ -1,4 +1,4 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 
 namespace CBSWebshopSeminarski.Model.ViewModels
 {
@@ -9,13 +9,13 @@ namespace CBSWebshopSeminarski.Model.ViewModels
         public int OrderID { get; set; }
         public DateTime PurchaseDate { get; set; }
         public float Price { get; set; }
-        public Order Order { get; set; }
-        public string OrderNumber { get; set; }
+        public Order Order { get; set; } = null!;
+        public string OrderNumber { get; set; } = null!;
         public DateTime TransactionDate { get; set; }
-        public string TransactionDateString { get; set; }
-        public string UserName { get; set; }
-        public string BagName { get; set; }
-        public string BeltName { get; set; }
-        public virtual User User { get; set; }
+        public string TransactionDateString { get; set; } = null!;
+        public string UserName { get; set; } = null!;
+        public string BagName { get; set; } = null!;
+        public string BeltName { get; set; } = null!;
+        public virtual User User { get; set; } = null!;
     }
 }

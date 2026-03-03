@@ -9,8 +9,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class BagTypesService : CRUDService<BagType, BagTypeSearchRequest, BagTypes, BagTypeUpsertRequest, BagTypeUpsertRequest>
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public BagTypesService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;
@@ -56,12 +56,16 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<BagType> Update(int ID, BagTypeUpsertRequest request)
         {
             var vrsta = await _context.BagTypes.FindAsync(ID);
+            if (vrsta == null)
+                throw new ArgumentException($"Bag type with ID {ID} not found.");
             if (await _context.BagTypes.AnyAsync(i => i.BagName == request.BagName) && request.BagName != vrsta.BagName)
             {
                 throw new Exception("Bag type already exists!");
             }
 
             var entity = _context.Set<BagTypes>().Find(ID);
+            if (entity == null)
+                throw new ArgumentException($"Bag type with ID {ID} not found.");
             _context.Set<BagTypes>().Attach(entity);
             _context.Set<BagTypes>().Update(entity);
 
@@ -75,11 +79,13 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<bool> Delete(int ID)
         {
             var bagType = await _context.BagTypes.Where(i => i.BagTypeID == ID).FirstOrDefaultAsync();
+            if (bagType == null)
+                return false;
             var bag = await _context.Bags.Where(i => i.BagTypeID == bagType.BagTypeID).ToListAsync();
             var orderItems = await _context.OrderItems.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
-            var reviews = await _context.Reviews.Where(i => i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
-            var rates = await _context.Rates.Where(i => i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
-            var favorites = await _context.Favorites.Where(i => i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
+            var reviews = await _context.Reviews.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
+            var rates = await _context.Rates.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
+            var favorites = await _context.Favorites.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
 
             if (bagType != null)
             {

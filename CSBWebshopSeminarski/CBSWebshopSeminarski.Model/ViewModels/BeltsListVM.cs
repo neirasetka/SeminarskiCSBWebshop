@@ -1,16 +1,16 @@
-﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Models;
 
 namespace CBSWebshopSeminarski.Model.ViewModels
 {
     public class BeltsListVM
     {
         public int BeltID { get; set; }
-        public string BeltName { get; set; }
-        public string Code { get; set; }
+        public string BeltName { get; set; } = null!;
+        public string Code { get; set; } = null!;
         public float Price { get; set; }
-        public string Description { get; set; }
-        public byte[] Image { get; set; }
+        public string Description { get; set; } = null!;
+        public byte[] Image { get; set; } = null!;
         public int BeltTypeID { get; set; }
-        public BeltType BeltType { get; set; }
+        public BeltType BeltType { get; set; } = null!;
     }
 }

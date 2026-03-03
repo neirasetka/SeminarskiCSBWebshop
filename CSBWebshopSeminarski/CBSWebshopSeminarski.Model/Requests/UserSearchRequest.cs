@@ -1,7 +1,7 @@
-﻿namespace CBSWebshopSeminarski.Model.Requests
+namespace CBSWebshopSeminarski.Model.Requests
 {
     public class UserSearchRequest
     {
-        public string UserName { get; set; }
+        public string UserName { get; set; } = null!;
     }
 }

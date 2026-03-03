@@ -10,8 +10,8 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class BeltsService : CRUDService<Belt, BeltSearchRequest, Belts, BeltUpsertRequest, BeltUpsertRequest>, IBeltsService
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IMapper _mapper;
+        private new readonly CocoSunBagsWebshopDbContext _context;
+        private new readonly IMapper _mapper;
         public BeltsService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
         {
             _context = context;
