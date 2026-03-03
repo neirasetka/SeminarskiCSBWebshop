@@ -21,6 +21,11 @@ class CartScreen extends ConsumerWidget {
           if (order == null || order.items.isEmpty) {
             return const Center(child: Text('Korpa je prazna.'));
           }
+          final double totalAmount = order.items.fold<double>(
+            0,
+            (double sum, OrderItemModel it) =>
+                sum + ((it.price * it.quantity) - (it.discount ?? 0)),
+          );
           return Column(
             children: <Widget>[
               Expanded(
@@ -44,7 +49,7 @@ class CartScreen extends ConsumerWidget {
                   children: <Widget>[
                     const Text('Ukupno:', style: TextStyle(fontWeight: FontWeight.bold)),
                     const Spacer(),
-                    Text('${order.amount.toStringAsFixed(2)} KM', style: Theme.of(context).textTheme.titleMedium),
+                    Text('${totalAmount.toStringAsFixed(2)} KM', style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
               ),

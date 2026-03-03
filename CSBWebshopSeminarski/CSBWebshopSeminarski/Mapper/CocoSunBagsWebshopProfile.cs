@@ -42,6 +42,7 @@ namespace CSBWebshopSeminarski.Mapper
             CreateMap<BeltUpsertRequest, Belts>().ForMember(d => d.Image, o => o.Ignore());
 
             CreateMap<Orders, Order>()
+                .ForMember(d => d.Amount, o => o.MapFrom(s => (decimal)s.Price))
                 .ForMember(d => d.PaymentStatus, o => o.MapFrom(s => s.PaymentStatus.ToString()));
             CreateMap<Orders, OrderUpsertRequest>().ReverseMap();
             CreateMap<TrackingEvents, TrackingEvent>().ReverseMap();
@@ -54,7 +55,8 @@ namespace CSBWebshopSeminarski.Mapper
                 .ConvertUsing(src => (ShippingStatusEntity)src);
 
             CreateMap<OrderItems, OrderItem>()
-                .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID));
+                .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID))
+                .ForMember(d => d.Name, o => o.MapFrom(s => s.Bag != null ? s.Bag.BagName : (s.Belt != null ? s.Belt.BeltName : null)));
             CreateMap<OrderItem, OrderItems>()
                 .ForMember(d => d.OrderItemID, o => o.MapFrom(s => s.OrderItemsID));
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();

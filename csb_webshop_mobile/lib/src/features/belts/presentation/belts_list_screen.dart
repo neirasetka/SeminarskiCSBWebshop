@@ -123,7 +123,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                   await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu')),
+                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
                                     );
                                   }
                                 },

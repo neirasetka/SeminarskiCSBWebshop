@@ -240,7 +240,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             ],
           ),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
           action: SnackBarAction(
             label: 'NARUČI',
             textColor: Colors.white,

@@ -236,7 +236,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
             ],
           ),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
           action: SnackBarAction(
             label: 'NARUČI',
             textColor: Colors.white,

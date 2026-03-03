@@ -141,6 +141,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: const Text('Artikal uspješno dodan u korpu'),
+                                          duration: const Duration(seconds: 5),
                                           action: SnackBarAction(
                                             label: 'NARUČI',
                                             onPressed: () => context.go('/cart'),
