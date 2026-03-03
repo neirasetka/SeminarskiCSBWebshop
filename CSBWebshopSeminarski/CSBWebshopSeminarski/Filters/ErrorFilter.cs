@@ -16,7 +16,7 @@ namespace CSBWebshopSeminarski.Filters
             var isDev = env?.IsDevelopment() ?? false;
             string message;
 
-            if (context.Exception is UserException)
+            if (context.Exception is UserException || context.Exception is InvalidOperationException)
             {
                 message = context.Exception.Message;
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;

@@ -60,7 +60,9 @@ class AuthApi {
     String errorMessage = 'Registracija nije uspjela';
     try {
       final dynamic errorData = json.decode(response.body);
-      if (errorData is Map && errorData.containsKey('message')) {
+      if (errorData is Map && errorData.containsKey('error')) {
+        errorMessage = errorData['error'].toString();
+      } else if (errorData is Map && errorData.containsKey('message')) {
         errorMessage = errorData['message'].toString();
       } else if (errorData is Map && errorData.containsKey('title')) {
         errorMessage = errorData['title'].toString();

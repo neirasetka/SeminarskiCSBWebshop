@@ -50,9 +50,20 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new Exception("Passwords do not match!");
             }
 
+            if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
+            {
+                throw new InvalidOperationException("Korisničko ime je već zauzeto.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                throw new InvalidOperationException("Email adresa je već registrirana.");
+            }
+
             var entity = _mapper.Map<Users>(request);
             entity.PasswordSalt = GenerateSalt();
             entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
+            entity.Image = request.Image ?? Array.Empty<byte>();
 
             await _context.Users.AddAsync(entity);
             await _context.SaveChangesAsync();
