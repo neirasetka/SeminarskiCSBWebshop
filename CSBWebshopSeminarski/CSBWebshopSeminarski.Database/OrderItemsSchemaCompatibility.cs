@@ -25,33 +25,36 @@ IF NOT EXISTS (
       AND c.is_nullable = 0)
     RETURN;
 
-DECLARE @name sysname;
+DECLARE @constraintName sysname;
+DECLARE @dropSql nvarchar(max);
 
 -- Drop all foreign keys on OrderItems that use BagID or BeltID (names may differ on legacy DBs)
 WHILE 1 = 1
 BEGIN
-    SELECT TOP (1) @name = fk.name
+    SELECT TOP (1) @constraintName = fk.name
     FROM sys.foreign_keys AS fk
     INNER JOIN sys.foreign_key_columns AS fkc ON fk.object_id = fkc.constraint_object_id
     INNER JOIN sys.columns AS col ON fkc.parent_object_id = col.object_id AND fkc.parent_column_id = col.column_id
     WHERE fk.parent_object_id = OBJECT_ID(N'dbo.OrderItems')
       AND col.name IN (N'BagID', N'BeltID');
-    IF @name IS NULL BREAK;
-    EXEC(N'ALTER TABLE [dbo].[OrderItems] DROP CONSTRAINT ' + QUOTENAME(@name) + N';');
-    SET @name = NULL;
+    IF @constraintName IS NULL BREAK;
+    SET @dropSql = N'ALTER TABLE [dbo].[OrderItems] DROP CONSTRAINT ' + N'[' + REPLACE(@constraintName, N']', N']]') + N'];';
+    EXEC sys.sp_executesql @dropSql;
+    SET @constraintName = NULL;
 END;
 
 -- Drop default constraints on those columns (otherwise ALTER can fail on some databases)
 WHILE 1 = 1
 BEGIN
-    SELECT TOP (1) @name = dc.name
+    SELECT TOP (1) @constraintName = dc.name
     FROM sys.default_constraints AS dc
     INNER JOIN sys.columns AS c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
     WHERE dc.parent_object_id = OBJECT_ID(N'dbo.OrderItems')
       AND c.name IN (N'BagID', N'BeltID');
-    IF @name IS NULL BREAK;
-    EXEC(N'ALTER TABLE [dbo].[OrderItems] DROP CONSTRAINT ' + QUOTENAME(@name) + N';');
-    SET @name = NULL;
+    IF @constraintName IS NULL BREAK;
+    SET @dropSql = N'ALTER TABLE [dbo].[OrderItems] DROP CONSTRAINT ' + N'[' + REPLACE(@constraintName, N']', N']]') + N'];';
+    EXEC sys.sp_executesql @dropSql;
+    SET @constraintName = NULL;
 END;
 
 IF COL_LENGTH(N'dbo.OrderItems', N'BagID') IS NOT NULL
