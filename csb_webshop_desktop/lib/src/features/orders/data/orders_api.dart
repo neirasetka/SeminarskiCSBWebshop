@@ -20,7 +20,13 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to get active cart: ${response.statusCode}');
+    final String errorDetail = _parseErrorResponse(response);
+    final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'GET /Orders/Active (userId=$userId) nije uspio$extra',
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
   }
 
   Future<List<Map<String, dynamic>>> getOrdersByUser({required int userId}) async {
@@ -45,12 +51,17 @@ class OrdersApi {
       'UserID': userId,
       'items': <Map<String, dynamic>>[],
     };
-    final http.Response response = await _apiClient.post(_ordersPath + '/Create', body: json.encode(body));
+    final http.Response response = await _apiClient.post('$_ordersPath/Create', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
     final String errorDetail = _parseErrorResponse(response);
-    throw Exception('Failed to create order: ${response.statusCode}${errorDetail.isNotEmpty ? ': $errorDetail' : ''}');
+    final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'POST /Orders/Create (userId=$userId) nije uspio$extra',
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
   }
 
   Future<Map<String, dynamic>> addItem({
@@ -74,12 +85,14 @@ class OrdersApi {
       return json.decode(response.body) as Map<String, dynamic>;
     }
     final String errorDetail = _parseErrorResponse(response);
-    final String message = errorDetail.isNotEmpty
+    final String base = errorDetail.isNotEmpty
         ? errorDetail
-        : 'Greška pri dodavanju u korpu';
+        : 'Greška pri dodavanju u korpu${_emptyBodyHint(response)}';
+    final String ids =
+        ' [AddToCart orderId=$orderId bagId=${bagId ?? '—'} beltId=${beltId ?? '—'} qty=$quantity price=$price]';
     throw ApiException(
       statusCode: response.statusCode,
-      message: message,
+      message: '$base$ids',
       rawBody: response.body.isNotEmpty ? response.body : null,
     );
   }
@@ -163,6 +176,17 @@ class OrdersApi {
     } catch (_) {
       return '';
     }
+  }
+
+  static String _rawBodySnippet(http.Response response) {
+    if (response.body.isEmpty) return '';
+    final String b = response.body.length > 400 ? '${response.body.substring(0, 400)}…' : response.body;
+    return ' | tijelo: $b';
+  }
+
+  static String _emptyBodyHint(http.Response response) {
+    if (response.body.isNotEmpty) return '';
+    return ' (prazan odgovor, HTTP ${response.statusCode})';
   }
 
   Future<void> cancelActiveCart({required int userId}) async {

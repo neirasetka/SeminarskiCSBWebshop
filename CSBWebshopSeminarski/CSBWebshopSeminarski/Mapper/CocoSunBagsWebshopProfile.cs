@@ -56,6 +56,9 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<OrderItems, OrderItem>()
                 .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID))
+                // Nakon inserta BagID/BeltID/Quantity/Price mogu biti null na entitetu; DTO je nullable ili ima defaulte.
+                .ForMember(d => d.Quantity, o => o.MapFrom(s => s.Quantity ?? 0))
+                .ForMember(d => d.Price, o => o.MapFrom(s => (decimal)(s.Price ?? 0f)))
                 .ForMember(d => d.Name, o => o.MapFrom(s =>
                     s.Bag != null ? s.Bag.BagName
                     : (s.Belt != null ? s.Belt.BeltName : string.Empty)))

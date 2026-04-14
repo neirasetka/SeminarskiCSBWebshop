@@ -56,7 +56,12 @@ namespace CSBWebshopSeminarski.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", request.OrderID, request.BagID, request.BeltID);
-                throw new UserException("Greška pri dodavanju u korpu. Osvježite stranicu i pokušajte ponovno.");
+                var inner = ex.InnerException;
+                var detail = inner == null
+                    ? $"{ex.GetType().Name}: {ex.Message}"
+                    : $"{ex.GetType().Name}: {ex.Message} | Unutarnje ({inner.GetType().Name}): {inner.Message}";
+                throw new UserException(
+                    $"Greška pri dodavanju u korpu (AddToCart/Insert). Osvježite stranicu ako treba. Tehnički detalj: {detail}");
             }
         }
     }

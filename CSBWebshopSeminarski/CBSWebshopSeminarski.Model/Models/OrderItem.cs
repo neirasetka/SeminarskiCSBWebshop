@@ -4,8 +4,10 @@ namespace CBSWebshopSeminarski.Model.Models
     {
         public int OrderItemsID { get; set; }
         public int OrderID { get; set; }
-        public int BagID { get; set; }
-        public int BeltID { get; set; }
+        /// <summary>Popunjeno za stavku torbe; inače null.</summary>
+        public int? BagID { get; set; }
+        /// <summary>Popunjeno za stavku kaiša; inače null.</summary>
+        public int? BeltID { get; set; }
         public Bag Bag { get; set; } = null!;
         public Belt Belt { get; set; } = null!;
         public Order Order { get; set; } = null!;

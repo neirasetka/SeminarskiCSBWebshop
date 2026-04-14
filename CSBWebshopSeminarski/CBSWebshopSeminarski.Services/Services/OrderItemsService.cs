@@ -66,7 +66,14 @@ namespace CBSWebshopSeminarski.Services.Services
             _context.Set<OrderItems>().Add(entity);
             await SaveChangesWithOrderItemsNullableRepairAsync();
             await RecalculateOrderTotal(entity.OrderID);
-            return _mapper.Map<OrderItem>(entity);
+            // Ponovno učitaj stavku s Bag/Belt radi stabilnog mapiranja na OrderItem (izbjegava iznimke na pratnom entitetu).
+            var insertedId = entity.OrderItemID;
+            var forReturn = await _context.OrderItems
+                .AsNoTracking()
+                .Include(oi => oi.Bag)
+                .Include(oi => oi.Belt)
+                .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
+            return _mapper.Map<OrderItem>(forReturn ?? entity);
         }
 
         public override async Task<OrderItem> Update(int ID, OrderItemUpsertRequest request)

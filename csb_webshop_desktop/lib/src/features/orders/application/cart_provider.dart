@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show debugPrint, defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api_exception.dart';
 import '../../profile/data/profile_api.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../data/orders_api.dart';
@@ -26,6 +28,15 @@ bool get _isStripeSupportedPlatform {
 }
 
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
+
+Future<T> _cartStep<T>(String stepLabelHr, Future<T> Function() action) async {
+  try {
+    return await action();
+  } catch (e, st) {
+    debugPrint('[Korpa — $stepLabelHr] $e\n$st');
+    throw Exception('[Korpa — $stepLabelHr] ${ApiException.formatForDisplay(e)}');
+  }
+}
 
 class CartNotifier extends AsyncNotifier<OrderModel?> {
   late final OrdersApi _api;
@@ -54,26 +65,43 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     if (bagId < 1) {
       throw Exception('Neispravan ID torbe. Osvježite katalog i pokušajte ponovno.');
     }
-    // Ensure cart exists
     OrderModel? order = state.value;
     if (order == null) {
-      order = await _loadActiveCart();
+      order = await _cartStep(
+        '2) Učitavanje aktivne korpe (GET /Orders/Active)',
+        _loadActiveCart,
+      );
     }
     if (order == null) {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId < 1) {
-        throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-      }
-      final created = await _api.createOrder(
-        userId: userId,
-        orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
-        date: DateTime.now(),
-        price: 0,
+      order = await _cartStep(
+        '3) Kreiranje prazne narudžbe (GET /Users/me + POST /Orders/Create)',
+        () async {
+          final int userId = (await _profileApi.getMe()).id;
+          if (userId < 1) {
+            throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
+          }
+          final Map<String, dynamic> created = await _api.createOrder(
+            userId: userId,
+            orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
+            date: DateTime.now(),
+            price: 0,
+          );
+          return OrderModel.fromJson(created);
+        },
       );
-      order = OrderModel.fromJson(created);
     }
-    await _api.addItem(orderId: order.id, bagId: bagId, quantity: quantity, price: price);
-    await refresh();
+    final OrderModel cartOrder = order!;
+    if (cartOrder.id < 1) {
+      throw Exception(
+        '[Korpa — provjera narudžbe] Server je vratio narudžbu bez valjanog OrderID (id=${cartOrder.id}). '
+        'Odjavite se, ponovno se prijavite i pokušajte opet.',
+      );
+    }
+    await _cartStep(
+      '4) Dodavanje torbe (POST /OrderItems/AddToCart, bagId=$bagId, qty=$quantity)',
+      () => _api.addItem(orderId: cartOrder.id, bagId: bagId, quantity: quantity, price: price),
+    );
+    await _cartStep('5) Osvježavanje prikaza korpe nakon dodavanja', refresh);
   }
 
   /// Resets local cart state after successful payment (does not call backend).
@@ -98,23 +126,41 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     OrderModel? order = state.value;
     if (order == null) {
-      order = await _loadActiveCart();
+      order = await _cartStep(
+        '2) Učitavanje aktivne korpe (GET /Orders/Active)',
+        _loadActiveCart,
+      );
     }
     if (order == null) {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId < 1) {
-        throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-      }
-      final created = await _api.createOrder(
-        userId: userId,
-        orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
-        date: DateTime.now(),
-        price: 0,
+      order = await _cartStep(
+        '3) Kreiranje prazne narudžbe (GET /Users/me + POST /Orders/Create)',
+        () async {
+          final int userId = (await _profileApi.getMe()).id;
+          if (userId < 1) {
+            throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
+          }
+          final Map<String, dynamic> created = await _api.createOrder(
+            userId: userId,
+            orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
+            date: DateTime.now(),
+            price: 0,
+          );
+          return OrderModel.fromJson(created);
+        },
       );
-      order = OrderModel.fromJson(created);
     }
-    await _api.addItem(orderId: order.id, beltId: beltId, quantity: quantity, price: price);
-    await refresh();
+    final OrderModel cartOrder = order!;
+    if (cartOrder.id < 1) {
+      throw Exception(
+        '[Korpa — provjera narudžbe] Server je vratio narudžbu bez valjanog OrderID (id=${cartOrder.id}). '
+        'Odjavite se, ponovno se prijavite i pokušajte opet.',
+      );
+    }
+    await _cartStep(
+      '4) Dodavanje kaiša (POST /OrderItems/AddToCart, beltId=$beltId, qty=$quantity)',
+      () => _api.addItem(orderId: cartOrder.id, beltId: beltId, quantity: quantity, price: price),
+    );
+    await _cartStep('5) Osvježavanje prikaza korpe nakon dodavanja', refresh);
   }
 
   Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
