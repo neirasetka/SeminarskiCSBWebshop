@@ -125,7 +125,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     );
     await Stripe.instance.presentPaymentSheet();
     // Mark as paid
-    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid');
+    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
     // Refresh cart (should be empty/none if you move order out of Pending). For now reload state.
     await refresh();
     return <String, String>{

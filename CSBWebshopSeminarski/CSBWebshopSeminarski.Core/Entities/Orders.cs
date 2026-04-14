@@ -20,6 +20,11 @@ namespace CSBWebshopSeminarski.Core.Entities
 
         // Payment
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+
+        /// <summary>
+        /// Set when a payment confirmation email was sent successfully (idempotency for webhook + client PATCH).
+        /// </summary>
+        public bool PaymentConfirmationEmailSent { get; set; }
  
         // Shipping/tracking
         public string? TrackingNumber { get; set; }

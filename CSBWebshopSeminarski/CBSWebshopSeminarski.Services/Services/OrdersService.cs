@@ -14,12 +14,18 @@ namespace CBSWebshopSeminarski.Services.Services
         private new readonly CocoSunBagsWebshopDbContext _context;
         private new readonly IMapper _mapper;
         private readonly IEventPublisher _eventPublisher;
+        private readonly IPaymentsService _paymentsService;
 
-        public OrdersService(CocoSunBagsWebshopDbContext context, IMapper mapper, IEventPublisher eventPublisher) : base(context, mapper)
+        public OrdersService(
+            CocoSunBagsWebshopDbContext context,
+            IMapper mapper,
+            IEventPublisher eventPublisher,
+            IPaymentsService paymentsService) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
             _eventPublisher = eventPublisher;
+            _paymentsService = paymentsService;
         }
 
         public override async Task<List<Order>> Get(OrderSearchRequest request)
@@ -162,12 +168,16 @@ namespace CBSWebshopSeminarski.Services.Services
             return $"ORD-{now:yyyyMMdd}-{rand}";
         }
 
-        public async Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status)
+        public async Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status, string? receiptEmail = null)
         {
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
             if (order == null) return false;
             order.PaymentStatus = status;
             await _context.SaveChangesAsync();
+            if (status == PaymentStatus.Paid)
+            {
+                await _paymentsService.SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
+            }
             return true;
         }
 

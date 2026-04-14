@@ -96,8 +96,15 @@ class OrdersApi {
     throw Exception('Failed to create payment intent: ${response.statusCode}');
   }
 
-  Future<void> updatePaymentStatus({required int orderId, required String status}) async {
-    final Map<String, dynamic> body = <String, dynamic>{'status': status};
+  Future<void> updatePaymentStatus({
+    required int orderId,
+    required String status,
+    String? receiptEmail,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'status': status,
+      if (receiptEmail != null && receiptEmail.trim().isNotEmpty) 'receiptEmail': receiptEmail.trim(),
+    };
     final http.Response response = await _apiClient.patch('$_ordersPath/$orderId/payment-status', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to update payment status: ${response.statusCode}');

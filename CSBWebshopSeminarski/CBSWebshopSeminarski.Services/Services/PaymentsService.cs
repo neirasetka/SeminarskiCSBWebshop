@@ -54,23 +54,43 @@ namespace CBSWebshopSeminarski.Services.Services
             await _db.SaveChangesAsync();
 
             var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
-                ? email
-                : order.User?.Email;
-            if (!string.IsNullOrWhiteSpace(receiptEmail))
+                ? email.Trim()
+                : null;
+            await SendPaymentConfirmationIfNotSentYetAsync(order.OrderID, receiptEmail);
+        }
+
+        public async Task SendPaymentConfirmationIfNotSentYetAsync(int orderId, string? receiptEmailOverride)
+        {
+            var order = await _db.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null || order.PaymentStatus != PaymentStatus.Paid || order.PaymentConfirmationEmailSent)
             {
-                try
-                {
-                    var subject = $"Potvrda narudžbe #{order.OrderNumber}";
-                    var message = $"Hvala na kupovini!\n\n" +
-                        $"Vaša narudžba #{order.OrderNumber} je uspješno primljena.\n" +
-                        $"Ukupan iznos: {order.Price:N2} €.\n\n" +
-                        $"S poštovanjem,\nCocoSunBags tim";
-                    await _emailService.SendEmailAsync(receiptEmail, subject, message);
-                }
-                catch
-                {
-                    // Log but don't fail – order is already paid
-                }
+                return;
+            }
+
+            var to = !string.IsNullOrWhiteSpace(receiptEmailOverride)
+                ? receiptEmailOverride.Trim()
+                : order.User?.Email;
+            if (string.IsNullOrWhiteSpace(to))
+            {
+                return;
+            }
+
+            try
+            {
+                var subject = $"Potvrda plaćanja — narudžba #{order.OrderNumber}";
+                var message = "Poštovani/a,\n\n" +
+                    "Uspješno smo zaprimili Vaše plaćanje.\n\n" +
+                    $"Broj narudžbe: {order.OrderNumber}\n" +
+                    $"Ukupan iznos: {order.Price:N2} EUR\n\n" +
+                    "Hvala Vam na povjerenju.\n\n" +
+                    "CocoSunBags tim";
+                await _emailService.SendEmailAsync(to, subject, message);
+                order.PaymentConfirmationEmailSent = true;
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Order stays paid; email can be retried from another path if needed
             }
         }
 

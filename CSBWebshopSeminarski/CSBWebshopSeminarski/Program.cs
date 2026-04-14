@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,7 @@ builder.Services.AddControllers(x => x.Filters.Add<ErrorFilter>())
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddMvc();
@@ -221,8 +223,18 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
         if (stripeEvent.Type == "payment_intent.succeeded")
         {
             var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
+            var meta = paymentIntent.Metadata != null
+                ? new Dictionary<string, string>(paymentIntent.Metadata)
+                : new Dictionary<string, string>();
+            if (!meta.TryGetValue("receipt_email", out var re) || string.IsNullOrWhiteSpace(re))
+            {
+                if (!string.IsNullOrWhiteSpace(paymentIntent.ReceiptEmail))
+                {
+                    meta["receipt_email"] = paymentIntent.ReceiptEmail;
+                }
+            }
             var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-            await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, paymentIntent.Metadata);
+            await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, meta);
         }
         else if (stripeEvent.Type == "checkout.session.completed")
         {
@@ -231,8 +243,21 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
             {
                 var paymentIntentService = new PaymentIntentService();
                 var paymentIntent = await paymentIntentService.GetAsync(session.PaymentIntentId);
+                var meta = paymentIntent.Metadata != null
+                    ? new Dictionary<string, string>(paymentIntent.Metadata)
+                    : new Dictionary<string, string>();
+                if (!meta.TryGetValue("receipt_email", out var re) || string.IsNullOrWhiteSpace(re))
+                {
+                    var fromSession = !string.IsNullOrWhiteSpace(session.CustomerEmail)
+                        ? session.CustomerEmail
+                        : session.CustomerDetails?.Email;
+                    if (!string.IsNullOrWhiteSpace(fromSession))
+                    {
+                        meta["receipt_email"] = fromSession;
+                    }
+                }
                 var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-                await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, paymentIntent.Metadata);
+                await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, meta);
             }
         }
         else if (stripeEvent.Type == "payment_intent.payment_failed")
@@ -295,6 +320,9 @@ using (var scope = app.Services.CreateScope())
         // Legacy DBs: OrderItems.BagID/BeltID were NOT NULL; cart lines need one FK null (bag XOR belt).
         await context.Database.ExecuteSqlRawAsync(
             OrderItemsSchemaCompatibility.EnsureOrderItemsBagOrBeltColumnsNullableSql);
+
+        await context.Database.ExecuteSqlRawAsync(
+            OrdersSchemaCompatibility.EnsurePaymentConfirmationEmailSentColumnSql);
 
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");

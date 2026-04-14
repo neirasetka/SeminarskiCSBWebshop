@@ -9,7 +9,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Order GetByOrderNumber(string orderNumber);
         Task<Order?> GetActiveCartByUser(int userId);
         new Task<Order> Insert(OrderUpsertRequest request);
-        Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status);
+        Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status, string? receiptEmail = null);
         Task<bool> CancelActiveCartAsync(int userId);
     }
 }

@@ -55,6 +55,9 @@ namespace CSBWebshopSeminarski.Controllers
         public class UpdatePaymentStatusRequest
         {
             public PaymentStatus Status { get; set; }
+
+            /// <summary>Optional: email for payment confirmation (same as entered during checkout).</summary>
+            public string? ReceiptEmail { get; set; }
         }
 
         [HttpDelete("Active")]
@@ -84,7 +87,7 @@ namespace CSBWebshopSeminarski.Controllers
                     return Forbid();
                 }
             }
-            var ok = await _service.SetPaymentStatusAsync(orderId, request.Status);
+            var ok = await _service.SetPaymentStatusAsync(orderId, request.Status, request.ReceiptEmail);
             if (!ok) return NotFound();
             return NoContent();
         }

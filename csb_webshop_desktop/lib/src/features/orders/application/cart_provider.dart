@@ -195,7 +195,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       ),
     );
     await Stripe.instance.presentPaymentSheet();
-    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid');
+    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
     await refresh();
     return <String, String>{
       'clientSecret': clientSecret,

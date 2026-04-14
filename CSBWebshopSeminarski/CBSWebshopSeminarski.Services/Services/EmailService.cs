@@ -1,4 +1,4 @@
-﻿using MailKit.Net.Smtp;
+using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 
@@ -13,10 +13,11 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public EmailService(string smtpServer, int smtpPort, string smtpUser, string smtpPass)
         {
-            _smtpServer = smtpServer;
+            _smtpServer = (smtpServer ?? string.Empty).Trim();
             _smtpPort = smtpPort;
-            _smtpUser = smtpUser;
-            _smtpPass = smtpPass;
+            _smtpUser = (smtpUser ?? string.Empty).Trim();
+            // Gmail "app password" is 16 characters; Google often shows it in groups — auth expects no spaces.
+            _smtpPass = (smtpPass ?? string.Empty).Replace(" ", string.Empty).Trim();
         }
 
         public async Task SendEmailAsync(string recipientEmail, string subject, string message)

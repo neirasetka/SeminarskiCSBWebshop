@@ -405,6 +405,9 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 
+                    b.Property<bool>("PaymentConfirmationEmailSent")
+                        .HasColumnType("bit");
+
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
