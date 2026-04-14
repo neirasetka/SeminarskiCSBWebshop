@@ -51,6 +51,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<void> addBagToCart({required int bagId, required double price, int quantity = 1}) async {
+    if (bagId < 1) {
+      throw Exception('Neispravan ID torbe. Osvježite katalog i pokušajte ponovno.');
+    }
     // Ensure cart exists
     OrderModel? order = state.value;
     if (order == null) {
@@ -87,6 +90,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<void> addBeltToCart({required int beltId, required double price, int quantity = 1}) async {
+    if (beltId < 1) {
+      throw Exception('Neispravan ID kaiša. Osvježite katalog i pokušajte ponovno.');
+    }
     OrderModel? order = state.value;
     if (order == null) {
       final int userId = (await _profileApi.getMe()).id;

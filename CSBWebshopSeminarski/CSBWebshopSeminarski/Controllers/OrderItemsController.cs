@@ -43,6 +43,10 @@ namespace CSBWebshopSeminarski.Controllers
                 _logger.LogWarning(ex, "DbUpdateException adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", request.OrderID, request.BagID, request.BeltID);
                 if (inner.Contains("FK_") || inner.Contains("foreign key") || inner.Contains("REFERENCE"))
                     throw new UserException("Greška pri dodavanju u korpu: narudžba, torba ili kaiš nije pronađen. Osvježite stranicu i pokušajte ponovno.");
+                if (inner.Contains("Cannot insert the value NULL into column", StringComparison.OrdinalIgnoreCase)
+                    && (inner.Contains("BagID", StringComparison.OrdinalIgnoreCase) || inner.Contains("BeltID", StringComparison.OrdinalIgnoreCase)))
+                    throw new UserException(
+                        "Struktura baze ne dopušta stavku samo s torbom ili samo s kaišem. Ponovno pokrenite web API (pri pokretanju se ispravljaju stupci OrderItems.BagID/BeltID). Ako problem ostane, ručno postavite te stupce na NULL u SQL Serveru.");
                 throw new UserException($"Greška pri dodavanju u korpu: {inner}");
             }
             catch (ArgumentException ex)

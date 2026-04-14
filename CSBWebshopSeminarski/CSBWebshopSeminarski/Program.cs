@@ -292,6 +292,10 @@ using (var scope = app.Services.CreateScope())
         // Apply migrations
         await context.Database.MigrateAsync();
 
+        // Legacy DBs: OrderItems.BagID/BeltID were NOT NULL; cart lines need one FK null (bag XOR belt).
+        await context.Database.ExecuteSqlRawAsync(
+            OrderItemsSchemaCompatibility.EnsureOrderItemsBagOrBeltColumnsNullableSql);
+
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
         if (adminRole == null)
