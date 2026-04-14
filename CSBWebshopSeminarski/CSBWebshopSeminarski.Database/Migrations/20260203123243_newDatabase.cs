@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -247,7 +247,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 {
                     OutfitIdeaID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    BagID = table.Column<int>(type: "int", nullable: false),
+                    BagID = table.Column<int>(type: "int", nullable: true),
+                    BeltID = table.Column<int>(type: "int", nullable: true),
                     UserID = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -262,6 +263,12 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         column: x => x.BagID,
                         principalTable: "Bags",
                         principalColumn: "BagID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OutfitIdeas_Belts_BeltID",
+                        column: x => x.BeltID,
+                        principalTable: "Belts",
+                        principalColumn: "BeltID",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_OutfitIdeas_Users_UserID",
@@ -675,6 +682,11 @@ namespace CSBWebshopSeminarski.Database.Migrations
                 name: "IX_OutfitIdeas_BagID",
                 table: "OutfitIdeas",
                 column: "BagID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutfitIdeas_BeltID",
+                table: "OutfitIdeas",
+                column: "BeltID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutfitIdeas_UserID",
