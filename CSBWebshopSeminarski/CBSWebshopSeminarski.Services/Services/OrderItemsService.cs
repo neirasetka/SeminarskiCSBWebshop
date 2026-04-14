@@ -58,6 +58,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 }
             }
 
+            if (request.Price <= 0)
+                throw new ArgumentException("Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
+
             var entity = _mapper.Map<OrderItems>(request);
 
             _context.Set<OrderItems>().Add(entity);

@@ -57,6 +57,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     // Ensure cart exists
     OrderModel? order = state.value;
     if (order == null) {
+      order = await _loadActiveCart();
+    }
+    if (order == null) {
       final int userId = (await _profileApi.getMe()).id;
       if (userId < 1) {
         throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
@@ -94,6 +97,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       throw Exception('Neispravan ID kaiša. Osvježite katalog i pokušajte ponovno.');
     }
     OrderModel? order = state.value;
+    if (order == null) {
+      order = await _loadActiveCart();
+    }
     if (order == null) {
       final int userId = (await _profileApi.getMe()).id;
       if (userId < 1) {
