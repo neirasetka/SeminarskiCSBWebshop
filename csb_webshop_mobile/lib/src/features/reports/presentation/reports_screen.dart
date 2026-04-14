@@ -73,55 +73,68 @@ class _SalesByMonthChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (BuildContext context, WidgetRef ref, _) {
-        final List<double> monthlySales = ref.watch(monthlySalesProvider);
-        final List<BarChartGroupData> barGroups = List<BarChartGroupData>.generate(
-          monthlySales.length,
-          (int i) {
-            final double value = monthlySales[i];
-            return BarChartGroupData(
-              x: i + 1,
-              barRods: <BarChartRodData>[
-                BarChartRodData(
-                  toY: value,
-                  borderRadius: BorderRadius.circular(4),
-                  width: 14,
-                  gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF7C4DFF), Color(0xFF536DFE)],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-        return _Card(
-          child: BarChart(
-            BarChartData(
-              borderData: FlBorderData(show: false),
-              gridData: const FlGridData(show: false),
-              titlesData: FlTitlesData(
-                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 36)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (double value, TitleMeta meta) {
-                      final int month = value.toInt();
-                      const List<String> labels = <String>['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-                      if (month >= 1 && month <= 12) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(labels[month - 1]),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ),
+        final AsyncValue<List<double>> async = ref.watch(monthlySalesProvider);
+        return async.when(
+          loading: () => const _Card(child: Center(child: CircularProgressIndicator())),
+          error: (Object err, StackTrace st) => _Card(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text('Nije moguće učitati podatke.\n$err', textAlign: TextAlign.center),
               ),
-              barGroups: barGroups,
             ),
           ),
+          data: (List<double> monthlySales) {
+            final List<BarChartGroupData> barGroups = List<BarChartGroupData>.generate(
+              monthlySales.length,
+              (int i) {
+                final double value = monthlySales[i];
+                return BarChartGroupData(
+                  x: i + 1,
+                  barRods: <BarChartRodData>[
+                    BarChartRodData(
+                      toY: value,
+                      borderRadius: BorderRadius.circular(4),
+                      width: 14,
+                      gradient: const LinearGradient(
+                        colors: <Color>[Color(0xFF7C4DFF), Color(0xFF536DFE)],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+            return _Card(
+              child: BarChart(
+                BarChartData(
+                  borderData: FlBorderData(show: false),
+                  gridData: const FlGridData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 36)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final int month = value.toInt();
+                          const List<String> labels = <String>['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+                          if (month >= 1 && month <= 12) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(labels[month - 1]),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: barGroups,
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -133,7 +146,27 @@ class _TopBagsPieChart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<TopSellingBagEntry> entries = ref.watch(topSellingBagsWithQuantitiesProvider);
+    final AsyncValue<List<TopSellingBagEntry>> async = ref.watch(topSellingBagsWithQuantitiesProvider);
+    return async.when(
+      loading: () => const _Card(child: Center(child: CircularProgressIndicator())),
+      error: (Object err, StackTrace st) => _Card(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text('Nije moguće učitati podatke.\n$err', textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+      data: (List<TopSellingBagEntry> entries) => _topBagsBody(context, entries),
+    );
+  }
+
+  Widget _topBagsBody(BuildContext context, List<TopSellingBagEntry> entries) {
+    if (entries.isEmpty) {
+      return const _Card(
+        child: Center(child: Text('Nema podataka (potrebna admin prijava).')),
+      );
+    }
     final List<Color> colors = <Color>[
       const Color(0xFF7E57C2),
       const Color(0xFF42A5F5),
@@ -184,7 +217,27 @@ class _OrderStatusPieChart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<OrderStatusCountEntry> entries = ref.watch(orderStatusCountsProvider);
+    final AsyncValue<List<OrderStatusCountEntry>> async = ref.watch(orderStatusCountsProvider);
+    return async.when(
+      loading: () => const _Card(child: Center(child: CircularProgressIndicator())),
+      error: (Object err, StackTrace st) => _Card(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text('Nije moguće učitati podatke.\n$err', textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+      data: (List<OrderStatusCountEntry> entries) => _orderStatusBody(context, entries),
+    );
+  }
+
+  Widget _orderStatusBody(BuildContext context, List<OrderStatusCountEntry> entries) {
+    if (entries.isEmpty) {
+      return const _Card(
+        child: Center(child: Text('Nema podataka (potrebna admin prijava).')),
+      );
+    }
     final List<Color> colors = <Color>[
       const Color(0xFF66BB6A),
       const Color(0xFF42A5F5),

@@ -1,31 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/reports_api.dart';
 import '../domain/report_models.dart';
 
-/// Mobile reports use mock data only. Reports with real API are admin-only on desktop.
-final Provider<List<TopSellingBagEntry>> topSellingBagsWithQuantitiesProvider =
-    Provider<List<TopSellingBagEntry>>((Ref ref) => _mockTopBags);
+final Provider<ReportsApi> reportsApiProvider = Provider<ReportsApi>((Ref ref) => ReportsApi());
 
-final Provider<List<OrderStatusCountEntry>> orderStatusCountsProvider =
-    Provider<List<OrderStatusCountEntry>>((Ref ref) => _mockOrderStatuses);
+/// Revenue summed by calendar month (12 values, Jan–Dec) for the current UTC year.
+final FutureProvider<List<double>> monthlySalesProvider = FutureProvider<List<double>>((Ref ref) async {
+  final ReportsApi api = ref.read(reportsApiProvider);
+  final DateTime nowUtc = DateTime.now().toUtc();
+  final DateTime from = DateTime.utc(nowUtc.year, 1, 1);
+  final DateTime to = DateTime.utc(nowUtc.year, 12, 31, 23, 59, 59);
+  final List<RevenueByDayPoint> days = await api.getRevenueByDay(fromDateUtc: from, toDateUtc: to);
+  final List<double> months = List<double>.filled(12, 0);
+  for (final RevenueByDayPoint p in days) {
+    final DateTime d = p.dayUtc.toUtc();
+    if (d.year == nowUtc.year && d.month >= 1 && d.month <= 12) {
+      months[d.month - 1] += p.revenue;
+    }
+  }
+  return months;
+});
 
-const List<double> _mockMonthlySales = <double>[
-  1200, 1500, 1800, 1300, 2200, 2700, 3000, 2800, 2600, 2400, 2000, 1900,
-];
+final FutureProvider<List<TopSellingBagEntry>> topSellingBagsWithQuantitiesProvider =
+    FutureProvider<List<TopSellingBagEntry>>((Ref ref) async {
+  final ReportsApi api = ref.read(reportsApiProvider);
+  return api.getTopSellingBagsWithQuantities(take: 6);
+});
 
-final Provider<List<double>> monthlySalesProvider =
-    Provider<List<double>>((Ref ref) => _mockMonthlySales);
-
-const List<TopSellingBagEntry> _mockTopBags = <TopSellingBagEntry>[
-  TopSellingBagEntry(bagName: 'LEA', quantitySold: 45),
-  TopSellingBagEntry(bagName: 'MIA', quantitySold: 32),
-  TopSellingBagEntry(bagName: 'SOFIA', quantitySold: 28),
-  TopSellingBagEntry(bagName: 'EVA', quantitySold: 22),
-  TopSellingBagEntry(bagName: 'NORA', quantitySold: 18),
-];
-
-const List<OrderStatusCountEntry> _mockOrderStatuses = <OrderStatusCountEntry>[
-  OrderStatusCountEntry(statusName: 'Isporučeno', count: 12),
-  OrderStatusCountEntry(statusName: 'U obradi', count: 5),
-  OrderStatusCountEntry(statusName: 'Poslano', count: 3),
-];
+final FutureProvider<List<OrderStatusCountEntry>> orderStatusCountsProvider =
+    FutureProvider<List<OrderStatusCountEntry>>((Ref ref) async {
+  final ReportsApi api = ref.read(reportsApiProvider);
+  return api.getOrderStatusCounts();
+});
