@@ -199,7 +199,10 @@ app.Use(async (context, next) =>
     context.Request.EnableBuffering();
     await next();
 });
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
