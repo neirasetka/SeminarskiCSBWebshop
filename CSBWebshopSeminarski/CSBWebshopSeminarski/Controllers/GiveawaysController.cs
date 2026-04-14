@@ -2,6 +2,7 @@ using CBSWebshopSeminarski.Model.DTOs;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Services;
+using CSBWebshopSeminarski.Core.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -117,16 +118,35 @@ namespace CSBWebshopSeminarski.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipantOnGiveaway(int id, [FromBody] RegisterParticipantRequest request)
         {
-            var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
-            var dto = new ParticipantPublicDto
+            try
             {
-                Id = created.Id,
-                Name = created.Name,
-                MaskedEmail = ObjectExtension.MaskEmail(created.Email ?? string.Empty),
-                EntryDate = created.EntryDate,
-                GiveawayId = created.GiveawayId
-            };
-            return Ok(dto);
+                var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
+                var dto = new ParticipantPublicDto
+                {
+                    Id = created.Id,
+                    Name = created.Name,
+                    MaskedEmail = ObjectExtension.MaskEmail(created.Email ?? string.Empty),
+                    EntryDate = created.EntryDate,
+                    GiveawayId = created.GiveawayId
+                };
+                return Ok(dto);
+            }
+            catch (AlreadyRegisteredForGiveawayException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "Giveaway not found")
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "Giveaway is not accepting entries")
+            {
+                return BadRequest(new { message = "Giveaway trenutno ne prima prijave." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{id:int}/draw")]

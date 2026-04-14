@@ -60,6 +60,16 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
           ),
         );
       }
+    } on GiveawayRegistrationConflictException catch (e) {
+      setState(() => _isSubmitting = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.deepOrange,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {

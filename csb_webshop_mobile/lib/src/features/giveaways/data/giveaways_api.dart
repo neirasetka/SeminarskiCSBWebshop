@@ -6,6 +6,26 @@ import '../../../core/api_client.dart';
 import '../domain/giveaway.dart';
 import '../domain/participant.dart';
 
+/// Thrown when the same email is already registered for this giveaway (HTTP 409).
+class GiveawayRegistrationConflictException implements Exception {
+  GiveawayRegistrationConflictException(this.message);
+  final String message;
+  @override
+  String toString() => message;
+}
+
+/// Parses `{ "message": "..." }` from API error JSON (`message` or `Message`).
+String? giveawayApiMessageFromJsonBody(String body) {
+  try {
+    final dynamic decoded = json.decode(body);
+    if (decoded is Map<String, dynamic>) {
+      final Object? m = decoded['message'] ?? decoded['Message'];
+      if (m is String && m.isNotEmpty) return m;
+    }
+  } catch (_) {}
+  return null;
+}
+
 class GiveawaysApi {
   GiveawaysApi({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
@@ -63,6 +83,11 @@ class GiveawaysApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return GiveawayParticipant.fromPublicJson(map);
+    }
+    if (response.statusCode == 409) {
+      throw GiveawayRegistrationConflictException(
+        giveawayApiMessageFromJsonBody(response.body) ?? 'Već učestvujete u giveawayu.',
+      );
     }
     throw Exception('Failed to register: ${response.statusCode}');
   }

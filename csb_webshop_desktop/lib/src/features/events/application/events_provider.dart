@@ -43,9 +43,9 @@ class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
     final int? id = _id;
     if (id == null) return;
     final EventsApi api = ref.read(eventsApiProvider);
-    final EventModel? current = state.valueOrNull;
-    if (current != null) {
-      state = AsyncData<EventModel>(current.copyWith(isParticipating: true));
+    final EventModel? previous = state.valueOrNull;
+    if (previous != null) {
+      state = AsyncData<EventModel>(previous.copyWith(isParticipating: true));
     }
     try {
       final EventModel updated = await api.participate(
@@ -55,7 +55,11 @@ class EventDetailNotifier extends AutoDisposeAsyncNotifier<EventModel> {
       );
       state = AsyncData<EventModel>(updated);
     } catch (e, st) {
-      state = AsyncError<EventModel>(e, st);
+      if (previous != null) {
+        state = AsyncData<EventModel>(previous);
+      } else {
+        state = AsyncError<EventModel>(e, st);
+      }
       rethrow;
     }
   }

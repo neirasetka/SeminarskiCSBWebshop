@@ -239,6 +239,12 @@ class _RegisterCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prijava uspješna')));
                         }
+                      } on GiveawayRegistrationConflictException catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.message), backgroundColor: Colors.deepOrange),
+                          );
+                        }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context)

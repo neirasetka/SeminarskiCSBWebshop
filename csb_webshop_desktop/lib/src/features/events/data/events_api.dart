@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../giveaways/data/giveaways_api.dart'
+    show GiveawayRegistrationConflictException, giveawayApiMessageFromJsonBody;
 import '../domain/event.dart';
 
 class EventsApi {
@@ -55,10 +57,16 @@ class EventsApi {
         body: json.encode(body),
       );
       if (response.statusCode == 404) throw Exception('Not found');
+      if (response.statusCode == 409) {
+        throw GiveawayRegistrationConflictException(
+          giveawayApiMessageFromJsonBody(response.body) ?? 'Već učestvujete u giveawayu.',
+        );
+      }
       if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('HTTP ${response.statusCode}');
       final EventModel event = await getEventById(eventId);
       return event.copyWith(isParticipating: true);
-    } catch (_) {
+    } catch (e) {
+      if (e is GiveawayRegistrationConflictException) rethrow;
       final int idx = _dummyEvents.indexWhere((EventModel e) => e.id == eventId);
       if (idx >= 0) {
         final EventModel current = _dummyEvents[idx];

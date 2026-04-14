@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../giveaways/data/giveaways_api.dart' show GiveawayRegistrationConflictException;
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
 import '../application/events_provider.dart';
@@ -119,14 +120,31 @@ class _EventBody extends ConsumerWidget {
                   onPressed: participating || user == null
                   ? null
                   : () async {
-                      await ref.read(eventDetailProvider.notifier).participate(
-                        name: user.fullName,
-                        email: user.email,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Prijava uspješna')),
+                      try {
+                        await ref.read(eventDetailProvider.notifier).participate(
+                          name: user.fullName,
+                          email: user.email,
                         );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Prijava uspješna')),
+                          );
+                        }
+                      } on GiveawayRegistrationConflictException catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.message),
+                              backgroundColor: Colors.deepOrange,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Greška: $e')),
+                          );
+                        }
                       }
                     },
               icon: Icon(participating ? Icons.check : Icons.how_to_vote),

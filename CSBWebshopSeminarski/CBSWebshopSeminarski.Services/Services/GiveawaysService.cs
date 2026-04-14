@@ -1,4 +1,5 @@
 using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Core.Exceptions;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -86,7 +87,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var alreadyExists = await _context.Participants.AnyAsync(p => p.GiveawayId == giveawayId && p.Email == normalizedEmail);
             if (alreadyExists)
             {
-                throw new InvalidOperationException("Participant with this email already registered for this giveaway");
+                throw new AlreadyRegisteredForGiveawayException();
             }
 
             var participant = new Participants
