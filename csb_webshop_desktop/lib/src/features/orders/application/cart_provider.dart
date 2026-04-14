@@ -109,6 +109,19 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     state = const AsyncValue.data(null);
   }
 
+  /// Briše aktivnu korpu na serveru dok je token još valjan (pri odjavi).
+  Future<void> discardActiveCartOnLogout() async {
+    try {
+      final int userId = (await _profileApi.getMe()).id;
+      if (userId >= 1) {
+        await _api.cancelActiveCart(userId: userId);
+      }
+    } catch (_) {
+      // Mreža / istek tokena — ne blokiraj odjavu.
+    }
+    state = const AsyncValue<OrderModel?>.data(null);
+  }
+
   Future<void> clearCart() async {
     final OrderModel? order = state.value;
     if (order == null) {

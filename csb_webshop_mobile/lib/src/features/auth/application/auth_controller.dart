@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/secure_storage_service.dart';
+import '../../orders/application/cart_provider.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../data/auth_api.dart';
 import '../domain/auth_session.dart';
@@ -37,6 +38,7 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
       state = AsyncData<AuthSession?>(session);
       ref.invalidate(userProfileProvider);
       ref.invalidate(adminRoleProvider);
+      ref.invalidate(cartProvider);
     } catch (e, st) {
       state = AsyncError<AuthSession?>(e, st);
     } finally {
@@ -46,6 +48,7 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
 
   Future<void> logout() async {
     state = const AsyncLoading<AuthSession?>();
+    await ref.read(cartProvider.notifier).discardActiveCartOnLogout();
     await _storage.clearToken();
     state = const AsyncData<AuthSession?>(null);
     ref.invalidate(userProfileProvider);
