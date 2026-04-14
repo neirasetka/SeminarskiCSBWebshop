@@ -190,12 +190,25 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
                     value: _selectedTypeId,
                     decoration: const InputDecoration(labelText: 'Tip'),
                     items: <DropdownMenuItem<int?>>[
-                      const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
+                      if (widget.existing == null)
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          enabled: false,
+                          child: Text('Odaberite tip'),
+                        ),
+                      if (widget.existing != null)
+                        const DropdownMenuItem<int?>(value: null, child: Text('Bez promjene tipa')),
                       ...types.map(
                         (BeltType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name)),
                       ),
                     ],
                     onChanged: (int? value) => setState(() => _selectedTypeId = value),
+                    validator: widget.existing == null
+                        ? (int? value) {
+                            if (value == null) return 'Odaberite tip kaiša';
+                            return null;
+                          }
+                        : null,
                   );
                 },
                 loading: () => const Padding(

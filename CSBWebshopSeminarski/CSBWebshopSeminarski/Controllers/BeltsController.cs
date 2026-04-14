@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -32,6 +33,12 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<Belt> Insert(BeltUpsertRequest request)
         {
+            if (request.UserID == 0)
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (int.TryParse(userIdClaim, out var currentUserId) && currentUserId > 0)
+                    request.UserID = currentUserId;
+            }
             return await _service.Insert(request);
         }
 

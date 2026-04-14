@@ -45,8 +45,17 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _mapper.Map<Belts>(request);
 
+            // Klijent (desktop) ne šalje BeltTypeID kad je "Bez tipa" — u modelu to postane 0 i krši FK.
+            if (entity.BeltTypeID == 0)
+                throw new InvalidOperationException("Tip kaiša je obavezan. Odaberite tip u formi (ili dodajte tipove u administraciji).");
+
+            if (entity.UserID == 0)
+                throw new InvalidOperationException("Nije moguće sačuvati kaiš bez vlasnika (UserID). Prijavite se ponovo.");
+
             if (!string.IsNullOrWhiteSpace(request.Image))
                 entity.Image = Convert.FromBase64String(request.Image);
+            else
+                entity.Image = Array.Empty<byte>();
 
             _context.Set<Belts>().Add(entity);
             await _context.SaveChangesAsync();
@@ -70,7 +79,9 @@ namespace CBSWebshopSeminarski.Services.Services
             entity.Code = request.Code;
             entity.Price = request.Price;
             entity.Description = request.Description ?? string.Empty;
-            entity.BeltTypeID = request.BeltTypeID;
+            // 0 znači "bez tipa" / nije poslano — ne prepisuj postojeći FK nulom.
+            if (request.BeltTypeID != 0)
+                entity.BeltTypeID = request.BeltTypeID;
 
             if (!string.IsNullOrWhiteSpace(request.Image))
                 entity.Image = Convert.FromBase64String(request.Image);
