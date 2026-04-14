@@ -57,10 +57,9 @@ class GiveawaysListScreen extends ConsumerWidget {
                 if (isAdmin)
                   ElevatedButton.icon(
                     onPressed: () async {
-                      await showModalBottomSheet<void>(
+                      await showDialog<void>(
                         context: context,
-                        isScrollControlled: true,
-                        builder: (_) => const _CreateGiveawaySheet(),
+                        builder: (_) => const _CreateGiveawayDialog(),
                       );
                       await ref.read(giveawaysListProvider.notifier).refresh();
                     },
@@ -396,14 +395,14 @@ class _AdminActions extends ConsumerWidget {
   }
 }
 
-class _CreateGiveawaySheet extends ConsumerStatefulWidget {
-  const _CreateGiveawaySheet();
+class _CreateGiveawayDialog extends ConsumerStatefulWidget {
+  const _CreateGiveawayDialog();
 
   @override
-  ConsumerState<_CreateGiveawaySheet> createState() => _CreateGiveawaySheetState();
+  ConsumerState<_CreateGiveawayDialog> createState() => _CreateGiveawayDialogState();
 }
 
-class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
+class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
   final TextEditingController _title = TextEditingController();
   DateTime _start = DateTime.now();
   DateTime _end = DateTime.now().add(const Duration(days: 7));
@@ -412,83 +411,85 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
   @override
   Widget build(BuildContext context) {
     final GiveawaysApi api = ref.read(giveawaysApiProvider);
-    final EdgeInsets insets = MediaQuery.of(context).viewInsets;
-    return Padding(
-      padding: EdgeInsets.only(bottom: insets.bottom),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text('Novi giveaway', style: TextStyle(fontWeight: FontWeight.bold)),
-            Form(
-              key: _formKey,
-              child: TextFormField(
-                controller: _title,
-                decoration: const InputDecoration(labelText: 'Naslov'),
-                validator: (String? v) {
-                  if (v == null || v.trim().isEmpty) return 'Naslov je obavezan';
-                  if (v.trim().length < 3) return 'Naslov mora imati bar 3 znaka';
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(children: <Widget>[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      initialDate: _start,
-                    );
-                    if (picked != null) setState(() => _start = picked);
+    final EdgeInsets insets = MediaQuery.viewInsetsOf(context);
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + insets.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text('Novi giveaway', style: TextStyle(fontWeight: FontWeight.bold)),
+              Form(
+                key: _formKey,
+                child: TextFormField(
+                  controller: _title,
+                  decoration: const InputDecoration(labelText: 'Naslov'),
+                  validator: (String? v) {
+                    if (v == null || v.trim().isEmpty) return 'Naslov je obavezan';
+                    if (v.trim().length < 3) return 'Naslov mora imati bar 3 znaka';
+                    return null;
                   },
-                  child: Text('Start: ${_start.toLocal().toString().split(' ').first}'),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      firstDate: _start,
-                      lastDate: DateTime.now().add(const Duration(days: 730)),
-                      initialDate: _end,
-                    );
-                    if (picked != null) setState(() => _end = picked);
-                  },
-                  child: Text('Kraj: ${_end.toLocal().toString().split(' ').first}'),
+              const SizedBox(height: 8),
+              Row(children: <Widget>[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        initialDate: _start,
+                      );
+                      if (picked != null) setState(() => _start = picked);
+                    },
+                    child: Text('Start: ${_start.toLocal().toString().split(' ').first}'),
+                  ),
                 ),
-              ),
-            ]),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton(
-                onPressed: () async {
-                  if (!(_formKey.currentState?.validate() ?? false)) return;
-                  if (!_end.isAfter(_start)) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kraj mora biti nakon starta')));
-                    return;
-                  }
-                  try {
-                    await api.createGiveaway(title: _title.text.trim(), startDate: _start, endDate: _end);
-                    if (context.mounted) Navigator.of(context).pop();
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greška: $e')));
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        firstDate: _start,
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                        initialDate: _end,
+                      );
+                      if (picked != null) setState(() => _end = picked);
+                    },
+                    child: Text('Kraj: ${_end.toLocal().toString().split(' ').first}'),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: () async {
+                    if (!(_formKey.currentState?.validate() ?? false)) return;
+                    if (!_end.isAfter(_start)) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kraj mora biti nakon starta')));
+                      return;
                     }
-                  }
-                },
-                child: const Text('Kreiraj'),
+                    try {
+                      await api.createGiveaway(title: _title.text.trim(), startDate: _start, endDate: _end);
+                      if (context.mounted) Navigator.of(context).pop();
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greška: $e')));
+                      }
+                    }
+                  },
+                  child: const Text('Kreiraj'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
