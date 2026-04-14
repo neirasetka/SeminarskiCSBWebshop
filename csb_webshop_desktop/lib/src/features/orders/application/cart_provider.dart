@@ -39,13 +39,13 @@ Future<T> _cartStep<T>(String stepLabelHr, Future<T> Function() action) async {
 }
 
 class CartNotifier extends AsyncNotifier<OrderModel?> {
-  late final OrdersApi _api;
-  late final ProfileApi _profileApi;
+  // Getter: [build] se može ponoviti nakon invalidate (npr. nakon prijave).
+  OrdersApi get _api => ref.read(ordersApiProvider);
+
+  ProfileApi get _profileApi => ref.read(profileApiProvider);
 
   @override
   Future<OrderModel?> build() async {
-    _api = ref.read(ordersApiProvider);
-    _profileApi = ref.read(profileApiProvider);
     return await _loadActiveCart();
   }
 
