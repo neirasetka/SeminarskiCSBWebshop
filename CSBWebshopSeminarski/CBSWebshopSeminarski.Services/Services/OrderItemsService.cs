@@ -36,6 +36,10 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
                 throw new ArgumentException("Order item must have either BagID or BeltID.");
+            if (request.BagID.HasValue && request.BagID.Value < 1)
+                throw new ArgumentException("BagID must be a valid bag identifier.");
+            if (request.BeltID.HasValue && request.BeltID.Value < 1)
+                throw new ArgumentException("BeltID must be a valid belt identifier.");
 
             // Ako klijent pošalje cijenu 0, dohvati pravu cijenu iz artikla (Bag ili Belt)
             if (request.Price <= 0)

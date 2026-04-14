@@ -224,11 +224,22 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider
             var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
             await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, paymentIntent.Metadata);
         }
+        else if (stripeEvent.Type == "checkout.session.completed")
+        {
+            var session = (Stripe.Checkout.Session)stripeEvent.Data.Object;
+            if (!string.IsNullOrEmpty(session.PaymentIntentId))
+            {
+                var paymentIntentService = new PaymentIntentService();
+                var paymentIntent = await paymentIntentService.GetAsync(session.PaymentIntentId);
+                var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
+                await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, paymentIntent.Metadata);
+            }
+        }
         else if (stripeEvent.Type == "payment_intent.payment_failed")
         {
             var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
             var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-            await paymentsService.HandlePaymentFailedAsync(paymentIntent.Id, paymentIntent.Metadata, paymentIntent.LastPaymentError?.Message ?? "");
+            await paymentsService.HandlePaymentFailedAsync(paymentIntent.Id, paymentIntent.Metadata, paymentIntent.LastPaymentError?.Message ?? string.Empty);
         }
         return Results.Ok();
     }
