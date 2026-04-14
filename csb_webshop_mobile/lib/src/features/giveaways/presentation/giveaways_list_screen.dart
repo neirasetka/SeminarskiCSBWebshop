@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 import '../../giveaways/domain/participant.dart';
@@ -8,15 +9,17 @@ import '../../giveaways/data/giveaways_api.dart';
 import 'giveaway_participants_screen.dart';
 
 class GiveawaysListScreen extends ConsumerWidget {
-  const GiveawaysListScreen({super.key, this.forAdmin = false});
+  /// Kad je [forAdmin] null, koristi se [adminRoleProvider] (admin vidi administraciju).
+  const GiveawaysListScreen({super.key, this.forAdmin});
 
-  final bool forAdmin;
+  final bool? forAdmin;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool isAdmin = forAdmin ?? ref.watch(adminRoleProvider).valueOrNull ?? false;
     final AsyncValue<List<Giveaway>> listAsync = ref.watch(giveawaysListProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(forAdmin ? 'Giveaway administracija' : 'Giveawayi')),
+      appBar: AppBar(title: Text(isAdmin ? 'Giveaway administracija' : 'Giveawayi')),
       body: Column(
         children: <Widget>[
           Padding(
@@ -40,7 +43,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                   child: const Text('Svi'),
                 ),
                 const Spacer(),
-                if (forAdmin)
+                if (isAdmin)
                   ElevatedButton.icon(
                     onPressed: () async {
                       await showModalBottomSheet<void>(
@@ -76,7 +79,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => GiveawayDetailScreen(giveawayId: g.id, forAdmin: forAdmin),
+                        builder: (_) => GiveawayDetailScreen(giveawayId: g.id, forAdmin: isAdmin),
                       ),
                     ),
                   );
