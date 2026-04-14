@@ -61,7 +61,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = _mapper.Map<OrderItems>(request);
 
             _context.Set<OrderItems>().Add(entity);
-            await _context.SaveChangesAsync();
+            await SaveChangesWithOrderItemsNullableRepairAsync();
             await RecalculateOrderTotal(entity.OrderID);
             return _mapper.Map<OrderItem>(entity);
         }
@@ -76,7 +76,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _mapper.Map(request, entity);
 
-            await _context.SaveChangesAsync();
+            await SaveChangesWithOrderItemsNullableRepairAsync();
             await RecalculateOrderTotal(entity.OrderID);
             return _mapper.Map<OrderItem>(entity);
         }
@@ -90,6 +90,41 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.SaveChangesAsync();
             await RecalculateOrderTotal(orderId);
             return true;
+        }
+
+        /// <summary>
+        /// Legacy databases may still have NOT NULL on <c>OrderItems.BagID</c>/<c>BeltID</c> if startup
+        /// repair did not run (e.g. seeding failed first). Repair once and retry <see cref="DbContext.SaveChangesAsync"/>.
+        /// </summary>
+        private async Task SaveChangesWithOrderItemsNullableRepairAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsOrderItemsBagBeltNullConstraintError(ex))
+            {
+                await _context.Database.ExecuteSqlRawAsync(OrderItemsSchemaCompatibility.EnsureOrderItemsBagOrBeltColumnsNullableSql);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private static bool IsOrderItemsBagBeltNullConstraintError(DbUpdateException ex)
+        {
+            for (var e = (Exception?)ex; e != null; e = e.InnerException)
+            {
+                var msg = e.Message;
+                if (!msg.Contains("NULL", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (msg.Contains("Cannot insert the value NULL", StringComparison.OrdinalIgnoreCase)
+                    || msg.Contains("Cannot update the value NULL", StringComparison.OrdinalIgnoreCase))
+                {
+                    return msg.Contains("BagID", StringComparison.OrdinalIgnoreCase)
+                           || msg.Contains("BeltID", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return false;
         }
 
         private async Task RecalculateOrderTotal(int orderId)
