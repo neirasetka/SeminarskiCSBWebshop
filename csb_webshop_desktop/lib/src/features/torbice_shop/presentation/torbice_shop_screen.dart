@@ -252,26 +252,28 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
     try {
       await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: <Widget>[
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text('Artikal uspješno dodan u korpu')),
-            ],
+        final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: <Widget>[
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Artikal uspješno dodan u korpu')),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'NARUČI',
+              textColor: Colors.white,
+              onPressed: () {
+                messenger.hideCurrentSnackBar();
+                GoRouter.of(messenger.context).go('/cart');
+              },
+            ),
           ),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'NARUČI',
-            textColor: Colors.white,
-            onPressed: () {
-              context.go('/cart');
-            },
-          ),
-        ),
-      );
+        );
       }
     } catch (e, st) {
       final String displayMsg = ApiException.formatForDisplay(e);
