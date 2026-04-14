@@ -8,6 +8,8 @@ import '../domain/belt_type.dart';
 import 'belts_detail_screen.dart';
 import '../../orders/application/cart_provider.dart';
 
+bool get isAdmin => false;
+
 class BeltsListScreen extends ConsumerStatefulWidget {
   const BeltsListScreen({super.key});
 

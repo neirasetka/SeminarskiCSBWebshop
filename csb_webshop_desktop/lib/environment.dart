@@ -8,7 +8,7 @@ class EnvironmentConfig {
     'baseUrl',
     defaultValue: String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://localhost:8080/api',
+      defaultValue: 'https://localhost:7224/api',
     ),
   );
 
