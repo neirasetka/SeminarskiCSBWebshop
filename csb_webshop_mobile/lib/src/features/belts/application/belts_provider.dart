@@ -8,14 +8,13 @@ final Provider<BeltsApi> beltsApiProvider = Provider<BeltsApi>((Ref ref) {
 });
 
 class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
-  late final BeltsApi _api;
+  BeltsApi get _api => ref.read(beltsApiProvider);
 
   int? _beltTypeId;
   String? _query;
 
   @override
   Future<List<Belt>> build() async {
-    _api = ref.read(beltsApiProvider);
     _beltTypeId = null;
     _query = null;
     return _load();

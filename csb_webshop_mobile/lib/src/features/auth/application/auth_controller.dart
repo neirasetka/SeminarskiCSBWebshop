@@ -14,14 +14,12 @@ final Provider<AuthApi> authApiProvider = Provider<AuthApi>((Ref ref) {
 class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
   AuthController() : _listeners = <VoidCallback>{};
 
-  late final AuthApi _api;
-  late final SecureStorageService _storage;
+  AuthApi get _api => ref.read(authApiProvider);
+  final SecureStorageService _storage = SecureStorageService();
   final Set<VoidCallback> _listeners;
 
   @override
   Future<AuthSession?> build() async {
-    _api = ref.read(authApiProvider);
-    _storage = SecureStorageService();
     return _loadSession();
   }
 

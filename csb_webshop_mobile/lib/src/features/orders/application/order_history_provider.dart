@@ -8,13 +8,11 @@ import '../domain/order_models.dart';
 final Provider<OrdersApi> _ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
 class OrderHistoryNotifier extends AsyncNotifier<List<OrderModel>> {
-  late final OrdersApi _api;
-  late final ProfileApi _profileApi;
+  OrdersApi get _api => ref.read(_ordersApiProvider);
+  ProfileApi get _profileApi => ref.read(profileApiProvider);
 
   @override
   Future<List<OrderModel>> build() async {
-    _api = ref.read(_ordersApiProvider);
-    _profileApi = ref.read(profileApiProvider);
     return _load();
   }
 

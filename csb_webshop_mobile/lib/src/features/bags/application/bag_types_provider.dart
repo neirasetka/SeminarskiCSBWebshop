@@ -8,11 +8,10 @@ final Provider<BagTypesApi> bagTypesApiProvider = Provider<BagTypesApi>((Ref ref
 });
 
 class BagTypesNotifier extends AsyncNotifier<List<BagType>> {
-  late final BagTypesApi _api;
+  BagTypesApi get _api => ref.read(bagTypesApiProvider);
 
   @override
   Future<List<BagType>> build() async {
-    _api = ref.read(bagTypesApiProvider);
     return _api.getBagTypes();
   }
 

@@ -8,11 +8,10 @@ final Provider<ProfileApi> profileApiProvider = Provider<ProfileApi>((Ref ref) {
 });
 
 class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
-  late final ProfileApi _api;
+  ProfileApi get _api => ref.read(profileApiProvider);
 
   @override
   Future<UserProfile?> build() async {
-    _api = ref.read(profileApiProvider);
     return _load();
   }
 

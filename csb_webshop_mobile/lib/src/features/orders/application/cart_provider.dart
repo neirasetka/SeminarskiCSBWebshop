@@ -9,13 +9,11 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
 class CartNotifier extends AsyncNotifier<OrderModel?> {
-  late final OrdersApi _api;
-  late final ProfileApi _profileApi;
+  OrdersApi get _api => ref.read(ordersApiProvider);
+  ProfileApi get _profileApi => ref.read(profileApiProvider);
 
   @override
   Future<OrderModel?> build() async {
-    _api = ref.read(ordersApiProvider);
-    _profileApi = ref.read(profileApiProvider);
     return await _loadActiveCart();
   }
 
