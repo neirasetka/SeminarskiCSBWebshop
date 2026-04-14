@@ -13,7 +13,7 @@ import '../domain/order_models.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
 bool get _isStripeSupportedPlatform {
-  if (kIsWeb) return true;
+  if (kIsWeb) return false;
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
     case TargetPlatform.iOS:

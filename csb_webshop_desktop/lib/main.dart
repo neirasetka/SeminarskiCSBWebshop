@@ -10,7 +10,8 @@ import 'package:window_manager/window_manager.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (EnvironmentConfig.stripePublishableKey.isNotEmpty) {
+  // flutter_stripe koristi dart:io Platform pri initu — na webu to baca UnsupportedError.
+  if (!kIsWeb && EnvironmentConfig.stripePublishableKey.isNotEmpty) {
     Stripe.publishableKey = EnvironmentConfig.stripePublishableKey;
   }
 

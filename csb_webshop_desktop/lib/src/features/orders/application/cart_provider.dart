@@ -10,10 +10,10 @@ import '../data/orders_api.dart';
 import '../domain/order_models.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
-/// Stripe Payment Sheet podržava samo Android, iOS i Web.
-/// Na Windows/macOS/Linux desktopu nema native implementacije.
+/// Stripe Payment Sheet (flutter_stripe) na Androidu i iOS-u.
+/// Na webu i desktopu koristi se hostirani Stripe Checkout (URL), ne Payment Sheet.
 bool get _isStripeSupportedPlatform {
-  if (kIsWeb) return true;
+  if (kIsWeb) return false;
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
     case TargetPlatform.iOS:
