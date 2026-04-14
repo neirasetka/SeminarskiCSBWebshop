@@ -24,9 +24,11 @@ class OrderItemModel {
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
       id: _toInt(json['OrderItemID'] ?? json['OrderItemsID'] ?? json['id'] ?? 0),
-      orderId: _toInt(json['OrderID'] ?? 0),
-      bagId: _toNullableInt(json['BagID']),
-      beltId: _toNullableInt(json['BeltID']),
+      orderId: _toInt(
+        json['OrderID'] ?? json['orderID'] ?? json['orderId'] ?? 0,
+      ),
+      bagId: _toNullableInt(json['BagID'] ?? json['bagID'] ?? json['bagId']),
+      beltId: _toNullableInt(json['BeltID'] ?? json['beltID'] ?? json['beltId']),
       quantity: _toInt(json['Quantity'] ?? 1),
       price: _toDouble(json['Price'] ?? json['price'] ?? 0),
       discount: _toNullableDouble(json['Discount']),
@@ -59,17 +61,22 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final List<OrderItemModel> items = <OrderItemModel>[];
-    final Object? rawItems = json['OrderItems'] ?? json['items'];
+    final Object? rawItems =
+        json['OrderItems'] ?? json['orderItems'] ?? json['items'];
     if (rawItems is List) {
       for (final Object e in rawItems) {
         if (e is Map<String, dynamic>) items.add(OrderItemModel.fromJson(e));
       }
     }
     return OrderModel(
-      id: _toInt(json['OrderID'] ?? json['orderID'] ?? json['id'] ?? 0),
+      id: _toInt(
+        json['OrderID'] ?? json['orderID'] ?? json['orderId'] ?? json['id'] ?? 0,
+      ),
       orderNumber: (json['OrderNumber'] ?? json['orderNumber'] ?? '').toString(),
       date: DateTime.tryParse((json['Date'] ?? json['date'] ?? '').toString()) ?? DateTime.now(),
-      userId: _toInt(json['UserID'] ?? json['userId'] ?? 0),
+      userId: _toInt(
+        json['UserID'] ?? json['userID'] ?? json['userId'] ?? 0,
+      ),
       amount: _toDouble(json['Amount'] ?? json['Price'] ?? json['amount'] ?? json['price'] ?? 0),
       items: items,
       paymentStatus: (json['PaymentStatus'] ?? json['paymentStatus'])?.toString(),

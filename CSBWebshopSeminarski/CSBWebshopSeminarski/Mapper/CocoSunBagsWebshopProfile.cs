@@ -56,7 +56,17 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<OrderItems, OrderItem>()
                 .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID))
-                .ForMember(d => d.Name, o => o.MapFrom(s => s.Bag != null ? s.Bag.BagName : (s.Belt != null ? s.Belt.BeltName : null)));
+                .ForMember(d => d.Name, o => o.MapFrom(s =>
+                    s.Bag != null ? s.Bag.BagName
+                    : (s.Belt != null ? s.Belt.BeltName : string.Empty)))
+                .ForMember(d => d.Code, o => o.MapFrom(s =>
+                    s.Bag != null ? s.Bag.Code
+                    : (s.Belt != null ? s.Belt.Code : string.Empty)))
+                // Nakon inserta Bag/Belt/Order često nisu učitani; mapiranje na model s null! navigacijama
+                // može baciti AutoMapper iznimku i AddToCart bi padao s generičkom porukom.
+                .ForMember(d => d.Bag, o => o.Ignore())
+                .ForMember(d => d.Belt, o => o.Ignore())
+                .ForMember(d => d.Order, o => o.Ignore());
             CreateMap<OrderItem, OrderItems>()
                 .ForMember(d => d.OrderItemID, o => o.MapFrom(s => s.OrderItemsID));
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();
