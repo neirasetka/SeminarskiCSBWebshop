@@ -20,7 +20,11 @@ class UserProfile {
   String get fullName {
     final String a = firstName.trim();
     final String b = lastName.trim();
-    if (a.isEmpty && b.isEmpty) return username;
+    if (a.isEmpty && b.isEmpty) {
+      final String u = username.trim();
+      if (u.isNotEmpty) return u;
+      return email.trim();
+    }
     if (a.isEmpty) return b;
     if (b.isEmpty) return a;
     return '$a $b';

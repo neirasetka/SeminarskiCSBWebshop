@@ -7,6 +7,7 @@ import 'profile_update_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
 import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/auth_session.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, required this.title});
@@ -41,7 +42,10 @@ class ProfileScreen extends ConsumerWidget {
               child: Text('Niste prijavljeni ili profil nije dostupan.'),
             );
           }
-          return _ProfileDetails(profile: profile);
+          return _ProfileDetails(
+            profile: profile,
+            session: ref.watch(authControllerProvider).value,
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object error, StackTrace stackTrace) => Center(
@@ -104,9 +108,10 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 class _ProfileDetails extends StatelessWidget {
-  const _ProfileDetails({required this.profile});
+  const _ProfileDetails({required this.profile, this.session});
 
   final UserProfile profile;
+  final AuthSession? session;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +131,7 @@ class _ProfileDetails extends StatelessWidget {
                       radius: 50,
                       backgroundColor: theme.colorScheme.primaryContainer,
                       child: Text(
-                        _initials(profile.fullName),
+                        _initials(_initialsSource(profile, session)),
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -268,12 +273,29 @@ class _ProfileDetails extends StatelessWidget {
     );
   }
 
+  String _initialsSource(UserProfile profile, AuthSession? session) {
+    String source = profile.fullName.trim();
+    if (source.isEmpty) source = profile.username.trim();
+    if (source.isEmpty) source = profile.email.trim();
+    if (source.isEmpty) source = (session?.username ?? '').trim();
+    return source;
+  }
+
   String _initials(String name) {
-    final List<String> parts = name.trim().split(RegExp(r"\s+"));
-    final String first = parts.isNotEmpty ? parts.first : '';
-    final String last = parts.length > 1 ? parts.last : '';
-    return (first.isNotEmpty ? first[0] : '') +
-        (last.isNotEmpty ? last[0] : '');
+    final String source = name.trim();
+    if (source.isEmpty) return '?';
+    final List<String> parts = source.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      final String p = parts.first;
+      if (p.isEmpty) return '?';
+      return p.length >= 2
+          ? p.substring(0, 2).toUpperCase()
+          : p[0].toUpperCase();
+    }
+    final String first = parts.first.isNotEmpty ? parts.first[0] : '';
+    final String last = parts.last.isNotEmpty ? parts.last[0] : '';
+    final String two = (first + last).toUpperCase();
+    return two.isNotEmpty ? two : '?';
   }
 }
 

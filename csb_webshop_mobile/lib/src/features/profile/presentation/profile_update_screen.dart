@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 
@@ -21,6 +22,10 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
   late final TextEditingController _phoneController;
   bool _submitting = false;
 
+  void _onNameFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,10 +34,14 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
     );
     _lastNameController = TextEditingController(text: widget.initial.lastName);
     _phoneController = TextEditingController(text: widget.initial.phone ?? '');
+    _firstNameController.addListener(_onNameFieldChanged);
+    _lastNameController.addListener(_onNameFieldChanged);
   }
 
   @override
   void dispose() {
+    _firstNameController.removeListener(_onNameFieldChanged);
+    _lastNameController.removeListener(_onNameFieldChanged);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
@@ -93,12 +102,12 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
                     CircleAvatar(
                       radius: 36,
                       backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
                       child: Text(
-                        _getInitials(),
-                        style: TextStyle(
+                        _previewInitials(),
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -205,12 +214,42 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
     );
   }
 
-  String _getInitials() {
-    final String first = _firstNameController.text.trim();
-    final String last = _lastNameController.text.trim();
-    if (first.isEmpty && last.isEmpty) return '?';
-    final String f = first.isNotEmpty ? first[0] : '';
-    final String l = last.isNotEmpty ? last[0] : '';
-    return (f + l).toUpperCase();
+  String _previewDisplaySource() {
+    final String a = _firstNameController.text.trim();
+    final String b = _lastNameController.text.trim();
+    if (a.isNotEmpty || b.isNotEmpty) {
+      return '$a $b'.trim();
+    }
+    String source = widget.initial.fullName.trim();
+    if (source.isEmpty) source = widget.initial.username.trim();
+    if (source.isEmpty) source = widget.initial.email.trim();
+    if (source.isEmpty) {
+      source =
+          (ref.read(authControllerProvider).value?.username ?? '').trim();
+    }
+    return source;
+  }
+
+  String _previewInitials() {
+    return _initialsFromDisplay(_previewDisplaySource());
+  }
+
+  /// Usklađeno s prikazom na ekranu profila (uključuje jednu riječ / email).
+  String _initialsFromDisplay(String raw) {
+    String source =
+        raw.replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), '').trim();
+    if (source.isEmpty) return '?';
+    final List<String> parts = source.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      final String p = parts.first;
+      if (p.isEmpty) return '?';
+      return p.length >= 2
+          ? p.substring(0, 2).toUpperCase()
+          : p[0].toUpperCase();
+    }
+    final String first = parts.first.isNotEmpty ? parts.first[0] : '';
+    final String last = parts.last.isNotEmpty ? parts.last[0] : '';
+    final String two = (first + last).toUpperCase();
+    return two.isNotEmpty ? two : '?';
   }
 }

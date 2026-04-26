@@ -308,17 +308,17 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 message: 'Moj račun',
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: () => _showUserMenu(profile),
+                  onTap: () => _showUserMenu(profile, isAdmin: isAdmin),
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundImage: _avatarImage(profile),
+                    backgroundImage: _avatarImage(profile, isAdmin: isAdmin),
                     backgroundColor: Theme.of(
                       context,
                     ).colorScheme.primaryContainer,
                     foregroundColor: Theme.of(
                       context,
                     ).colorScheme.onPrimaryContainer,
-                    child: _shouldShowInitials(profile)
+                    child: _shouldShowInitials(profile, isAdmin: isAdmin)
                         ? Text(
                             _avatarInitials(profile, session),
                             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -362,7 +362,8 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     );
   }
 
-  ImageProvider<Object>? _avatarImage(UserProfile? profile) {
+  ImageProvider<Object>? _avatarImage(UserProfile? profile, {required bool isAdmin}) {
+    if (isAdmin) return null;
     final String? url = profile?.avatarUrl;
     if (url == null || url.isEmpty) return null;
     if (url.startsWith('data:image')) {
@@ -377,12 +378,15 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     return NetworkImage(url);
   }
 
-  bool _shouldShowInitials(UserProfile? profile) {
-    return _avatarImage(profile) == null;
+  bool _shouldShowInitials(UserProfile? profile, {required bool isAdmin}) {
+    return _avatarImage(profile, isAdmin: isAdmin) == null;
   }
 
   String _avatarInitials(UserProfile? profile, AuthSession? session) {
-    final String source = (profile?.fullName ?? session?.username ?? '').trim();
+    String source = (profile?.fullName ?? '').trim();
+    if (source.isEmpty) source = (profile?.username ?? '').trim();
+    if (source.isEmpty) source = (profile?.email ?? '').trim();
+    if (source.isEmpty) source = (session?.username ?? '').trim();
     if (source.isEmpty) return '?';
     final List<String> parts = source.split(RegExp(r'\s+'));
     if (parts.length == 1) {
@@ -395,13 +399,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     return (first + last).toUpperCase();
   }
 
-  Future<void> _showUserMenu(UserProfile? profile) async {
+  Future<void> _showUserMenu(UserProfile? profile, {required bool isAdmin}) async {
     if (!mounted) return;
     final ThemeData theme = Theme.of(context);
     final AsyncValue<AuthSession?> sessionAsync = ref.read(
       authControllerProvider,
     );
-    final bool isAdmin = ref.read(adminRoleProvider).valueOrNull ?? false;
     final AuthSession? session = sessionAsync.value;
     final int profilePageIndex = isAdmin ? 3 : 4;
 
@@ -434,10 +437,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                   children: <Widget>[
                     CircleAvatar(
                       radius: 30,
-                      backgroundImage: _avatarImage(profile),
+                      backgroundImage: _avatarImage(profile, isAdmin: isAdmin),
                       backgroundColor: theme.colorScheme.primaryContainer,
                       foregroundColor: theme.colorScheme.onPrimaryContainer,
-                      child: _shouldShowInitials(profile)
+                      child: _shouldShowInitials(profile, isAdmin: isAdmin)
                           ? Text(
                               _avatarInitials(profile, session),
                               style: const TextStyle(

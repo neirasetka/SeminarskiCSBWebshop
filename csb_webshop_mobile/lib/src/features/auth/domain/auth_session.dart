@@ -53,7 +53,8 @@ class AuthSession {
     final int? userId = _readInt(
       userJson?['UserID'] ?? userJson?['userId'] ?? userJson?['ID'] ?? userJson?['id'],
     );
-    final String? username = userJson?['UserName']?.toString();
+    final String? username =
+        (userJson?['UserName'] ?? userJson?['userName'])?.toString();
     return AuthSession(
       token: token,
       expiresUtc: expiresUtc,
@@ -63,7 +64,15 @@ class AuthSession {
         'NameIdentifier',
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
       ])),
-      username: username ?? _decodeClaim(token, <String>['unique_name', 'name'])?.toString(),
+      username: username?.trim().isNotEmpty == true
+          ? username
+          : _decodeClaim(token, const <String>[
+                'unique_name',
+                'name',
+                'preferred_username',
+                'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+              ])
+              ?.toString(),
       roles: _rolesFromToken(token),
     );
   }
@@ -78,7 +87,13 @@ class AuthSession {
         'NameIdentifier',
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
       ])),
-      username: _decodeClaim(token, const <String>['unique_name', 'name'])?.toString(),
+      username: _decodeClaim(token, const <String>[
+        'unique_name',
+        'name',
+        'preferred_username',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+      ])
+          ?.toString(),
       roles: _rolesFromToken(token),
     );
   }
