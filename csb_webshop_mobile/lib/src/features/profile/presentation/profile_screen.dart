@@ -58,27 +58,34 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final UserProfile? current = await ref.read(userProfileProvider.notifier).ensureLoaded();
-          if (current == null) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.')),
-              );
-            }
-            return;
-          }
-          await Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => ProfileUpdateScreen(initial: current),
-            ),
-          );
-          // After returning, refresh to ensure data is up to date
-          await ref.read(userProfileProvider.notifier).refreshProfile();
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text('Uredi profil'),
+      floatingActionButton: profileAsync.maybeWhen(
+        data: (UserProfile? profile) => profile != null
+            ? FloatingActionButton.extended(
+                onPressed: () async {
+                  final UserProfile? current =
+                      await ref.read(userProfileProvider.notifier).ensureLoaded();
+                  if (!context.mounted) return;
+                  if (current == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.'),
+                      ),
+                    );
+                    return;
+                  }
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) =>
+                          ProfileUpdateScreen(initial: current),
+                    ),
+                  );
+                  await ref.read(userProfileProvider.notifier).refreshProfile();
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Uredi profil'),
+              )
+            : null,
+        orElse: () => null,
       ),
     );
   }
@@ -145,7 +152,7 @@ class _ProfileDetails extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '@${profile.username}',
+                  '${profile.username}',
                   style: TextStyle(
                     fontSize: 14,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -205,8 +212,8 @@ class _ProfileDetails extends StatelessWidget {
                   ),
                   child: Icon(Icons.receipt_long, color: theme.colorScheme.onPrimaryContainer),
                 ),
-                title: const Text('Moje narudžbe'),
-                subtitle: const Text('Pogledajte povijest narudžbi'),
+                title: const Text('Narudžbe'),
+                subtitle: const Text('Pogledajte historiju narudžbi'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),

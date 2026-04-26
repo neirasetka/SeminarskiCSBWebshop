@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
-import '../../../core/read_platform_file_bytes.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
@@ -290,17 +289,17 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                   final FilePickerResult? result = await FilePicker.platform.pickFiles(
                     type: FileType.image,
                     allowMultiple: false,
-                    withData: false,
-                    withReadStream: true,
+                    withData: true,
                   );
-                  if (result == null || result.files.isEmpty) return;
-                  final Uint8List? bytes =
-                      await readPlatformFileBytes(result.files.single);
-                  if (bytes == null || bytes.isEmpty) return;
-                  setState(() {
-                    selectedImageBytes = bytes;
-                    selectedImageBase64 = base64Encode(bytes);
-                  });
+                  if (result != null &&
+                      result.files.isNotEmpty &&
+                      result.files.single.bytes != null) {
+                    final Uint8List bytes = result.files.single.bytes!;
+                    setState(() {
+                      selectedImageBytes = bytes;
+                      selectedImageBase64 = base64Encode(bytes);
+                    });
+                  }
                 }
 
                 return Form(

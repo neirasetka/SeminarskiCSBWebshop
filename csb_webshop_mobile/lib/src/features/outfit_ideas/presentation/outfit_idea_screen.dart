@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/read_platform_file_bytes.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
@@ -75,8 +74,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
-        withData: false,
-        withReadStream: true,
+        withData: true,
       );
       if (result == null || result.files.isEmpty) return;
 
@@ -96,7 +94,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       }
 
       final PlatformFile file = result.files.first;
-      final Uint8List? bytes = await readPlatformFileBytes(file);
+      final Uint8List? bytes = file.bytes;
       if (bytes == null || bytes.isEmpty) {
         _showError('Ne mogu učitati sliku: ${file.name}');
         return;

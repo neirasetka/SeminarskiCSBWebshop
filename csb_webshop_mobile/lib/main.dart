@@ -14,7 +14,10 @@ Future<void> main() async {
     Stripe.publishableKey = EnvironmentConfig.stripePublishableKey;
   }
 
-  NotificationService.instance.initialize();
+  // Defer native notification setup until after first frame so startup UI is not blocked.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    NotificationService.instance.initialize();
+  });
 
   // Initialize desktop window management for Windows only
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
