@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 /// Model representing outfit inspiration for a bag or belt.
 class OutfitIdea {
@@ -95,16 +96,19 @@ class OutfitIdeaImage {
 
   final int outfitIdeaImageId;
   final int outfitIdeaId;
-  final List<int>? imageBytes;
+  /// Raw image bytes from API (decoded once in [fromJson]).
+  final Uint8List? imageBytes;
   final String? caption;
   final int displayOrder;
   final DateTime? createdAt;
 
   factory OutfitIdeaImage.fromJson(Map<String, dynamic> json) {
-    List<int>? bytes;
+    Uint8List? bytes;
     if (json['image'] != null) {
       if (json['image'] is List) {
-        bytes = (json['image'] as List<dynamic>).cast<int>();
+        bytes = Uint8List.fromList(
+          (json['image'] as List<dynamic>).cast<int>(),
+        );
       } else if (json['image'] is String) {
         bytes = base64Decode(json['image'] as String);
       }

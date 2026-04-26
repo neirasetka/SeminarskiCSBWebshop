@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/read_platform_file_bytes.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../favorites/application/favorites_provider.dart';
@@ -280,17 +281,17 @@ Future<bool?> _showBagEditDialog(BuildContext context, WidgetRef ref, {required 
                     final FilePickerResult? result = await FilePicker.platform.pickFiles(
                       type: FileType.image,
                       allowMultiple: false,
-                      withData: true,
+                      withData: false,
+                      withReadStream: true,
                     );
-                    if (result != null &&
-                        result.files.isNotEmpty &&
-                        result.files.single.bytes != null) {
-                      final Uint8List bytes = result.files.single.bytes!;
-                      setState(() {
-                        selectedImageBytes = bytes;
-                        selectedImageBase64 = base64Encode(bytes);
-                      });
-                    }
+                    if (result == null || result.files.isEmpty) return;
+                    final Uint8List? bytes =
+                        await readPlatformFileBytes(result.files.single);
+                    if (bytes == null || bytes.isEmpty) return;
+                    setState(() {
+                      selectedImageBytes = bytes;
+                      selectedImageBase64 = base64Encode(bytes);
+                    });
                   }
 
                   return Form(

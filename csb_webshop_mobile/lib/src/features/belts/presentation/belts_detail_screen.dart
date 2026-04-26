@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/read_platform_file_bytes.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
@@ -242,17 +243,17 @@ Future<bool?> _showBeltEditDialog(BuildContext context, WidgetRef ref,
                         await FilePicker.platform.pickFiles(
                       type: FileType.image,
                       allowMultiple: false,
-                      withData: true,
+                      withData: false,
+                      withReadStream: true,
                     );
-                    if (result != null &&
-                        result.files.isNotEmpty &&
-                        result.files.single.bytes != null) {
-                      final Uint8List bytes = result.files.single.bytes!;
-                      setState(() {
-                        selectedImageBytes = bytes;
-                        selectedImageBase64 = base64Encode(bytes);
-                      });
-                    }
+                    if (result == null || result.files.isEmpty) return;
+                    final Uint8List? bytes =
+                        await readPlatformFileBytes(result.files.single);
+                    if (bytes == null || bytes.isEmpty) return;
+                    setState(() {
+                      selectedImageBytes = bytes;
+                      selectedImageBase64 = base64Encode(bytes);
+                    });
                   }
 
                   return Form(

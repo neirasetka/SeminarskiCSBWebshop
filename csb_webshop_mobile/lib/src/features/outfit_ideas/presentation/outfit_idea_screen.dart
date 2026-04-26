@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/read_platform_file_bytes.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
@@ -74,7 +75,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
-        withData: true,
+        withData: false,
+        withReadStream: true,
       );
       if (result == null || result.files.isEmpty) return;
 
@@ -94,7 +96,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       }
 
       final PlatformFile file = result.files.first;
-      final Uint8List? bytes = file.bytes;
+      final Uint8List? bytes = await readPlatformFileBytes(file);
       if (bytes == null || bytes.isEmpty) {
         _showError('Ne mogu učitati sliku: ${file.name}');
         return;
@@ -155,7 +157,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     final int i = dataUrl.indexOf(base64Marker);
     final String base64 =
         i >= 0 ? dataUrl.substring(i + base64Marker.length) : dataUrl;
-    return Uint8List.fromList(base64Decode(base64));
+    return base64Decode(base64);
   }
 
   @override
@@ -328,6 +330,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 1000,
+      addAutomaticKeepAlives: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
@@ -354,7 +358,9 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         child: Stack(
           children: <Widget>[
             InteractiveViewer(
-              child: Image.memory(Uint8List.fromList(image.imageBytes!)),
+              child: RepaintBoundary(
+                child: Image.memory(image.imageBytes!, fit: BoxFit.contain),
+              ),
             ),
             Positioned(
               top: 8,
@@ -394,7 +400,9 @@ class _ImageCard extends StatelessWidget {
           InkWell(
             onTap: onTap,
             child: hasImage
-                ? Image.memory(Uint8List.fromList(image.imageBytes!), fit: BoxFit.cover)
+                ? RepaintBoundary(
+                    child: Image.memory(image.imageBytes!, fit: BoxFit.cover),
+                  )
                 : Container(
                     color: Colors.grey.shade200,
                     child: const Center(child: Icon(Icons.broken_image)),
