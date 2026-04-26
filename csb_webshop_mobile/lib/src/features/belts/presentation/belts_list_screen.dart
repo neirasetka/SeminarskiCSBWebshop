@@ -7,6 +7,8 @@ import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import 'belts_detail_screen.dart';
+import '../../favorites/application/favorites_provider.dart';
+import '../../favorites/domain/favorites_collections.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BeltsListScreen extends ConsumerStatefulWidget {
@@ -35,6 +37,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
@@ -89,6 +92,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
                       final Belt belt = belts[index];
+                      final bool isFav = favoritesAsync.value?.beltIds.contains(belt.id) ?? false;
                       return ListTile(
                         leading: _BeltThumbnail(imageUrl: belt.imageUrl),
                         title: Text(belt.name),
@@ -100,6 +104,11 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
+                            IconButton(
+                              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
+                              tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                              onPressed: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
+                            ),
                             if (!isAdmin)
                               IconButton(
                                 icon: const Icon(Icons.add_shopping_cart),

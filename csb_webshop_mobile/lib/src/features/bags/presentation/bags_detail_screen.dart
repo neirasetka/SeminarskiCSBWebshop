@@ -10,6 +10,7 @@ import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
+import '../../favorites/domain/favorites_collections.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BagDetailScreen extends ConsumerWidget {
@@ -20,7 +21,7 @@ class BagDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(id));
-    final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
+    final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +29,7 @@ class BagDetailScreen extends ConsumerWidget {
       ),
       body: bagAsync.when(
         data: (Bag bag) {
-          final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
+          final bool isFav = favoritesAsync.value?.bagIds.contains(bag.id) ?? false;
           return _BagDetailBody(
             bag: bag,
             isFavorite: isFav,

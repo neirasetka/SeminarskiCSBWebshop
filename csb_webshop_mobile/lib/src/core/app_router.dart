@@ -55,6 +55,13 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: 'favorites',
+          name: 'favorites',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: RootScreen(title: 'CSB Webshop', initialIndex: 3),
+          ),
+        ),
+        GoRoute(
           path: 'cart',
           name: 'cart',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(

@@ -11,6 +11,7 @@ import '../../bags/domain/bag_type.dart';
 import '../domain/bag.dart';
 import 'bags_detail_screen.dart';
 import '../../favorites/application/favorites_provider.dart';
+import '../../favorites/domain/favorites_collections.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BagsListScreen extends ConsumerStatefulWidget {
@@ -51,7 +52,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
-    final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
+    final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
@@ -107,7 +108,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
                       final Bag bag = bags[index];
-                      final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
+                      final bool isFav = favoritesAsync.value?.bagIds.contains(bag.id) ?? false;
                       return ListTile(
                         leading: _BagThumbnail(imageUrl: bag.imageUrl),
                         title: Text(bag.name),

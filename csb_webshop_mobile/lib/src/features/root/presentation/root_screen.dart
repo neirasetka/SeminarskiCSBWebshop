@@ -17,6 +17,7 @@ import '../../profile/domain/user_profile.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../profile/presentation/profile_update_screen.dart';
 import '../../lookbook/presentation/lookbook_screen.dart';
+import '../../favorites/presentation/favorites_screen.dart';
 
 class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({super.key, required this.title, this.initialIndex = 0});
@@ -136,12 +137,14 @@ class _HomeMenuScreen extends StatelessWidget {
   const _HomeMenuScreen({
     required this.onTorbice,
     required this.onKaisevi,
+    required this.onFavoriti,
     required this.onGiveaway,
     required this.onLookbook,
   });
 
   final VoidCallback onTorbice;
   final VoidCallback onKaisevi;
+  final VoidCallback onFavoriti;
   final VoidCallback onGiveaway;
   final VoidCallback onLookbook;
 
@@ -172,6 +175,12 @@ class _HomeMenuScreen extends StatelessWidget {
                   label: 'Kaiševi',
                   color: colors.secondary,
                   onTap: onKaisevi,
+                ),
+                _MainMenuButton(
+                  icon: Icons.favorite_outline,
+                  label: 'Favoriti',
+                  color: Colors.pink,
+                  onTap: onFavoriti,
                 ),
                 _MainMenuButton(
                   icon: Icons.celebration_outlined,
@@ -218,14 +227,13 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     );
     final AuthSession? session = sessionAsync.value;
     final UserProfile? profile = profileAsync.value;
-    final int cartPageIndex = 3;
-    final int profilePageIndex = isAdmin ? 3 : 4;
 
     final List<Widget> pages = <Widget>[
       // 0 - Home Menu
       _HomeMenuScreen(
         onTorbice: () => _navigateToPage(1),
         onKaisevi: () => _navigateToPage(2),
+        onFavoriti: () => _navigateToPage(3),
         onGiveaway: () => Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
         ),
@@ -237,8 +245,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       const BagsListScreen(),
       // 2 - Kaiševi
       const BeltsListScreen(),
+      // 3 - Favoriti
+      const FavoritesScreen(),
       if (!isAdmin) ...<Widget>[
-        // 3 - Korpa
+        // 4 - Korpa
         const CartScreen(),
       ],
       // Profil
@@ -289,7 +299,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             IconButton(
               tooltip: 'Korpa',
               icon: const Icon(Icons.shopping_cart_outlined),
-              onPressed: () => _navigateToPage(cartPageIndex),
+              onPressed: () => _navigateToPage(4),
             ),
           // User avatar - vodi na edit profile
           if (sessionAsync.isLoading && session == null)
@@ -347,6 +357,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           const BottomNavigationBarItem(
             icon: Icon(Icons.checkroom_outlined),
             label: 'Kaiševi',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_outline),
+            label: 'Favoriti',
           ),
           if (!isAdmin)
             const BottomNavigationBarItem(
@@ -406,7 +420,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       authControllerProvider,
     );
     final AuthSession? session = sessionAsync.value;
-    final int profilePageIndex = isAdmin ? 3 : 4;
+    final int profilePageIndex = isAdmin ? 4 : 5;
 
     await showModalBottomSheet<void>(
       context: context,

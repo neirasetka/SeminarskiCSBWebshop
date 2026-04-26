@@ -10,6 +10,8 @@ import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../favorites/application/favorites_provider.dart';
+import '../../favorites/domain/favorites_collections.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BeltDetailScreen extends ConsumerWidget {
@@ -20,15 +22,21 @@ class BeltDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(id));
+    final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(title: const Text('Detalji kaiša')),
       body: beltAsync.when(
-        data: (Belt belt) => _BeltDetailBody(
-          belt: belt,
-          isAdmin: isAdmin,
-          onEdit: null,
-        ),
+        data: (Belt belt) {
+          final bool isFav = favoritesAsync.value?.beltIds.contains(belt.id) ?? false;
+          return _BeltDetailBody(
+            belt: belt,
+            isFavorite: isFav,
+            onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
+            isAdmin: isAdmin,
+            onEdit: null,
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace st) => Padding(
           padding: const EdgeInsets.all(16),
@@ -55,11 +63,15 @@ class BeltDetailScreen extends ConsumerWidget {
 class _BeltDetailBody extends ConsumerWidget {
   const _BeltDetailBody({
     required this.belt,
+    required this.isFavorite,
+    required this.onToggleFavorite,
     this.isAdmin = false,
     this.onEdit,
   });
 
   final Belt belt;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
   final bool isAdmin;
   final VoidCallback? onEdit;
 
@@ -89,6 +101,12 @@ class _BeltDetailBody extends ConsumerWidget {
                     Text(belt.averageRating!.toStringAsFixed(1)),
                   ],
                 ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: isFavorite ? Colors.red : null),
+                tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                onPressed: onToggleFavorite,
+              ),
             ],
           ),
           const SizedBox(height: 16),
