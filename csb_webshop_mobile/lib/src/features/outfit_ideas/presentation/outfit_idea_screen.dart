@@ -73,7 +73,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
-        allowMultiple: true,
+        allowMultiple: false,
         withData: true,
       );
       if (result == null || result.files.isEmpty) return;
@@ -93,22 +93,23 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         }
       }
 
-      for (final PlatformFile file in result.files) {
-        final Uint8List? bytes = file.bytes;
-        if (bytes == null || bytes.isEmpty) {
-          _showError('Ne mogu učitati sliku: ${file.name}');
-          continue;
-        }
-        final bool success =
-            await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
-        if (!success && mounted) {
-          _showError('Greška pri dodavanju slike: ${file.name}');
-        }
+      final PlatformFile file = result.files.first;
+      final Uint8List? bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        _showError('Ne mogu učitati sliku: ${file.name}');
+        return;
+      }
+
+      final bool success =
+          await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
+      if (!success && mounted) {
+        _showError('Greška pri dodavanju slike: ${file.name}');
+        return;
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slike uspješno dodane!')),
+          const SnackBar(content: Text('Slika uspješno dodana!')),
         );
       }
     } catch (e) {
