@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import 'belts_detail_screen.dart';
 import '../../orders/application/cart_provider.dart';
-
-bool get isAdmin => false;
 
 class BeltsListScreen extends ConsumerStatefulWidget {
   const BeltsListScreen({super.key});
@@ -36,6 +35,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(

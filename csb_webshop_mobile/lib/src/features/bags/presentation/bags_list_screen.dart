@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
+import '../../auth/application/admin_role_provider.dart';
 import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
@@ -51,6 +52,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -122,18 +124,19 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                               tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
                               onPressed: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add_shopping_cart),
-                              tooltip: 'Dodaj u korpu',
-                              onPressed: () async {
-                                await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
-                                  );
-                                }
-                              },
-                            ),
+                            if (!isAdmin)
+                              IconButton(
+                                icon: const Icon(Icons.add_shopping_cart),
+                                tooltip: 'Dodaj u korpu',
+                                onPressed: () async {
+                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
+                                    );
+                                  }
+                                },
+                              ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
