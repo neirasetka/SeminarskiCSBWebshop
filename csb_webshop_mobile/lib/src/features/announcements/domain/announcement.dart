@@ -23,12 +23,26 @@ class Announcement {
   final double? price;
   final String? color;
 
+  static int _toInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   factory Announcement.fromJson(Map<String, dynamic> json) {
     final String? typeValue = json['type'] as String?;
     final String segment = json['segment'] as String? ?? '';
     final String? publishedAtRaw = (json['publishedAtUtc'] ?? json['publishedAt']) as String?;
     return Announcement(
-      id: json['id'] as int,
+      id: _toInt(json['id'] ?? json['Id']),
       title: (json['title'] as String?) ?? '',
       body: (json['body'] as String?) ?? '',
       publishedAt: publishedAtRaw != null ? DateTime.parse(publishedAtRaw) : DateTime.now(),
@@ -36,7 +50,7 @@ class Announcement {
       segment: segment,
       launchDate: json['launchDate'] != null ? DateTime.tryParse(json['launchDate'] as String) : null,
       productName: json['productName'] as String?,
-      price: (json['price'] as num?)?.toDouble(),
+      price: _toDouble(json['price']),
       color: json['color'] as String?,
     );
   }

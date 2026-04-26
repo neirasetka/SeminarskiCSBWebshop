@@ -130,11 +130,18 @@ class AnnounceWinnerResult {
   });
 
   factory AnnounceWinnerResult.fromJson(Map<String, dynamic> json) {
+    int? toInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.tryParse('$value');
+    }
+
     return AnnounceWinnerResult(
       message: json['message'] as String? ?? 'Success',
       winnerName: json['winnerName'] as String?,
-      subscribersNotified: json['subscribersNotified'] as int? ?? 0,
-      newsItemId: json['newsItemId'] as int?,
+      subscribersNotified: toInt(json['subscribersNotified']) ?? 0,
+      newsItemId: toInt(json['newsItemId']),
     );
   }
 
