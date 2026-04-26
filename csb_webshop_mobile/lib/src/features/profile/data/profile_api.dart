@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -29,7 +30,15 @@ class ProfileApi {
           json.decode(response.body) as Map<String, dynamic>;
       return UserProfile.fromJson(jsonMap);
     }
-    throw Exception('Failed to load profile: ${response.statusCode}');
+    final String detail = _readApiErrorDetail(response.body);
+    if (kDebugMode) {
+      debugPrint(
+        'GET $_usersPath/$userId failed ${response.statusCode}: ${response.body}',
+      );
+    }
+    throw Exception(
+      'Failed to load profile (${response.statusCode}): $detail',
+    );
   }
 
   Future<UserProfile> updateMe({
@@ -49,23 +58,87 @@ class ProfileApi {
       'Surname': lastName,
       'Email': email,
       'UserName': userName,
+      'Phone': phone ?? '',
     };
-    if (phone != null && phone.isNotEmpty) {
-      body['Phone'] = phone;
-    }
     if (imageBase64 != null && imageBase64.isNotEmpty) {
-      body['Image'] = imageBase64;
+      body['Image'] = _stripDataUrlIfPresent(imageBase64);
     }
+    // PUT /api/Users/profile — vlastiti profil; /api/Users/{id} je Admin-only i šalje UserUpsertRequest.
     final http.Response response = await _apiClient.put(
-      '$_usersPath/$userId',
+      '$_usersPath/profile',
       body: json.encode(body),
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> jsonMap =
-          json.decode(response.body) as Map<String, dynamic>;
-      return UserProfile.fromJson(jsonMap);
+      try {
+        final Map<String, dynamic> jsonMap =
+            json.decode(response.body) as Map<String, dynamic>;
+        return UserProfile.fromJson(jsonMap);
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('updateMe: JSON parse / map failed: $e\n$st');
+          debugPrint('Response body: ${response.body}');
+        }
+        rethrow;
+      }
     }
-    throw Exception('Failed to update profile: ${response.statusCode}');
+    final String detail = _readApiErrorDetail(response.body);
+    if (kDebugMode) {
+      debugPrint(
+        'PUT $_usersPath/profile failed ${response.statusCode}: ${response.body}',
+      );
+    }
+    throw Exception(
+      'Failed to update profile (${response.statusCode}): $detail',
+    );
+  }
+
+  /// Čita poruku iz ASP.NET odgovora: `{"error":"..."}`, ValidationProblemDetails `errors`, ili `title`/`detail`.
+  static String _readApiErrorDetail(String body) {
+    final String trimmed = body.trim();
+    if (trimmed.isEmpty) {
+      return '(prazan odgovor)';
+    }
+    try {
+      final Object? decoded = json.decode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final Object? simple = decoded['error'];
+        if (simple != null && simple.toString().isNotEmpty) {
+          return simple.toString();
+        }
+        final Object? errors = decoded['errors'];
+        if (errors is Map<String, dynamic>) {
+          final List<String> parts = <String>[];
+          for (final MapEntry<String, dynamic> e in errors.entries) {
+            final Object? v = e.value;
+            if (v is List) {
+              for (final Object x in v) {
+                parts.add('${e.key}: $x');
+              }
+            } else if (v != null) {
+              parts.add('${e.key}: $v');
+            }
+          }
+          if (parts.isNotEmpty) {
+            return parts.join('; ');
+          }
+        }
+        final Object? detail = decoded['detail'];
+        if (detail != null && detail.toString().isNotEmpty) {
+          return detail.toString();
+        }
+        final Object? title = decoded['title'];
+        if (title != null && title.toString().isNotEmpty) {
+          return title.toString();
+        }
+      }
+    } catch (_) {
+      /* nije JSON */
+    }
+    const int maxLen = 500;
+    if (trimmed.length > maxLen) {
+      return '${trimmed.substring(0, maxLen)}…';
+    }
+    return trimmed;
   }
 
   Future<bool> isAdmin() async {
@@ -104,6 +177,15 @@ class ProfileApi {
       decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'],
     );
     return roles;
+  }
+
+  /// API očekuje čisti base64 u JSON-u za byte[] (ne data:image/...;base64,...).
+  static String _stripDataUrlIfPresent(String raw) {
+    final int comma = raw.indexOf(',');
+    if (comma != -1 && raw.toLowerCase().contains('base64')) {
+      return raw.substring(comma + 1).trim();
+    }
+    return raw.trim();
   }
 
   Future<int?> _getUserIdFromToken() async {

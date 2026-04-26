@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -47,6 +48,30 @@ namespace CSBWebshopSeminarski.Controllers
             public string Token { get; set; } = string.Empty;
             public DateTime ExpiresUtc { get; set; }
             public User User { get; set; } = null!;
+        }
+
+        /// <summary>
+        /// Prijavljeni korisnik ažurira vlastiti profil (ime, prezime, email, korisničko ime, telefon, slika).
+        /// Za razliku od PUT api/Users/{id}, ne zahtijeva ulogu Admin.
+        /// </summary>
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<ActionResult<User>> UpdateMyProfile([FromBody] UserProfileUpdateRequest request)
+        {
+            var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(idClaim) || !int.TryParse(idClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                return await _service.UpdateMyProfile(userId, request);
+            }
+            catch (ArgumentException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost("Token")]

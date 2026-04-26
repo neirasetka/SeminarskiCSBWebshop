@@ -159,6 +159,9 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
                 if (value == null || value.trim().isEmpty) {
                   return 'Ime je obavezno';
                 }
+                if (value.trim().length < 2) {
+                  return 'Ime mora imati najmanje 2 znaka';
+                }
                 return null;
               },
             ),
@@ -174,6 +177,9 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
               validator: (String? value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Prezime je obavezno';
+                }
+                if (value.trim().length < 2) {
+                  return 'Prezime mora imati najmanje 2 znaka';
                 }
                 return null;
               },

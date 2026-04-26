@@ -28,7 +28,11 @@ namespace CSBWebshopSeminarski.Mapper
 
             CreateMap<Users, User>()
                 .ForMember(d => d.UserRole, o => o.MapFrom(s => s.UserRoles));
-            CreateMap<Users, UserUpsertRequest>().ReverseMap();
+            CreateMap<Users, UserUpsertRequest>();
+            CreateMap<UserUpsertRequest, Users>()
+                .ForMember(d => d.Image, o => o.Condition((src, _, _, _) => src.Image != null && src.Image.Length > 0))
+                .ForMember(d => d.PasswordHash, o => o.Ignore())
+                .ForMember(d => d.PasswordSalt, o => o.Ignore());
 
             CreateMap<UserRoles, UserRole>()
                 .ForMember(d => d.Role, o => o.MapFrom(s => s.Roles));

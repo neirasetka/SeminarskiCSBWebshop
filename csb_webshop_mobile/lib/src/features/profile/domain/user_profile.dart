@@ -47,10 +47,23 @@ class UserProfile {
             json['ID'] ??
             0,
       ),
-      username: (json['UserName'] ?? json['username'] ?? '').toString(),
-      firstName: (json['Name'] ?? json['FirstName'] ?? json['firstName'] ?? '')
+      // API (.NET) po defaultu serijalizira camelCase: userName, name, surname …
+      username: (json['UserName'] ??
+              json['userName'] ??
+              json['username'] ??
+              '')
           .toString(),
-      lastName: (json['Surname'] ?? json['LastName'] ?? json['lastName'] ?? '')
+      firstName: (json['Name'] ??
+              json['name'] ??
+              json['FirstName'] ??
+              json['firstName'] ??
+              '')
+          .toString(),
+      lastName: (json['Surname'] ??
+              json['surname'] ??
+              json['LastName'] ??
+              json['lastName'] ??
+              '')
           .toString(),
       email: (json['Email'] ?? json['email'] ?? '').toString(),
       phone: (json['Phone'] ?? json['phone'])?.toString(),

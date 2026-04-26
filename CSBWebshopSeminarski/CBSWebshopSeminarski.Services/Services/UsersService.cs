@@ -83,6 +83,45 @@ namespace CBSWebshopSeminarski.Services.Services
 
             return _mapper.Map<User>(entity);
         }
+        public async Task<User> UpdateMyProfile(int userId, UserProfileUpdateRequest request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email && u.UserID != userId))
+            {
+                throw new InvalidOperationException("Email adresa je već registrirana.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.UserName == request.UserName && u.UserID != userId))
+            {
+                throw new InvalidOperationException("Korisničko ime je već zauzeto.");
+            }
+
+            var entity = await _context.Users.FindAsync(userId);
+            if (entity == null)
+            {
+                throw new ArgumentException($"User with ID {userId} not found.");
+            }
+
+            entity.Name = request.Name;
+            entity.Surname = request.Surname;
+            entity.Email = request.Email;
+            entity.UserName = request.UserName;
+            entity.Phone = request.Phone ?? string.Empty;
+            if (request.Image != null && request.Image.Length > 0)
+            {
+                entity.Image = request.Image;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var reloaded = await _context.Set<Users>()
+                .Where(i => i.UserID == userId)
+                .Include(i => i.UserRoles)
+                .ThenInclude(j => j.Roles)
+                .SingleAsync();
+
+            return _mapper.Map<User>(reloaded);
+        }
+
         public override async Task<User> Update(int ID, UserUpsertRequest request)
         {
             var entity = _context.Users.Find(ID);

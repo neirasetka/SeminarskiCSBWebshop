@@ -13,5 +13,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task<List<Belt>> GetLikedBelts(int ID, BeltSearchRequest request);
         Task<Belt> InsertLikedBelts(int ID, int BeltID);
         Task<Belt> DeleteLikedBelts(int ID, int BeltID);
+
+        Task<User> UpdateMyProfile(int userId, UserProfileUpdateRequest request);
     }
 }

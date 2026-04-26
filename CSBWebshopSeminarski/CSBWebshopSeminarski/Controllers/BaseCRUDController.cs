@@ -21,14 +21,15 @@ namespace CSBWebshopSeminarski.Controllers
             return await _service.Insert(request);
         }
 
-        [HttpPut("{ID}")]
+        // {ID:int} da literalni segmenti poput "profile" ne idu u ovaj endpoint (inače binding pada s 400).
+        [HttpPut("{ID:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<T> Update(int ID, TUpdate request)
         {
             return await _service.Update(ID, request);
         }
 
-        [HttpDelete("{ID}")]
+        [HttpDelete("{ID:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<bool> Delete(int ID)
         {
