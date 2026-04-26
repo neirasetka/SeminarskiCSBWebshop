@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_controller.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
@@ -206,9 +207,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<AuthSession?> sessionAsync = ref.watch(authControllerProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     final AsyncValue<UserProfile?> profileAsync = ref.watch(userProfileProvider);
     final AuthSession? session = sessionAsync.value;
     final UserProfile? profile = profileAsync.value;
+    final int cartPageIndex = 3;
+    final int profilePageIndex = isAdmin ? 3 : 4;
 
     final List<Widget> pages = <Widget>[
       // 0 - Home Menu
@@ -226,11 +230,14 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       const BagsListScreen(),
       // 2 - Kaiševi
       const BeltsListScreen(),
-      // 3 - Korpa
-      const CartScreen(),
-      // 4 - Profil
+      if (!isAdmin) ...<Widget>[
+        // 3 - Korpa
+        const CartScreen(),
+      ],
+      // Profil
       ProfileScreen(title: widget.title),
     ];
+    final int currentIndex = _index.clamp(0, pages.length - 1).toInt();
     final String welcomeName = profile?.firstName ?? session?.username ?? '';
     final String welcomeText = welcomeName.isNotEmpty ? 'Dobro došli, $welcomeName!' : 'Dobro došli!';
 
@@ -267,12 +274,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           ),
         ),
         actions: <Widget>[
-          // Korpa ikona
-          IconButton(
-            tooltip: 'Korpa',
-            icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () => _navigateToPage(3),
-          ),
+          if (!isAdmin)
+            IconButton(
+              tooltip: 'Korpa',
+              icon: const Icon(Icons.shopping_cart_outlined),
+              onPressed: () => _navigateToPage(cartPageIndex),
+            ),
           // User avatar - vodi na edit profile
           if (sessionAsync.isLoading && session == null)
             const Padding(
@@ -305,19 +312,19 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         ],
       ),
       body: IndexedStack(
-        index: _index,
+        index: currentIndex,
         children: pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
+        currentIndex: currentIndex,
         onTap: (int i) => setState(() => _index = i),
         type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Početna'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Torbe'),
-          BottomNavigationBarItem(icon: Icon(Icons.checkroom_outlined), label: 'Kaiševi'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Korpa'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Početna'),
+          const BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Torbe'),
+          const BottomNavigationBarItem(icon: Icon(Icons.checkroom_outlined), label: 'Kaiševi'),
+          if (!isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Korpa'),
+          const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
     );
@@ -350,7 +357,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     if (!mounted) return;
     final ThemeData theme = Theme.of(context);
     final AsyncValue<AuthSession?> sessionAsync = ref.read(authControllerProvider);
+    final bool isAdmin = ref.read(adminRoleProvider).valueOrNull ?? false;
     final AuthSession? session = sessionAsync.value;
+    final int profilePageIndex = isAdmin ? 3 : 4;
     
     await showModalBottomSheet<void>(
       context: context,
@@ -460,7 +469,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  setState(() => _index = 4);
+                  setState(() => _index = profilePageIndex);
                 },
               ),
               ListTile(
