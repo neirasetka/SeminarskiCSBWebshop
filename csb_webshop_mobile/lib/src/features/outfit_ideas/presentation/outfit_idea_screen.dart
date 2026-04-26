@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/admin_role_provider.dart';
@@ -73,7 +75,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
-        allowMultiple: false,
+        allowMultiple: true,
         withData: true,
       );
       if (result == null || result.files.isEmpty) return;
@@ -93,23 +95,30 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         }
       }
 
-      final PlatformFile file = result.files.first;
-      final Uint8List? bytes = file.bytes;
-      if (bytes == null || bytes.isEmpty) {
-        _showError('Ne mogu učitati sliku: ${file.name}');
-        return;
-      }
+      for (final PlatformFile file in result.files) {
+        Uint8List? bytes = file.bytes;
+        if ((bytes == null || bytes.isEmpty) &&
+            !kIsWeb &&
+            file.path != null &&
+            file.path!.isNotEmpty) {
+          bytes = await File(file.path!).readAsBytes();
+        }
 
-      final bool success =
-          await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
-      if (!success && mounted) {
-        _showError('Greška pri dodavanju slike: ${file.name}');
-        return;
+        if (bytes == null || bytes.isEmpty) {
+          _showError('Ne mogu učitati sliku: ${file.name}');
+          continue;
+        }
+
+        final bool success =
+            await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
+        if (!success && mounted) {
+          _showError('Greška pri dodavanju slike: ${file.name}');
+        }
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slika uspješno dodana!')),
+          const SnackBar(content: Text('Slike uspješno dodane!')),
         );
       }
     } catch (e) {
