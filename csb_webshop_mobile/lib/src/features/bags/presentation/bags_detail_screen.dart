@@ -11,27 +11,14 @@ import '../domain/bag.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
-class BagDetailScreen extends ConsumerStatefulWidget {
+class BagDetailScreen extends ConsumerWidget {
   const BagDetailScreen({super.key, required this.id});
 
   final int id;
 
   @override
-  ConsumerState<BagDetailScreen> createState() => _BagDetailScreenState();
-}
-
-class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bagDetailProvider.notifier).fetch(widget.id);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(id));
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     return Scaffold(
       appBar: AppBar(
@@ -74,7 +61,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
               Text(e.toString(), style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => ref.read(bagDetailProvider.notifier).fetch(widget.id),
+                onPressed: () => ref.invalidate(bagDetailProvider(id)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Pokušaj ponovno'),
               ),

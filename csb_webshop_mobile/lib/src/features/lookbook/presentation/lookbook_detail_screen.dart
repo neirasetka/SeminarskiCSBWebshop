@@ -8,27 +8,14 @@ import '../../bags/domain/bag.dart';
 import '../../outfit_ideas/presentation/outfit_idea_screen.dart';
 
 /// Lookbook detalj – prikaz torbe s mogućnošću otvaranja Outfit ideje i (za admine) uređivanja.
-class LookbookDetailScreen extends ConsumerStatefulWidget {
+class LookbookDetailScreen extends ConsumerWidget {
   const LookbookDetailScreen({super.key, required this.bagId});
 
   final int bagId;
 
   @override
-  ConsumerState<LookbookDetailScreen> createState() => _LookbookDetailScreenState();
-}
-
-class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(bagId));
 
     return Scaffold(
       body: bagAsync.when(
@@ -62,7 +49,7 @@ class _LookbookDetailScreenState extends ConsumerState<LookbookDetailScreen> {
                 Text(e.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () => ref.read(bagDetailProvider.notifier).fetch(widget.bagId),
+                  onPressed: () => ref.invalidate(bagDetailProvider(bagId)),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Pokušaj ponovo'),
                 ),

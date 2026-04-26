@@ -34,7 +34,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
   }
 
   Future<void> _loadData() async {
-    await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
+    ref.invalidate(bagDetailProvider(widget.bagId));
     ref.read(outfitIdeaProvider.notifier).clear();
     final AuthSession? session = ref.read(authControllerProvider).value;
     int? userId = session?.userId;
@@ -159,7 +159,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(widget.bagId));
     final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 

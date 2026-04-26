@@ -11,27 +11,14 @@ import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
 import '../../orders/application/cart_provider.dart';
 
-class BeltDetailScreen extends ConsumerStatefulWidget {
+class BeltDetailScreen extends ConsumerWidget {
   const BeltDetailScreen({super.key, required this.id});
 
   final int id;
 
   @override
-  ConsumerState<BeltDetailScreen> createState() => _BeltDetailScreenState();
-}
-
-class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(beltDetailProvider.notifier).fetch(widget.id);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(id));
     return Scaffold(
       appBar: AppBar(title: const Text('Detalji kaiša')),
       body: beltAsync.when(
@@ -51,7 +38,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
               Text(e.toString(), style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => ref.read(beltDetailProvider.notifier).fetch(widget.id),
+                onPressed: () => ref.invalidate(beltDetailProvider(id)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Pokušaj ponovno'),
               ),
