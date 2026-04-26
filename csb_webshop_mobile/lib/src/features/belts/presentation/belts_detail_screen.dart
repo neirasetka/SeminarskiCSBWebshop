@@ -9,6 +9,7 @@ import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt_type.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
 class BeltDetailScreen extends ConsumerWidget {
@@ -19,12 +20,13 @@ class BeltDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Belt> beltAsync = ref.watch(beltDetailProvider(id));
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(title: const Text('Detalji kaiša')),
       body: beltAsync.when(
         data: (Belt belt) => _BeltDetailBody(
           belt: belt,
-          isAdmin: false,
+          isAdmin: isAdmin,
           onEdit: null,
         ),
         loading: () => const Center(child: CircularProgressIndicator()),

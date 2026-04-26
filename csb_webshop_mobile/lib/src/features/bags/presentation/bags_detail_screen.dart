@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 
@@ -20,6 +21,7 @@ class BagDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(id));
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalji torbe'),
@@ -31,14 +33,16 @@ class BagDetailScreen extends ConsumerWidget {
             bag: bag,
             isFavorite: isFav,
             onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
-            onAddToCart: () async {
-              await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
-                );
-              }
-            },
+            onAddToCart: isAdmin
+                ? null
+                : () async {
+                    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),
+                      );
+                    }
+                  },
             onOutfitIdea: () {
               context.pushNamed(
                 'outfitIdea',
@@ -46,7 +50,7 @@ class BagDetailScreen extends ConsumerWidget {
                 queryParameters: <String, String>{'name': bag.name},
               );
             },
-            isAdmin: false,
+            isAdmin: isAdmin,
             onEdit: null,
           );
         },
@@ -78,7 +82,7 @@ class _BagDetailBody extends StatelessWidget {
     required this.bag,
     required this.isFavorite,
     required this.onToggleFavorite,
-    required this.onAddToCart,
+    this.onAddToCart,
     required this.onOutfitIdea,
     this.isAdmin = false,
     this.onEdit,
@@ -87,7 +91,7 @@ class _BagDetailBody extends StatelessWidget {
   final Bag bag;
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
-  final VoidCallback onAddToCart;
+  final VoidCallback? onAddToCart;
   final VoidCallback onOutfitIdea;
   final bool isAdmin;
   final VoidCallback? onEdit;
