@@ -1,66 +1,146 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/local_outfit_ideas_storage.dart';
+import '../data/outfit_ideas_api.dart';
 import '../domain/outfit_idea.dart';
 
-final Provider<LocalOutfitIdeasStorage> localOutfitIdeasStorageProvider =
-    Provider<LocalOutfitIdeasStorage>((Ref ref) => LocalOutfitIdeasStorage());
+final Provider<OutfitIdeasApi> outfitIdeasApiProvider =
+    Provider<OutfitIdeasApi>((Ref ref) => OutfitIdeasApi());
 
-/// Notifier for managing all outfit ideas.
-class OutfitIdeasNotifier extends AsyncNotifier<Map<int, OutfitIdea>> {
-  late final LocalOutfitIdeasStorage _storage;
+class OutfitIdeaState {
+  OutfitIdeaState({
+    this.outfitIdea,
+    this.isLoading = false,
+    this.error,
+  });
 
-  @override
-  Future<Map<int, OutfitIdea>> build() async {
-    _storage = ref.read(localOutfitIdeasStorageProvider);
-    return _storage.getAll();
-  }
+  final OutfitIdea? outfitIdea;
+  final bool isLoading;
+  final String? error;
 
-  Future<void> refresh() async {
-    state = const AsyncLoading<Map<int, OutfitIdea>>();
-    state = await AsyncValue.guard(() => _storage.getAll());
-  }
-
-  Future<void> addImages({
-    required int bagId,
-    required List<String> imagePaths,
-  }) async {
-    final Map<int, OutfitIdea> updated = await _storage.addImages(
-      bagId: bagId,
-      imagePaths: imagePaths,
+  OutfitIdeaState copyWith({
+    OutfitIdea? outfitIdea,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+    bool clearOutfitIdea = false,
+  }) {
+    return OutfitIdeaState(
+      outfitIdea: clearOutfitIdea ? null : (outfitIdea ?? this.outfitIdea),
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
     );
-    state = AsyncData<Map<int, OutfitIdea>>(updated);
-  }
-
-  Future<void> removeImage({
-    required int bagId,
-    required String imagePath,
-  }) async {
-    final Map<int, OutfitIdea> updated = await _storage.removeImage(
-      bagId: bagId,
-      imagePath: imagePath,
-    );
-    state = AsyncData<Map<int, OutfitIdea>>(updated);
-  }
-
-  Future<void> saveOutfitIdea(OutfitIdea idea) async {
-    final Map<int, OutfitIdea> updated = await _storage.saveForBag(idea);
-    state = AsyncData<Map<int, OutfitIdea>>(updated);
-  }
-
-  Future<void> removeForBag(int bagId) async {
-    final Map<int, OutfitIdea> updated = await _storage.removeForBag(bagId);
-    state = AsyncData<Map<int, OutfitIdea>>(updated);
   }
 }
 
-final AsyncNotifierProvider<OutfitIdeasNotifier, Map<int, OutfitIdea>>
-    outfitIdeasProvider =
-    AsyncNotifierProvider<OutfitIdeasNotifier, Map<int, OutfitIdea>>(
-        OutfitIdeasNotifier.new);
+class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
+  OutfitIdeaNotifier(this._api) : super(OutfitIdeaState());
 
-/// Provider to get outfit idea for a specific bag.
-final outfitIdeaForBagProvider = Provider.autoDispose.family<OutfitIdea?, int>((ref, bagId) {
-  final AsyncValue<Map<int, OutfitIdea>> allIdeas = ref.watch(outfitIdeasProvider);
-  return allIdeas.value?[bagId];
-});
+  final OutfitIdeasApi _api;
+
+  Future<void> loadForBag(int bagId, int? userId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final List<OutfitIdea> ideas = await _api.getAll(bagId: bagId);
+      OutfitIdea? idea;
+      if (userId != null) {
+        idea = ideas
+                .where((OutfitIdea o) => o.userId == userId)
+                .where((OutfitIdea o) => o.images.isNotEmpty)
+                .firstOrNull ??
+            ideas.where((OutfitIdea o) => o.userId == userId).firstOrNull;
+      }
+      idea ??= ideas
+              .where((OutfitIdea o) => o.images.isNotEmpty)
+              .firstOrNull ??
+          ideas.firstOrNull;
+      state = state.copyWith(
+        outfitIdea: idea,
+        isLoading: false,
+        clearOutfitIdea: idea == null,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
+  }
+
+  Future<OutfitIdea?> createOutfitIdea({
+    required int bagId,
+    required int userId,
+    String? title,
+    String? description,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final OutfitIdea idea = await _api.createForBag(
+        bagId: bagId,
+        userId: userId,
+        title: title,
+        description: description,
+      );
+      state = state.copyWith(outfitIdea: idea, isLoading: false);
+      return idea;
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+      return null;
+    }
+  }
+
+  Future<bool> addImage(Uint8List imageBytes, {String? caption}) async {
+    final OutfitIdea? current = state.outfitIdea;
+    if (current == null) return false;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final OutfitIdeaImage newImage = await _api.addImage(
+        outfitIdeaId: current.outfitIdeaId,
+        imageBytes: imageBytes,
+        caption: caption,
+        displayOrder: current.images.length,
+      );
+
+      state = state.copyWith(
+        outfitIdea: current.copyWith(
+          images: <OutfitIdeaImage>[...current.images, newImage],
+        ),
+        isLoading: false,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+      return false;
+    }
+  }
+
+  Future<bool> removeImage(int imageId) async {
+    final OutfitIdea? current = state.outfitIdea;
+    if (current == null) return false;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _api.removeImage(imageId);
+      state = state.copyWith(
+        outfitIdea: current.copyWith(
+          images: current.images
+              .where((OutfitIdeaImage img) => img.outfitIdeaImageId != imageId)
+              .toList(),
+        ),
+        isLoading: false,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+      return false;
+    }
+  }
+
+  void clear() {
+    state = OutfitIdeaState();
+  }
+}
+
+final StateNotifierProvider<OutfitIdeaNotifier, OutfitIdeaState>
+    outfitIdeaProvider = StateNotifierProvider<OutfitIdeaNotifier, OutfitIdeaState>(
+  (Ref ref) => OutfitIdeaNotifier(ref.read(outfitIdeasApiProvider)),
+);

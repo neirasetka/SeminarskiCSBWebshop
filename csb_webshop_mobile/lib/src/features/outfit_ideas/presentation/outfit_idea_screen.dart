@@ -1,13 +1,19 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/admin_role_provider.dart';
+import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/auth_session.dart';
+import '../../bags/application/bags_provider.dart';
+import '../../bags/domain/bag.dart';
+import '../../profile/application/user_profile_provider.dart';
 import '../application/outfit_ideas_provider.dart';
 import '../domain/outfit_idea.dart';
 
-/// Screen for managing outfit inspiration images for a specific bag.
 class OutfitIdeaScreen extends ConsumerStatefulWidget {
   const OutfitIdeaScreen({super.key, required this.bagId, this.bagName});
 
@@ -19,290 +25,342 @@ class OutfitIdeaScreen extends ConsumerStatefulWidget {
 }
 
 class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
-  /// Local list of image paths being edited (before save).
-  List<String> _imagePaths = <String>[];
-  bool _hasChanges = false;
-  bool _isLoading = false;
+  bool _isInitialized = false;
 
-  /// Tracks whether we've initialized _imagePaths from the provider.
-  /// This prevents overwriting user's local edits after initial load.
-  bool _isInitializedFromProvider = false;
-
-  /// Syncs _imagePaths from provider data when appropriate.
-  /// Only syncs if we haven't initialized yet and user hasn't made local changes.
-  /// [providerHasLoaded] indicates whether the async provider has finished loading.
-  void _syncFromProvider(OutfitIdea? existingIdea, {required bool providerHasLoaded}) {
-    if (_isInitializedFromProvider || _hasChanges) {
-      return;
-    }
-
-    if (!providerHasLoaded) {
-      // Provider is still loading, wait for it
-      return;
-    }
-
-    // Provider has loaded - mark as initialized regardless of whether there's data
-    _isInitializedFromProvider = true;
-
-    if (existingIdea != null && existingIdea.imagePaths.isNotEmpty) {
-      // Use addPostFrameCallback to avoid setState during build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _imagePaths = List<String>.from(existingIdea.imagePaths);
-          });
-        }
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadData);
   }
 
-  Future<void> _pickImages() async {
+  Future<void> _loadData() async {
+    await ref.read(bagDetailProvider.notifier).fetch(widget.bagId);
+    ref.read(outfitIdeaProvider.notifier).clear();
+    final AuthSession? session = ref.read(authControllerProvider).value;
+    int? userId = session?.userId;
+    if (userId == null && session != null) {
+      await ref.read(userProfileProvider.notifier).refreshProfile();
+      userId = ref.read(userProfileProvider).value?.id;
+    }
+
+    await ref.read(outfitIdeaProvider.notifier).loadForBag(widget.bagId, userId);
+    if (!mounted) return;
+    setState(() => _isInitialized = true);
+  }
+
+  Future<void> _pickAndAddImages() async {
+    final AuthSession? session = ref.read(authControllerProvider).value;
+    if (session == null) {
+      _showError('Morate biti prijavljeni');
+      return;
+    }
+
+    int? userId = session.userId ?? ref.read(userProfileProvider).value?.id;
+    if (userId == null) {
+      await ref.read(userProfileProvider.notifier).refreshProfile();
+      userId = ref.read(userProfileProvider).value?.id;
+    }
+    userId ??= ref.read(outfitIdeaProvider).outfitIdea?.userId;
+    if (userId == null || userId < 1) {
+      _showError('Korisnički ID nije dostupan. Pokušajte ponovo.');
+      return;
+    }
+    if (widget.bagId < 1) {
+      _showError('Neispravna torbica.');
+      return;
+    }
+
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        withData: true,
       );
+      if (result == null || result.files.isEmpty) return;
 
-      if (result != null && result.files.isNotEmpty) {
-        final List<String> newPaths = result.files
-            .where((PlatformFile f) => f.path != null)
-            .map((PlatformFile f) => f.path!)
-            .toList();
-
-        if (newPaths.isNotEmpty) {
-          setState(() {
-            _imagePaths.addAll(newPaths);
-            _hasChanges = true;
-          });
+      OutfitIdeaState state = ref.read(outfitIdeaProvider);
+      if (state.outfitIdea == null) {
+        final OutfitIdea? created = await ref
+            .read(outfitIdeaProvider.notifier)
+            .createOutfitIdea(
+              bagId: widget.bagId,
+              userId: userId,
+              title: 'Outfit inspiracija',
+            );
+        if (created == null) {
+          _showError(ref.read(outfitIdeaProvider).error ?? 'Greška pri kreiranju');
+          return;
         }
       }
-    } catch (e) {
+
+      for (final PlatformFile file in result.files) {
+        final Uint8List? bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) {
+          _showError('Ne mogu učitati sliku: ${file.name}');
+          continue;
+        }
+        final bool success =
+            await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
+        if (!success && mounted) {
+          _showError('Greška pri dodavanju slike: ${file.name}');
+        }
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška pri odabiru slika: $e')),
+          const SnackBar(content: Text('Slike uspješno dodane!')),
         );
       }
+    } catch (e) {
+      _showError('Greška pri odabiru slika: $e');
     }
   }
 
-  void _removeImage(int index) {
-    setState(() {
-      _imagePaths.removeAt(index);
-      _hasChanges = true;
-    });
-  }
-
-  Future<void> _saveOutfitIdea() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final OutfitIdea idea = OutfitIdea(
-        bagId: widget.bagId,
-        imagePaths: _imagePaths,
-      );
-      await ref.read(outfitIdeasProvider.notifier).saveOutfitIdea(idea);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outfit ideja sačuvana!')),
-        );
-        setState(() {
-          _hasChanges = false;
-        });
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška pri čuvanju: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<bool> _onWillPop() async {
-    if (!_hasChanges) return true;
-
-    final bool? result = await showDialog<bool>(
+  Future<void> _removeImage(int imageId) async {
+    final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Nesačuvane promjene'),
-        content: const Text('Imate nesačuvane promjene. Želite li napustiti bez čuvanja?'),
+        title: const Text('Ukloni sliku'),
+        content: const Text('Jeste li sigurni da želite ukloniti ovu sliku?'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Ostani'),
+            child: const Text('Odustani'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Napusti'),
+            child: const Text('Ukloni'),
           ),
         ],
       ),
     );
-    return result ?? false;
+    if (confirm != true) return;
+
+    final bool success = await ref.read(outfitIdeaProvider.notifier).removeImage(imageId);
+    if (!success && mounted) {
+      _showError('Greška pri uklanjanju slike');
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  static Uint8List _base64ToBytes(String dataUrl) {
+    const String base64Marker = 'base64,';
+    final int i = dataUrl.indexOf(base64Marker);
+    final String base64 =
+        i >= 0 ? dataUrl.substring(i + base64Marker.length) : dataUrl;
+    return Uint8List.fromList(base64Decode(base64));
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the provider to react to async data loading and external changes
-    final AsyncValue<Map<int, OutfitIdea>> ideasAsync = ref.watch(outfitIdeasProvider);
-    final OutfitIdea? existingIdea = ref.watch(outfitIdeaForBagProvider(widget.bagId));
+    final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider);
+    final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
-    // Check if the provider has finished loading (has data, not loading)
-    final bool providerHasLoaded = ideasAsync.hasValue;
-
-    // Sync from provider when data loads (only if not already initialized and no local changes)
-    _syncFromProvider(existingIdea, providerHasLoaded: providerHasLoaded);
-
-    // Show loading indicator while provider is loading for the first time
-    final bool isProviderLoading = ideasAsync.isLoading && !_isInitializedFromProvider;
-
-    return PopScope(
-      canPop: !_hasChanges,
-      onPopInvokedWithResult: (bool didPop, dynamic result) async {
-        if (didPop) return;
-        final bool shouldPop = await _onWillPop();
-        if (shouldPop && context.mounted) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: 'Nazad',
-            onPressed: () async {
-              if (_hasChanges) {
-                final bool shouldPop = await _onWillPop();
-                if (shouldPop && context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              } else {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          title: const Text('Outfit ideja'),
-          actions: <Widget>[
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              TextButton(
-                onPressed: _imagePaths.isEmpty ? null : _saveOutfitIdea,
-                child: const Text('Save'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Outfit ideja'),
+        actions: <Widget>[
+          if (outfitState.isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
-          ],
-        ),
-        body: _buildBody(isProviderLoading: isProviderLoading),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _pickImages,
-          tooltip: 'Dodaj slike',
-          child: const Icon(Icons.add),
-        ),
+            ),
+        ],
       ),
+      body: !_isInitialized
+          ? const Center(child: CircularProgressIndicator())
+          : _buildBody(bagAsync, outfitState, isAdmin),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: _pickAndAddImages,
+              tooltip: 'Dodaj slike',
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
-  Widget _buildBody({required bool isProviderLoading}) {
-    // Show loading indicator while waiting for provider to load initial data
-    if (isProviderLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+  Widget _buildBody(
+    AsyncValue<Bag> bagAsync,
+    OutfitIdeaState outfitState,
+    bool isAdmin,
+  ) {
+    if (outfitState.error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 8),
+              Text(outfitState.error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: outfitState.isLoading ? null : _loadData,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Pokušaj ponovo'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
-    if (_imagePaths.isEmpty) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final Widget bagInfo = _buildBagInfo(bagAsync, isAdmin);
+        final Widget images = _buildImagesGrid(outfitState, isAdmin);
+
+        if (constraints.maxWidth < 900) {
+          return Column(
+            children: <Widget>[
+              Expanded(flex: 2, child: bagInfo),
+              const Divider(height: 1),
+              Expanded(flex: 3, child: images),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(width: 320, child: bagInfo),
+            const VerticalDivider(width: 1),
+            Expanded(child: images),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBagInfo(AsyncValue<Bag> bagAsync, bool isAdmin) {
+    return bagAsync.when(
+      data: (Bag bag) {
+        final String? imageUrl = bag.displayImageUrl;
+        final Widget imageWidget = imageUrl != null && imageUrl.isNotEmpty
+            ? (imageUrl.startsWith('data:')
+                ? Image.memory(
+                    _base64ToBytes(imageUrl),
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  )
+                : Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  ))
+            : Container(
+                height: 180,
+                color: Colors.grey.shade200,
+                child: const Center(child: Icon(Icons.image, size: 48)),
+              );
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: imageWidget,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                bag.name,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              Text('${bag.price.toStringAsFixed(2)} KM'),
+              const SizedBox(height: 12),
+              Text(
+                isAdmin
+                    ? 'Kao admin možete dodati slike putem + dugmeta.'
+                    : 'Prikaz outfit inspiracije za ovu torbicu.',
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (Object error, _) => Center(child: Text('Greška: $error')),
+    );
+  }
+
+  Widget _buildImagesGrid(OutfitIdeaState outfitState, bool isAdmin) {
+    final List<OutfitIdeaImage> images = outfitState.outfitIdea?.images ?? <OutfitIdeaImage>[];
+    if (images.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(
-              Icons.image_outlined,
-              size: 80,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nema slika za inspiraciju',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey.shade600,
+            const Icon(Icons.image_outlined, size: 64),
+            const SizedBox(height: 12),
+            const Text('Nema slika za inspiraciju'),
+            if (isAdmin) ...<Widget>[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _pickAndAddImages,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: const Text('Dodaj slike'),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Dodajte slike pritiskom na + dugme',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
+            ],
           ],
         ),
       );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: 0.8,
       ),
-      itemCount: _imagePaths.length,
+      itemCount: images.length,
       itemBuilder: (BuildContext context, int index) {
+        final OutfitIdeaImage image = images[index];
         return _ImageCard(
-          imagePath: _imagePaths[index],
-          onRemove: () => _removeImage(index),
-          onTap: () => _showImagePreview(index),
+          image: image,
+          onTap: () => _showImagePreview(image),
+          onRemove: isAdmin ? () => _removeImage(image.outfitIdeaImageId) : null,
         );
       },
     );
   }
 
-  void _showImagePreview(int index) {
-    showDialog(
+  void _showImagePreview(OutfitIdeaImage image) {
+    if (image.imageBytes == null || image.imageBytes!.isEmpty) return;
+    showDialog<void>(
       context: context,
-      builder: (BuildContext context) => Dialog(
+      builder: (_) => Dialog(
         child: Stack(
           children: <Widget>[
             InteractiveViewer(
-              child: Image.file(
-                File(_imagePaths[index]),
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(Icons.broken_image, size: 48),
-                  ),
-                ),
-              ),
+              child: Image.memory(Uint8List.fromList(image.imageBytes!)),
             ),
             Positioned(
               top: 8,
               right: 8,
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black54,
-                ),
+                style: IconButton.styleFrom(backgroundColor: Colors.black54),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
@@ -315,58 +373,44 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
 class _ImageCard extends StatelessWidget {
   const _ImageCard({
-    required this.imagePath,
-    required this.onRemove,
+    required this.image,
     required this.onTap,
+    this.onRemove,
   });
 
-  final String imagePath;
-  final VoidCallback onRemove;
+  final OutfitIdeaImage image;
   final VoidCallback onTap;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
+    final bool hasImage = image.imageBytes != null && image.imageBytes!.isNotEmpty;
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          GestureDetector(
+          InkWell(
             onTap: onTap,
-            child: Image.file(
-              File(imagePath),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.broken_image, size: 32),
-                      SizedBox(height: 4),
-                      Text(
-                        'Slika nije dostupna',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
+            child: hasImage
+                ? Image.memory(Uint8List.fromList(image.imageBytes!), fit: BoxFit.cover)
+                : Container(
+                    color: Colors.grey.shade200,
+                    child: const Center(child: Icon(Icons.broken_image)),
                   ),
+          ),
+          if (onRemove != null)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: IconButton(
+                onPressed: onRemove,
+                icon: const Icon(Icons.delete, color: Colors.white),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.85),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            top: 4,
-            right: 4,
-            child: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.7),
-              ),
-              onPressed: onRemove,
-              tooltip: 'Ukloni sliku',
-            ),
-          ),
         ],
       ),
     );
