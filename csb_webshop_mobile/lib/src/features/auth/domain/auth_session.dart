@@ -49,12 +49,20 @@ class AuthSession {
         ? DateTime.tryParse(expiresString)?.toUtc() ?? JwtDecoder.getExpirationDate(token)
         : JwtDecoder.getExpirationDate(token);
     final Map<String, dynamic>? userJson = json['User'] as Map<String, dynamic>?;
-    final int? userId = _readInt(userJson?['UserID'] ?? userJson?['ID'] ?? userJson?['id']);
+    // Backend payload can vary in key casing depending on endpoint/serializer.
+    final int? userId = _readInt(
+      userJson?['UserID'] ?? userJson?['userId'] ?? userJson?['ID'] ?? userJson?['id'],
+    );
     final String? username = userJson?['UserName']?.toString();
     return AuthSession(
       token: token,
       expiresUtc: expiresUtc,
-      userId: userId ?? _readInt(_decodeClaim(token, <String>['nameid', 'sub'])),
+      userId: userId ?? _readInt(_decodeClaim(token, const <String>[
+        'nameid',
+        'sub',
+        'NameIdentifier',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+      ])),
       username: username ?? _decodeClaim(token, <String>['unique_name', 'name'])?.toString(),
       roles: _rolesFromToken(token),
     );
@@ -64,7 +72,12 @@ class AuthSession {
     return AuthSession(
       token: token,
       expiresUtc: JwtDecoder.getExpirationDate(token),
-      userId: _readInt(_decodeClaim(token, const <String>['nameid', 'sub'])),
+      userId: _readInt(_decodeClaim(token, const <String>[
+        'nameid',
+        'sub',
+        'NameIdentifier',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+      ])),
       username: _decodeClaim(token, const <String>['unique_name', 'name'])?.toString(),
       roles: _rolesFromToken(token),
     );
