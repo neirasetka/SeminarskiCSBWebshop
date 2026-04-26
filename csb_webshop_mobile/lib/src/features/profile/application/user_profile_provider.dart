@@ -30,6 +30,16 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
     state = await AsyncValue.guard(_load);
   }
 
+  Future<UserProfile?> ensureLoaded() async {
+    final UserProfile? current = state.valueOrNull;
+    if (current != null) {
+      return current;
+    }
+    state = const AsyncLoading<UserProfile?>();
+    state = await AsyncValue.guard(_load);
+    return state.valueOrNull;
+  }
+
   Future<void> updateProfile({
     required String firstName,
     required String lastName,

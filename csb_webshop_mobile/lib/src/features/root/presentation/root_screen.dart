@@ -484,18 +484,24 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 title: const Text('Uredi podatke'),
                 subtitle: const Text('Promijeni ime, telefon...'),
                 trailing: const Icon(Icons.chevron_right, size: 20),
-                enabled: profile != null,
-                onTap: profile == null
-                    ? null
-                    : () async {
-                        Navigator.of(sheetContext).pop();
-                        await Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => ProfileUpdateScreen(initial: profile),
-                          ),
-                        );
-                        await ref.read(userProfileProvider.notifier).refreshProfile();
-                      },
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  final UserProfile? profileForEdit =
+                      profile ?? await ref.read(userProfileProvider.notifier).ensureLoaded();
+                  if (!mounted) return;
+                  if (profileForEdit == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.')),
+                    );
+                    return;
+                  }
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ProfileUpdateScreen(initial: profileForEdit),
+                    ),
+                  );
+                  await ref.read(userProfileProvider.notifier).refreshProfile();
+                },
               ),
               ListTile(
                 leading: Container(

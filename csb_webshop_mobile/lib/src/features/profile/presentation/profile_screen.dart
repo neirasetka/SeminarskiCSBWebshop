@@ -58,23 +58,28 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: profileAsync.hasValue && profileAsync.value != null
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                final UserProfile? current = ref.read(userProfileProvider).value;
-                if (current == null) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => ProfileUpdateScreen(initial: current),
-                  ),
-                );
-                // After returning, refresh to ensure data is up to date
-                await ref.read(userProfileProvider.notifier).refreshProfile();
-              },
-              icon: const Icon(Icons.edit),
-              label: const Text('Uredi profil'),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final UserProfile? current = await ref.read(userProfileProvider.notifier).ensureLoaded();
+          if (current == null) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.')),
+              );
+            }
+            return;
+          }
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => ProfileUpdateScreen(initial: current),
+            ),
+          );
+          // After returning, refresh to ensure data is up to date
+          await ref.read(userProfileProvider.notifier).refreshProfile();
+        },
+        icon: const Icon(Icons.edit),
+        label: const Text('Uredi profil'),
+      ),
     );
   }
 }
