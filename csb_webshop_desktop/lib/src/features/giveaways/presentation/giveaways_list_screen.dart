@@ -418,9 +418,14 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
   Widget build(BuildContext context) {
     final GiveawaysApi api = ref.read(giveawaysApiProvider);
     final EdgeInsets insets = MediaQuery.viewInsetsOf(context);
+    final Size screenSize = MediaQuery.sizeOf(context);
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
+        constraints: BoxConstraints(
+          maxWidth: 560,
+          maxHeight: screenSize.height * 0.9,
+        ),
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + insets.bottom),
           child: Column(
