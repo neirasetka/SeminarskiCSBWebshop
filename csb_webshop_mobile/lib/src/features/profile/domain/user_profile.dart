@@ -27,16 +27,30 @@ class UserProfile {
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final String? avatarUrl = (json['AvatarUrl'] ?? json['avatarUrl'])
+        ?.toString();
+    final Object? imageData = json['Image'] ?? json['image'];
+    final String? avatarFromImage = imageData is String && imageData.isNotEmpty
+        ? 'data:image/png;base64,$imageData'
+        : null;
+
     return UserProfile(
       id: _toInt(
-        json['UserID'] ?? json['userID'] ?? json['userId'] ?? json['id'] ?? json['ID'] ?? 0,
+        json['UserID'] ??
+            json['userID'] ??
+            json['userId'] ??
+            json['id'] ??
+            json['ID'] ??
+            0,
       ),
       username: (json['UserName'] ?? json['username'] ?? '').toString(),
-      firstName: (json['Name'] ?? json['FirstName'] ?? json['firstName'] ?? '').toString(),
-      lastName: (json['Surname'] ?? json['LastName'] ?? json['lastName'] ?? '').toString(),
+      firstName: (json['Name'] ?? json['FirstName'] ?? json['firstName'] ?? '')
+          .toString(),
+      lastName: (json['Surname'] ?? json['LastName'] ?? json['lastName'] ?? '')
+          .toString(),
       email: (json['Email'] ?? json['email'] ?? '').toString(),
       phone: (json['Phone'] ?? json['phone'])?.toString(),
-      avatarUrl: (json['AvatarUrl'] ?? json['avatarUrl'])?.toString(),
+      avatarUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : avatarFromImage,
     );
   }
 
@@ -71,4 +85,3 @@ class UserProfile {
     return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
 }
-

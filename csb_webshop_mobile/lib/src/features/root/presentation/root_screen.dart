@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -206,9 +209,13 @@ class _RootScreenState extends ConsumerState<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<AuthSession?> sessionAsync = ref.watch(authControllerProvider);
+    final AsyncValue<AuthSession?> sessionAsync = ref.watch(
+      authControllerProvider,
+    );
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
-    final AsyncValue<UserProfile?> profileAsync = ref.watch(userProfileProvider);
+    final AsyncValue<UserProfile?> profileAsync = ref.watch(
+      userProfileProvider,
+    );
     final AuthSession? session = sessionAsync.value;
     final UserProfile? profile = profileAsync.value;
     final int cartPageIndex = 3;
@@ -222,9 +229,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         onGiveaway: () => Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
         ),
-        onLookbook: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const LookbookScreen()),
-        ),
+        onLookbook: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const LookbookScreen())),
       ),
       // 1 - Torbice
       const BagsListScreen(),
@@ -239,7 +246,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     ];
     final int currentIndex = _index.clamp(0, pages.length - 1).toInt();
     final String welcomeName = profile?.firstName ?? session?.username ?? '';
-    final String welcomeText = welcomeName.isNotEmpty ? 'Dobro došli, $welcomeName!' : 'Dobro došli!';
+    final String welcomeText = welcomeName.isNotEmpty
+        ? 'Dobro došli, $welcomeName!'
+        : 'Dobro došli!';
 
     return Scaffold(
       appBar: AppBar(
@@ -267,7 +276,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 widget.title,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -284,7 +295,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           if (sessionAsync.isLoading && session == null)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
-              child: SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2)),
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             )
           else if (session != null)
             Padding(
@@ -297,8 +312,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                   child: CircleAvatar(
                     radius: 18,
                     backgroundImage: _avatarImage(profile),
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer,
                     child: _shouldShowInitials(profile)
                         ? Text(
                             _avatarInitials(profile, session),
@@ -311,20 +330,33 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             ),
         ],
       ),
-      body: IndexedStack(
-        index: currentIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: currentIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (int i) => setState(() => _index = i),
         type: BottomNavigationBarType.fixed,
         items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Početna'),
-          const BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Torbe'),
-          const BottomNavigationBarItem(icon: Icon(Icons.checkroom_outlined), label: 'Kaiševi'),
-          if (!isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Korpa'),
-          const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Početna',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag_outlined),
+            label: 'Torbe',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.checkroom_outlined),
+            label: 'Kaiševi',
+          ),
+          if (!isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart_outlined),
+              label: 'Korpa',
+            ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profil',
+          ),
         ],
       ),
     );
@@ -333,12 +365,20 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   ImageProvider<Object>? _avatarImage(UserProfile? profile) {
     final String? url = profile?.avatarUrl;
     if (url == null || url.isEmpty) return null;
+    if (url.startsWith('data:image')) {
+      try {
+        final String base64Part = url.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return MemoryImage(bytes);
+      } catch (_) {
+        return null;
+      }
+    }
     return NetworkImage(url);
   }
 
   bool _shouldShowInitials(UserProfile? profile) {
-    final String? url = profile?.avatarUrl;
-    return url == null || url.isEmpty;
+    return _avatarImage(profile) == null;
   }
 
   String _avatarInitials(UserProfile? profile, AuthSession? session) {
@@ -346,7 +386,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     if (source.isEmpty) return '?';
     final List<String> parts = source.split(RegExp(r'\s+'));
     if (parts.length == 1) {
-      return parts.first.length >= 2 ? parts.first.substring(0, 2).toUpperCase() : parts.first[0].toUpperCase();
+      return parts.first.length >= 2
+          ? parts.first.substring(0, 2).toUpperCase()
+          : parts.first[0].toUpperCase();
     }
     final String first = parts.first.isNotEmpty ? parts.first[0] : '';
     final String last = parts.last.isNotEmpty ? parts.last[0] : '';
@@ -356,11 +398,13 @@ class _RootScreenState extends ConsumerState<RootScreen> {
   Future<void> _showUserMenu(UserProfile? profile) async {
     if (!mounted) return;
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<AuthSession?> sessionAsync = ref.read(authControllerProvider);
+    final AsyncValue<AuthSession?> sessionAsync = ref.read(
+      authControllerProvider,
+    );
     final bool isAdmin = ref.read(adminRoleProvider).valueOrNull ?? false;
     final AuthSession? session = sessionAsync.value;
     final int profilePageIndex = isAdmin ? 3 : 4;
-    
+
     await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -396,7 +440,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                       child: _shouldShowInitials(profile)
                           ? Text(
                               _avatarInitials(profile, session),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             )
                           : null,
                     ),
@@ -416,16 +463,21 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                           Text(
                             '@${profile?.username ?? session?.username ?? ''}',
                             style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
-                          if (profile?.email != null && profile!.email.isNotEmpty) ...<Widget>[
+                          if (profile?.email != null &&
+                              profile!.email.isNotEmpty) ...<Widget>[
                             const SizedBox(height: 2),
                             Text(
                               profile.email,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                             ),
                           ],
@@ -433,7 +485,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.shade100,
                         borderRadius: BorderRadius.circular(12),
@@ -441,11 +496,19 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.check_circle, size: 14, color: Colors.green.shade700),
+                          Icon(
+                            Icons.check_circle,
+                            size: 14,
+                            color: Colors.green.shade700,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Aktivan',
-                            style: TextStyle(fontSize: 11, color: Colors.green.shade700, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -462,7 +525,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.person_outline, size: 20, color: theme.colorScheme.onPrimaryContainer),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 20,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                 ),
                 title: const Text('Moj profil'),
                 subtitle: const Text('Pregled korisničkih podataka'),
@@ -479,7 +546,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.edit_outlined, size: 20, color: theme.colorScheme.onSecondaryContainer),
+                  child: Icon(
+                    Icons.edit_outlined,
+                    size: 20,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
                 ),
                 title: const Text('Uredi podatke'),
                 subtitle: const Text('Promijeni ime, telefon...'),
@@ -487,17 +558,25 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   final UserProfile? profileForEdit =
-                      profile ?? await ref.read(userProfileProvider.notifier).ensureLoaded();
+                      profile ??
+                      await ref
+                          .read(userProfileProvider.notifier)
+                          .ensureLoaded();
                   if (!mounted) return;
                   if (profileForEdit == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.')),
+                      const SnackBar(
+                        content: Text(
+                          'Profil trenutno nije dostupan. Pokušajte ponovo.',
+                        ),
+                      ),
                     );
                     return;
                   }
                   await Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => ProfileUpdateScreen(initial: profileForEdit),
+                      builder: (_) =>
+                          ProfileUpdateScreen(initial: profileForEdit),
                     ),
                   );
                   await ref.read(userProfileProvider.notifier).refreshProfile();
@@ -510,7 +589,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                     color: theme.colorScheme.tertiaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.receipt_long_outlined, size: 20, color: theme.colorScheme.onTertiaryContainer),
+                  child: Icon(
+                    Icons.receipt_long_outlined,
+                    size: 20,
+                    color: theme.colorScheme.onTertiaryContainer,
+                  ),
                 ),
                 title: const Text('Moje narudžbe'),
                 subtitle: const Text('Povijest kupovine'),
@@ -518,7 +601,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => const OrderHistoryScreen(),
+                    ),
                   );
                 },
               ),
@@ -530,9 +615,16 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                     color: Colors.red.shade100,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.logout, size: 20, color: Colors.red.shade700),
+                  child: Icon(
+                    Icons.logout,
+                    size: 20,
+                    color: Colors.red.shade700,
+                  ),
                 ),
-                title: Text('Odjava', style: TextStyle(color: Colors.red.shade700)),
+                title: Text(
+                  'Odjava',
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   ref.read(authControllerProvider.notifier).logout();
@@ -546,4 +638,3 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     );
   }
 }
-

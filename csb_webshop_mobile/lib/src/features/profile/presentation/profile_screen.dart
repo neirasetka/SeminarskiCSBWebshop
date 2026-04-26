@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,14 +18,17 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<UserProfile?> profileAsync = ref.watch(userProfileProvider);
+    final AsyncValue<UserProfile?> profileAsync = ref.watch(
+      userProfileProvider,
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(userProfileProvider.notifier).refreshProfile(),
+            onPressed: () =>
+                ref.read(userProfileProvider.notifier).refreshProfile(),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -34,7 +40,9 @@ class ProfileScreen extends ConsumerWidget {
       body: profileAsync.when(
         data: (UserProfile? profile) {
           if (profile == null) {
-            return const Center(child: Text('Niste prijavljeni ili profil nije dostupan.'));
+            return const Center(
+              child: Text('Niste prijavljeni ili profil nije dostupan.'),
+            );
           }
           return _ProfileDetails(profile: profile);
         },
@@ -47,10 +55,14 @@ class ProfileScreen extends ConsumerWidget {
               children: <Widget>[
                 const Text('Greška pri dohvaćanju profila'),
                 const SizedBox(height: 8),
-                Text(error.toString(), style: const TextStyle(color: Colors.red)),
+                Text(
+                  error.toString(),
+                  style: const TextStyle(color: Colors.red),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => ref.read(userProfileProvider.notifier).refreshProfile(),
+                  onPressed: () =>
+                      ref.read(userProfileProvider.notifier).refreshProfile(),
                   child: const Text('Pokušaj ponovno'),
                 ),
               ],
@@ -62,13 +74,16 @@ class ProfileScreen extends ConsumerWidget {
         data: (UserProfile? profile) => profile != null
             ? FloatingActionButton.extended(
                 onPressed: () async {
-                  final UserProfile? current =
-                      await ref.read(userProfileProvider.notifier).ensureLoaded();
+                  final UserProfile? current = await ref
+                      .read(userProfileProvider.notifier)
+                      .ensureLoaded();
                   if (!context.mounted) return;
                   if (current == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.'),
+                        content: Text(
+                          'Profil trenutno nije dostupan. Pokušajte ponovo.',
+                        ),
                       ),
                     );
                     return;
@@ -113,10 +128,8 @@ class _ProfileDetails extends StatelessWidget {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: theme.colorScheme.primaryContainer,
-                      backgroundImage: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
-                          ? NetworkImage(profile.avatarUrl!)
-                          : null,
-                      child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
+                      backgroundImage: _avatarImage(profile.avatarUrl),
+                      child: !_hasAvatar(profile.avatarUrl)
                           ? Text(
                               _initials(profile.fullName),
                               style: TextStyle(
@@ -137,7 +150,11 @@ class _ProfileDetails extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: theme.cardColor, width: 2),
                         ),
-                        child: const Icon(Icons.check, size: 14, color: Colors.white),
+                        child: const Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -152,7 +169,7 @@ class _ProfileDetails extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${profile.username}',
+                  profile.username,
                   style: TextStyle(
                     fontSize: 14,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -172,7 +189,9 @@ class _ProfileDetails extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   'Kontakt informacije',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               _InfoTile(
@@ -200,7 +219,9 @@ class _ProfileDetails extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   'Brze akcije',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               ListTile(
@@ -210,13 +231,18 @@ class _ProfileDetails extends StatelessWidget {
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.receipt_long, color: theme.colorScheme.onPrimaryContainer),
+                  child: Icon(
+                    Icons.receipt_long,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                 ),
                 title: const Text('Narudžbe'),
                 subtitle: const Text('Pogledajte historiju narudžbi'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                  MaterialPageRoute<void>(
+                    builder: (_) => const OrderHistoryScreen(),
+                  ),
                 ),
               ),
               const Divider(height: 1, indent: 72),
@@ -227,13 +253,18 @@ class _ProfileDetails extends StatelessWidget {
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.campaign_outlined, color: theme.colorScheme.onSecondaryContainer),
+                  child: Icon(
+                    Icons.campaign_outlined,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
                 ),
                 title: const Text('Najave i obavijesti'),
                 subtitle: const Text('Pratite novosti'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AnnouncementsListScreen(),
+                  ),
                 ),
               ),
             ],
@@ -243,11 +274,30 @@ class _ProfileDetails extends StatelessWidget {
     );
   }
 
+  ImageProvider<Object>? _avatarImage(String? avatarUrl) {
+    if (avatarUrl == null || avatarUrl.isEmpty) return null;
+    if (avatarUrl.startsWith('data:image')) {
+      try {
+        final String base64Part = avatarUrl.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return MemoryImage(bytes);
+      } catch (_) {
+        return null;
+      }
+    }
+    return NetworkImage(avatarUrl);
+  }
+
+  bool _hasAvatar(String? avatarUrl) {
+    return _avatarImage(avatarUrl) != null;
+  }
+
   String _initials(String name) {
     final List<String> parts = name.trim().split(RegExp(r"\s+"));
     final String first = parts.isNotEmpty ? parts.first : '';
     final String last = parts.length > 1 ? parts.last : '';
-    return (first.isNotEmpty ? first[0] : '') + (last.isNotEmpty ? last[0] : '');
+    return (first.isNotEmpty ? first[0] : '') +
+        (last.isNotEmpty ? last[0] : '');
   }
 }
 
@@ -266,7 +316,10 @@ class _InfoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
       subtitle: Text(value, style: const TextStyle(fontSize: 15)),
     );
   }

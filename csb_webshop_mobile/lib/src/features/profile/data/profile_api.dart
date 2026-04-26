@@ -10,8 +10,8 @@ import '../domain/user_profile.dart';
 
 class ProfileApi {
   ProfileApi({ApiClient? apiClient, SecureStorageService? secureStorage})
-      : _apiClient = apiClient ?? ApiClient(),
-        _secureStorage = secureStorage ?? SecureStorageService();
+    : _apiClient = apiClient ?? ApiClient(),
+      _secureStorage = secureStorage ?? SecureStorageService();
 
   final ApiClient _apiClient;
   final SecureStorageService _secureStorage;
@@ -25,7 +25,8 @@ class ProfileApi {
     }
     final http.Response response = await _apiClient.get('$_usersPath/$userId');
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> jsonMap =
+          json.decode(response.body) as Map<String, dynamic>;
       return UserProfile.fromJson(jsonMap);
     }
     throw Exception('Failed to load profile: ${response.statusCode}');
@@ -34,8 +35,10 @@ class ProfileApi {
   Future<UserProfile> updateMe({
     required String firstName,
     required String lastName,
+    required String email,
+    required String userName,
     String? phone,
-    String? avatarUrl,
+    String? imageBase64,
   }) async {
     final int? userId = await _getUserIdFromToken();
     if (userId == null) {
@@ -44,19 +47,22 @@ class ProfileApi {
     final Map<String, dynamic> body = <String, dynamic>{
       'Name': firstName,
       'Surname': lastName,
+      'Email': email,
+      'UserName': userName,
     };
     if (phone != null && phone.isNotEmpty) {
       body['Phone'] = phone;
     }
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      // Backend expects byte[] Image; if we only have URL, skip updating image
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      body['Image'] = imageBase64;
     }
     final http.Response response = await _apiClient.put(
       '$_usersPath/$userId',
       body: json.encode(body),
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> jsonMap =
+          json.decode(response.body) as Map<String, dynamic>;
       return UserProfile.fromJson(jsonMap);
     }
     throw Exception('Failed to update profile: ${response.statusCode}');
@@ -91,15 +97,21 @@ class ProfileApi {
 
     addRoleValue(decoded['role']);
     addRoleValue(decoded['roles']);
-    addRoleValue(decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
-    addRoleValue(decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role']);
+    addRoleValue(
+      decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
+    );
+    addRoleValue(
+      decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'],
+    );
     return roles;
   }
+
   Future<int?> _getUserIdFromToken() async {
     final String? token = await _secureStorage.getToken();
     if (token == null || token.isEmpty) return null;
     final Map<String, dynamic> decoded = JwtDecoder.decode(token);
-    final Object? sub = decoded['nameid'] ??
+    final Object? sub =
+        decoded['nameid'] ??
         decoded['sub'] ??
         decoded['NameIdentifier'] ??
         decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
@@ -107,4 +119,3 @@ class ProfileApi {
     return int.tryParse(sub.toString());
   }
 }
-
