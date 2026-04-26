@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,17 +125,14 @@ class _ProfileDetails extends StatelessWidget {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: theme.colorScheme.primaryContainer,
-                      backgroundImage: _avatarImage(profile.avatarUrl),
-                      child: !_hasAvatar(profile.avatarUrl)
-                          ? Text(
-                              _initials(profile.fullName),
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            )
-                          : null,
+                      child: Text(
+                        _initials(profile.fullName),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -272,24 +266,6 @@ class _ProfileDetails extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  ImageProvider<Object>? _avatarImage(String? avatarUrl) {
-    if (avatarUrl == null || avatarUrl.isEmpty) return null;
-    if (avatarUrl.startsWith('data:image')) {
-      try {
-        final String base64Part = avatarUrl.split(',').last;
-        final Uint8List bytes = base64Decode(base64Part);
-        return MemoryImage(bytes);
-      } catch (_) {
-        return null;
-      }
-    }
-    return NetworkImage(avatarUrl);
-  }
-
-  bool _hasAvatar(String? avatarUrl) {
-    return _avatarImage(avatarUrl) != null;
   }
 
   String _initials(String name) {

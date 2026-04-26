@@ -1,7 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,8 +20,6 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
   late final TextEditingController _lastNameController;
   late final TextEditingController _phoneController;
   bool _submitting = false;
-  Uint8List? _imageBytes;
-  String? _imageBase64;
 
   @override
   void initState() {
@@ -45,30 +39,6 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-      withData: true,
-    );
-    if (result != null &&
-        result.files.isNotEmpty &&
-        result.files.single.bytes != null) {
-      final Uint8List bytes = Uint8List.fromList(result.files.single.bytes!);
-      setState(() {
-        _imageBytes = bytes;
-        _imageBase64 = base64Encode(bytes);
-      });
-    }
-  }
-
-  void _removeImage() {
-    setState(() {
-      _imageBytes = null;
-      _imageBase64 = null;
-    });
-  }
-
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
@@ -83,7 +53,6 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
             phone: _phoneController.text.trim().isEmpty
                 ? null
                 : _phoneController.text.trim(),
-            imageBase64: _imageBase64,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -212,33 +181,6 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Profilna slika',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _AvatarPreview(imageBytes: _imageBytes, initial: widget.initial),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Odaberi sliku'),
-                ),
-                if (_imageBytes != null)
-                  TextButton.icon(
-                    onPressed: _removeImage,
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Ukloni'),
-                  ),
-              ],
-            ),
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: _submitting ? null : _onSubmit,
@@ -270,75 +212,5 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
     final String f = first.isNotEmpty ? first[0] : '';
     final String l = last.isNotEmpty ? last[0] : '';
     return (f + l).toUpperCase();
-  }
-}
-
-class _AvatarPreview extends StatelessWidget {
-  const _AvatarPreview({required this.imageBytes, required this.initial});
-
-  final Uint8List? imageBytes;
-  final UserProfile initial;
-
-  @override
-  Widget build(BuildContext context) {
-    const double size = 96;
-    final Widget placeholder = CircleAvatar(
-      radius: size / 2,
-      child: Text(
-        _initials(initial.fullName),
-        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-      ),
-    );
-
-    if (imageBytes != null && imageBytes!.isNotEmpty) {
-      return ClipOval(
-        child: Image.memory(
-          imageBytes!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-
-    final String? avatar = initial.avatarUrl;
-    if (avatar == null || avatar.isEmpty) return placeholder;
-
-    if (avatar.startsWith('data:image')) {
-      try {
-        final String base64Part = avatar.split(',').last;
-        final Uint8List bytes = base64Decode(base64Part);
-        return ClipOval(
-          child: Image.memory(
-            bytes,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, error, stackTrace) => placeholder,
-          ),
-        );
-      } catch (_) {
-        return placeholder;
-      }
-    }
-
-    return ClipOval(
-      child: Image.network(
-        avatar,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, error, stackTrace) => placeholder,
-      ),
-    );
-  }
-
-  String _initials(String name) {
-    final List<String> parts = name.trim().split(RegExp(r'\s+'));
-    final String first = parts.isNotEmpty ? parts.first : '';
-    final String last = parts.length > 1 ? parts.last : '';
-    final String raw =
-        (first.isNotEmpty ? first[0] : '') + (last.isNotEmpty ? last[0] : '');
-    return raw.isEmpty ? '?' : raw.toUpperCase();
   }
 }
