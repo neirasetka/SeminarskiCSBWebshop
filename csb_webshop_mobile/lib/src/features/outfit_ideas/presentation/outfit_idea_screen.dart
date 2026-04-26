@@ -1,13 +1,9 @@
-import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
 import '../../bags/application/bags_provider.dart';
@@ -50,108 +46,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     setState(() => _isInitialized = true);
   }
 
-  Future<void> _pickAndAddImages() async {
-    final AuthSession? session = ref.read(authControllerProvider).value;
-    if (session == null) {
-      _showError('Morate biti prijavljeni');
-      return;
-    }
-
-    int? userId = session.userId ?? ref.read(userProfileProvider).value?.id;
-    if (userId == null) {
-      await ref.read(userProfileProvider.notifier).refreshProfile();
-      userId = ref.read(userProfileProvider).value?.id;
-    }
-    userId ??= ref.read(outfitIdeaProvider).outfitIdea?.userId;
-    if (userId == null || userId < 1) {
-      _showError('Korisnički ID nije dostupan. Pokušajte ponovo.');
-      return;
-    }
-    if (widget.bagId < 1) {
-      _showError('Neispravna torbica.');
-      return;
-    }
-
-    try {
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        withData: true,
-      );
-      if (result == null || result.files.isEmpty) return;
-
-      OutfitIdeaState state = ref.read(outfitIdeaProvider);
-      if (state.outfitIdea == null) {
-        final OutfitIdea? created = await ref
-            .read(outfitIdeaProvider.notifier)
-            .createOutfitIdea(
-              bagId: widget.bagId,
-              userId: userId,
-              title: 'Outfit inspiracija',
-            );
-        if (created == null) {
-          _showError(ref.read(outfitIdeaProvider).error ?? 'Greška pri kreiranju');
-          return;
-        }
-      }
-
-      for (final PlatformFile file in result.files) {
-        Uint8List? bytes = file.bytes;
-        if ((bytes == null || bytes.isEmpty) &&
-            !kIsWeb &&
-            file.path != null &&
-            file.path!.isNotEmpty) {
-          bytes = await File(file.path!).readAsBytes();
-        }
-
-        if (bytes == null || bytes.isEmpty) {
-          _showError('Ne mogu učitati sliku: ${file.name}');
-          continue;
-        }
-
-        final bool success =
-            await ref.read(outfitIdeaProvider.notifier).addImage(bytes, caption: file.name);
-        if (!success && mounted) {
-          _showError('Greška pri dodavanju slike: ${file.name}');
-        }
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slike uspješno dodane!')),
-        );
-      }
-    } catch (e) {
-      _showError('Greška pri odabiru slika: $e');
-    }
-  }
-
-  Future<void> _removeImage(int imageId) async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Ukloni sliku'),
-        content: const Text('Jeste li sigurni da želite ukloniti ovu sliku?'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Odustani'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Ukloni'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
-
-    final bool success = await ref.read(outfitIdeaProvider.notifier).removeImage(imageId);
-    if (!success && mounted) {
-      _showError('Greška pri uklanjanju slike');
-    }
-  }
-
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +65,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<Bag> bagAsync = ref.watch(bagDetailProvider(widget.bagId));
     final OutfitIdeaState outfitState = ref.watch(outfitIdeaProvider);
-    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,21 +83,13 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
       ),
       body: !_isInitialized
           ? const Center(child: CircularProgressIndicator())
-          : _buildBody(bagAsync, outfitState, isAdmin),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              onPressed: _pickAndAddImages,
-              tooltip: 'Dodaj slike',
-              child: const Icon(Icons.add),
-            )
-          : null,
+          : _buildBody(bagAsync, outfitState),
     );
   }
 
   Widget _buildBody(
     AsyncValue<Bag> bagAsync,
     OutfitIdeaState outfitState,
-    bool isAdmin,
   ) {
     if (outfitState.error != null) {
       return Center(
@@ -230,8 +115,8 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final Widget bagInfo = _buildBagInfo(bagAsync, isAdmin);
-        final Widget images = _buildImagesGrid(outfitState, isAdmin);
+        final Widget bagInfo = _buildBagInfo(bagAsync);
+        final Widget images = _buildImagesGrid(outfitState);
 
         if (constraints.maxWidth < 900) {
           return Column(
@@ -255,7 +140,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     );
   }
 
-  Widget _buildBagInfo(AsyncValue<Bag> bagAsync, bool isAdmin) {
+  Widget _buildBagInfo(AsyncValue<Bag> bagAsync) {
     return bagAsync.when(
       data: (Bag bag) {
         final String? imageUrl = bag.displayImageUrl;
@@ -298,11 +183,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
               const SizedBox(height: 6),
               Text('${bag.price.toStringAsFixed(2)} KM'),
               const SizedBox(height: 12),
-              Text(
-                isAdmin
-                    ? 'Kao admin možete dodati slike putem + dugmeta.'
-                    : 'Prikaz outfit inspiracije za ovu torbicu.',
-              ),
+              const Text('Prikaz outfit inspiracije za ovu torbicu.'),
             ],
           ),
         );
@@ -312,7 +193,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     );
   }
 
-  Widget _buildImagesGrid(OutfitIdeaState outfitState, bool isAdmin) {
+  Widget _buildImagesGrid(OutfitIdeaState outfitState) {
     final List<OutfitIdeaImage> images = outfitState.outfitIdea?.images ?? <OutfitIdeaImage>[];
     if (images.isEmpty) {
       return Center(
@@ -322,14 +203,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
             const Icon(Icons.image_outlined, size: 64),
             const SizedBox(height: 12),
             const Text('Nema slika za inspiraciju'),
-            if (isAdmin) ...<Widget>[
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _pickAndAddImages,
-                icon: const Icon(Icons.add_photo_alternate),
-                label: const Text('Dodaj slike'),
-              ),
-            ],
           ],
         ),
       );
@@ -351,7 +224,6 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         return _ImageCard(
           image: image,
           onTap: () => _showImagePreview(image),
-          onRemove: isAdmin ? () => _removeImage(image.outfitIdeaImageId) : null,
         );
       },
     );
@@ -389,12 +261,10 @@ class _ImageCard extends StatelessWidget {
   const _ImageCard({
     required this.image,
     required this.onTap,
-    this.onRemove,
   });
 
   final OutfitIdeaImage image;
   final VoidCallback onTap;
-  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -415,18 +285,6 @@ class _ImageCard extends StatelessWidget {
                     child: const Center(child: Icon(Icons.broken_image)),
                   ),
           ),
-          if (onRemove != null)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: IconButton(
-                onPressed: onRemove,
-                icon: const Icon(Icons.delete, color: Colors.white),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withValues(alpha: 0.85),
-                ),
-              ),
-            ),
         ],
       ),
     );
