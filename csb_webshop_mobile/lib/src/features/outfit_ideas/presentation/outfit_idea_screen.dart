@@ -75,7 +75,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
-        allowMultiple: true,
+        allowMultiple: false,
         withData: true,
       );
       if (result == null || result.files.isEmpty) return;
