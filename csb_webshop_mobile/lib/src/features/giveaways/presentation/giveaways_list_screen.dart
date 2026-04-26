@@ -364,8 +364,12 @@ class _AdminActions extends ConsumerWidget {
                   try {
                     await api.notifyWinner(giveawayId);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text('Pobjednik obaviješten emailom')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Uspješno obaviješten korisnik'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                     }
                   } catch (e) {
                     if (context.mounted) {

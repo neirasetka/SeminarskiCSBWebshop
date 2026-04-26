@@ -104,7 +104,8 @@ class GiveawaysApi {
   Future<void> notifyWinner(int giveawayId) async {
     final http.Response response = await _apiClient.post('/api/Participants/$giveawayId/notify-winner');
     if (response.statusCode >= 200 && response.statusCode < 300) return;
-    throw Exception('Failed to notify winner: ${response.statusCode}');
+    final String? apiMessage = giveawayApiMessageFromJsonBody(response.body);
+    throw Exception(apiMessage ?? 'Failed to notify winner: ${response.statusCode}');
   }
 
   /// Announces the giveaway winner by:

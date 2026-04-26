@@ -128,7 +128,15 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (!string.IsNullOrWhiteSpace(winner.Email))
             {
-                await _emailService.SendEmailAsync(winner.Email, "Congratulations, You Are a Winner!", "You have won the giveaway!");
+                var winnerDisplayName = !string.IsNullOrWhiteSpace(winner.Name) ? winner.Name : "Dragi korisniče";
+                await _emailService.SendEmailAsync(
+                    winner.Email,
+                    "Čestitamo! Osvojili ste giveaway",
+                    $"{winnerDisplayName},\n\n" +
+                    "Čestitamo, osvojili ste torbicu kod CocoSunBags u našem darivanju!\n\n" +
+                    "Uskoro ćemo Vas kontaktirati sa svim detaljima.\n\n" +
+                    "Srdačan pozdrav,\nCocoSunBags tim"
+                );
             }
         }
 

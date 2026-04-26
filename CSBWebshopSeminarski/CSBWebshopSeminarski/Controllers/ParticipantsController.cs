@@ -45,7 +45,11 @@ namespace CSBWebshopSeminarski.Controllers
             var winner = await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value);
             if (winner == null) return NotFound("Winner not found");
             await _giveawaysService.NotifyWinnerAsync(winner);
-            return Ok();
+            return Ok(new
+            {
+                message = "Uspješno obaviješten korisnik",
+                winnerEmail = winner.Email
+            });
         }
     }
 }
