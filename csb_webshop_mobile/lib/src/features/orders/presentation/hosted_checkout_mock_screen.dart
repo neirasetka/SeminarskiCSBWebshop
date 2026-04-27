@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../environment.dart';
 import '../application/cart_provider.dart';
+import '../application/checkout_stripe_error_formatter.dart';
 import '../domain/order_models.dart';
 
 class HostedCheckoutMockScreen extends ConsumerStatefulWidget {
@@ -89,19 +90,51 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
       try {
         await cartNotifier.startCheckout();
         if (mounted) {
+          setState(() => _isProcessing = false);
           cartNotifier.resetCartAfterPayment();
           context.go('/checkout/success');
         }
         return;
-      } catch (e) {
+      } catch (e, st) {
+        logCheckoutFailure(e, st);
         if (mounted) {
+          setState(() => _isProcessing = false);
+          final String uiMsg = formatCheckoutErrorForUi(e);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Stripe plaćanje nije uspjelo. Koristi se simulacija.'),
-              backgroundColor: Colors.orange,
+              content: Text(uiMsg),
+              backgroundColor: Colors.orange.shade800,
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'Detalji',
+                textColor: Colors.white,
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (BuildContext ctx) => AlertDialog(
+                      title: const Text('Stripe / checkout'),
+                      content: SingleChildScrollView(
+                        child: SelectableText(
+                          '${formatCheckoutErrorForLog(e)}\n\n'
+                          'Provjeri: isti Stripe nalog (pk_ + sk_ na API), API URL '
+                          '(${EnvironmentConfig.apiBaseUrl}), Android rebuild nakon '
+                          'FlutterFragmentActivity + AppCompat teme.',
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Zatvori'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           );
         }
+        return;
       }
     }
 
@@ -124,6 +157,9 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
   Widget build(BuildContext context) {
     final AsyncValue<OrderModel?> cartAsync = ref.watch(cartProvider);
     final double totalAmount = cartAsync.value?.amount ?? 0.0;
+    final bool stripeConfigured =
+        EnvironmentConfig.stripePublishableKey.isNotEmpty &&
+            EnvironmentConfig.stripePublishableKey.startsWith('pk_');
 
     return Scaffold(
       appBar: AppBar(
@@ -158,6 +194,14 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
                   ),
                 ),
               ),
+              if (!stripeConfigured) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  'Nema valjanog Stripe pk_ ključa — ovo je samo demo forma, bez naplate i bez e-mail potvrde.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
+                ),
+              ],
               const SizedBox(height: 32),
 
               // Card Number

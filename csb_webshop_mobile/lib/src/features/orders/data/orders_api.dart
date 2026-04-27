@@ -93,7 +93,9 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to create payment intent: ${response.statusCode}');
+    final String detail = _parseErrorResponse(response);
+    final String tail = detail.isNotEmpty ? ': $detail' : (response.body.isNotEmpty ? ': ${response.body}' : '');
+    throw Exception('PaymentIntent API ${response.statusCode}$tail');
   }
 
   Future<void> updatePaymentStatus({
@@ -107,7 +109,9 @@ class OrdersApi {
     };
     final http.Response response = await _apiClient.patch('$_ordersPath/$orderId/payment-status', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) return;
-    throw Exception('Failed to update payment status: ${response.statusCode}');
+    final String detail = _parseErrorResponse(response);
+    final String tail = detail.isNotEmpty ? ': $detail' : (response.body.isNotEmpty ? ': ${response.body}' : '');
+    throw Exception('payment-status ${response.statusCode}$tail');
   }
 
   static String _parseErrorResponse(http.Response response) {

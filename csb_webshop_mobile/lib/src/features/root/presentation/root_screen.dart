@@ -18,6 +18,7 @@ import '../../profile/presentation/profile_screen.dart';
 import '../../profile/presentation/profile_update_screen.dart';
 import '../../lookbook/presentation/lookbook_screen.dart';
 import '../../favorites/presentation/favorites_screen.dart';
+import '../../recommendations/presentation/recommendations_screen.dart';
 
 class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({super.key, required this.title, this.initialIndex = 0});
@@ -138,6 +139,7 @@ class _HomeMenuScreen extends StatelessWidget {
     required this.onTorbice,
     required this.onKaisevi,
     required this.onFavoriti,
+    required this.onZaVas,
     required this.onGiveaway,
     required this.onLookbook,
   });
@@ -145,6 +147,7 @@ class _HomeMenuScreen extends StatelessWidget {
   final VoidCallback onTorbice;
   final VoidCallback onKaisevi;
   final VoidCallback onFavoriti;
+  final VoidCallback onZaVas;
   final VoidCallback onGiveaway;
   final VoidCallback onLookbook;
 
@@ -181,6 +184,12 @@ class _HomeMenuScreen extends StatelessWidget {
                   label: 'Favoriti',
                   color: Colors.pink,
                   onTap: onFavoriti,
+                ),
+                _MainMenuButton(
+                  icon: Icons.recommend_outlined,
+                  label: 'Za vas',
+                  color: colors.tertiary,
+                  onTap: onZaVas,
                 ),
                 _MainMenuButton(
                   icon: Icons.celebration_outlined,
@@ -234,6 +243,9 @@ class _RootScreenState extends ConsumerState<RootScreen> {
         onTorbice: () => _navigateToPage(1),
         onKaisevi: () => _navigateToPage(2),
         onFavoriti: () => _navigateToPage(3),
+        onZaVas: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const RecommendationsScreen()),
+        ),
         onGiveaway: () => Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const GiveawaysListScreen()),
         ),

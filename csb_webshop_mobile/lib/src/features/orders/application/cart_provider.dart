@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile/data/profile_api.dart';
@@ -122,6 +123,15 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       }
     } catch (_) {}
     final int amountInCents = (order.amount * 100).round();
+    // Stripe minimum za EUR je npr. 0,50 EUR (50); inače API/SDK može odbiti.
+    if (currency.toLowerCase() == 'eur' && amountInCents > 0 && amountInCents < 50) {
+      throw Exception(
+        'Iznos je premali za Stripe u EUR (${amountInCents}c). Povećaj korpu ili promijeni valutu na backendu.',
+      );
+    }
+    if (kDebugMode) {
+      debugPrint('[checkout] orderId=${order.id} amountCents=$amountInCents currency=$currency');
+    }
     final Map<String, dynamic> resp = await _api.createPaymentIntent(
       orderId: order.id,
       amountInCents: amountInCents,
@@ -129,6 +139,12 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       receiptEmail: receiptEmail,
     );
     final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
+    if (clientSecret.isEmpty) {
+      throw Exception('API nije vratio clientSecret za PaymentIntent.');
+    }
+    if (kDebugMode) {
+      debugPrint('[checkout] PaymentIntent clientSecret primljen (duljina=${clientSecret.length})');
+    }
     // Prepare and present PaymentSheet
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
@@ -136,7 +152,13 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
         merchantDisplayName: 'CSB Webshop',
       ),
     );
+    if (kDebugMode) {
+      debugPrint('[checkout] initPaymentSheet OK, presentPaymentSheet...');
+    }
     await Stripe.instance.presentPaymentSheet();
+    if (kDebugMode) {
+      debugPrint('[checkout] presentPaymentSheet OK, ažuriram status na serveru...');
+    }
     // Mark as paid
     await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
     // Refresh cart (should be empty/none if you move order out of Pending). For now reload state.

@@ -12,6 +12,7 @@ Future<void> main() async {
 
   if (EnvironmentConfig.stripePublishableKey.isNotEmpty) {
     Stripe.publishableKey = EnvironmentConfig.stripePublishableKey;
+    await Stripe.instance.applySettings();
   }
 
   // Defer native notification setup until after first frame so startup UI is not blocked.
