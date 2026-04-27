@@ -4,44 +4,56 @@ import '../domain/order_models.dart';
 import 'shipping_status_timeline.dart';
 
 class OrderDetailScreen extends StatelessWidget {
-  const OrderDetailScreen({super.key, required this.order});
+  const OrderDetailScreen({
+    super.key,
+    required this.order,
+    this.embedded = false,
+  });
 
   final OrderModel order;
+  /// Kada je true, vraća samo sadržaj bez [Scaffold] (npr. u admin detalju).
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
+    final Widget body = ListView(
+      padding: const EdgeInsets.all(16),
+      children: <Widget>[
+        _sectionHeader('Pregled'),
+        _kv('Broj narudžbe', order.orderNumber),
+        _kv('Datum', order.date.toLocal().toString()),
+        _kv('Status plaćanja', order.paymentStatus ?? 'N/A'),
+        _kv('Status isporuke', order.shippingStatus ?? 'N/A'),
+        const SizedBox(height: 8),
+        const Divider(),
+        _sectionHeader('Praćenje dostave'),
+        ShippingStatusTimeline(status: order.shippingStatus),
+        const SizedBox(height: 16),
+        _sectionHeader('Stavke'),
+        ...order.items.map((OrderItemModel item) => _itemTile(item)).toList(),
+        const Divider(height: 32),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+
+    if (embedded) {
+      return body;
+    }
+
     return BackConfirmationWrapper(
       child: Scaffold(
-      appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
-        title: Text('Narudžba ${order.orderNumber}'),
+        appBar: AppBar(
+          leading: buildBackButtonWithConfirmation(context),
+          title: Text('Narudžba ${order.orderNumber}'),
+        ),
+        body: body,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          _sectionHeader('Pregled'),
-          _kv('Broj narudžbe', order.orderNumber),
-          _kv('Datum', order.date.toLocal().toString()),
-          _kv('Status plaćanja', order.paymentStatus ?? 'N/A'),
-          _kv('Status isporuke', order.shippingStatus ?? 'N/A'),
-          const SizedBox(height: 8),
-          const Divider(),
-          _sectionHeader('Praćenje dostave'),
-          ShippingStatusTimeline(status: order.shippingStatus),
-          const SizedBox(height: 16),
-          _sectionHeader('Stavke'),
-          ...order.items.map((OrderItemModel item) => _itemTile(item)).toList(),
-          const Divider(height: 32),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    ),
     );
   }
 

@@ -17,6 +17,35 @@ namespace CSBWebshopSeminarski.Controllers
             _service = service;
         }
 
+        /// <summary>Pregled svih narudžbi (samo admin).</summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public override async Task<List<Order>> Get([FromQuery] OrderSearchRequest search)
+        {
+            return await _service.Get(search);
+        }
+
+        /// <summary>Puna narudžba sa stavkama; admin ili vlasnik narudžbe.</summary>
+        [HttpGet("{ID:int}")]
+        [Authorize]
+        public override async Task<Order> GetById(int ID)
+        {
+            var order = await _service.GetFullOrderByIdAsync(ID);
+            if (order == null)
+            {
+                throw new KeyNotFoundException("Narudžba nije pronađena.");
+            }
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != order.UserID)
+                {
+                    throw new UnauthorizedAccessException();
+                }
+            }
+            return order;
+        }
+
         [HttpPost("Create")]
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<Order> Create([FromBody] OrderUpsertRequest request)
@@ -47,8 +76,15 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult<List<Order>>> GetByUser([FromQuery] int userId)
         {
-            var orders = await _service.Get(new OrderSearchRequest());
-            var result = orders.Where(o => o.UserID == userId).OrderByDescending(o => o.Date).ToList();
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != userId)
+                {
+                    return Forbid();
+                }
+            }
+            var result = await _service.GetOrdersForUserAsync(userId);
             return Ok(result);
         }
 

@@ -147,6 +147,49 @@ class OrdersApi {
     throw Exception('Failed to get order: ${response.statusCode}');
   }
 
+  /// Sve narudžbe (samo admin token).
+  Future<List<Map<String, dynamic>>> listAllOrders({String? orderNumberPrefix}) async {
+    final String q = orderNumberPrefix != null && orderNumberPrefix.trim().isNotEmpty
+        ? '?OrderNumber=${Uri.encodeQueryComponent(orderNumberPrefix.trim())}'
+        : '';
+    final http.Response response = await _apiClient.get('$_ordersPath$q');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
+      return jsonList.cast<Map<String, dynamic>>();
+    }
+    final String errorDetail = _parseErrorResponse(response);
+    final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'GET /Orders (admin) nije uspio$extra',
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
+  }
+
+  /// Postavlja status isporuke (npr. Shipped). Samo admin na API-ju.
+  Future<void> updateShippingStatus({
+    required int orderId,
+    required String status,
+    String? message,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'status': status,
+      if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+    };
+    final http.Response response = await _apiClient.patch(
+      '/api/orders/$orderId/shipping/status',
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    final String errorDetail = _parseErrorResponse(response);
+    final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'PATCH shipping/status (orderId=$orderId) nije uspio$extra',
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
+  }
+
   Future<void> updatePaymentStatus({
     required int orderId,
     required String status,

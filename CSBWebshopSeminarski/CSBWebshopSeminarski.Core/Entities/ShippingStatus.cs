@@ -9,6 +9,8 @@ namespace CSBWebshopSeminarski.Core.Entities
         OutForDelivery = 4,
         Delivered = 5,
         Returned = 6,
-        Cancelled = 7
+        Cancelled = 7,
+        /// <summary>Admin je započeo obradu narudžbe (prije predaje kuriru).</summary>
+        Processing = 8
     }
 }

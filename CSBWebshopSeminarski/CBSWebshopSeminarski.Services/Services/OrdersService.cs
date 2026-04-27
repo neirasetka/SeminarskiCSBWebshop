@@ -30,33 +30,44 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<List<Order>> Get(OrderSearchRequest request)
         {
-            var query = _context.Orders.
-               Include(z => z.User)
-               .AsQueryable();
+            var query = _context.Orders
+                .Include(o => o.User)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request?.OrderNumber))
             {
                 query = query.Where(x => x.OrderNumber.StartsWith(request.OrderNumber));
             }
 
-            var list = await query.ToListAsync();
+            var list = await query
+                .OrderByDescending(x => x.Date)
+                .ToListAsync();
 
-            List<Orders> result = new List<Orders>();
+            return _mapper.Map<List<Order>>(list);
+        }
 
-            foreach (var item in list)
-            {
-                Orders newList = new Orders();
+        public async Task<List<Order>> GetOrdersForUserAsync(int userId)
+        {
+            var list = await _context.Orders
+                .Include(o => o.User)
+                .Where(o => o.UserID == userId)
+                .OrderByDescending(o => o.Date)
+                .ToListAsync();
 
-                newList.OrderNumber = item.OrderNumber;
-                newList.Date = item.Date;
-                newList.Price = item.Price;
-                newList.UserID = item.User.UserID;
-                newList.OrderID = item.OrderID;
+            return _mapper.Map<List<Order>>(list);
+        }
 
-                result.Add(newList);
-            }
+        public async Task<Order?> GetFullOrderByIdAsync(int orderId)
+        {
+            var entity = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Bag)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Belt)
+                .FirstOrDefaultAsync(o => o.OrderID == orderId);
 
-            return _mapper.Map<List<Order>>(result);
+            return entity == null ? null : _mapper.Map<Order>(entity);
         }
 
         public override async Task<Order> Insert(OrderUpsertRequest request)

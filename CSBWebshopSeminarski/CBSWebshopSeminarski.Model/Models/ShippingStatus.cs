@@ -9,6 +9,7 @@ namespace CBSWebshopSeminarski.Model.Models
         OutForDelivery = 4,
         Delivered = 5,
         Returned = 6,
-        Cancelled = 7
+        Cancelled = 7,
+        Processing = 8
     }
 }

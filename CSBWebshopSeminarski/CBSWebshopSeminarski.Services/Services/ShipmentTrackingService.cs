@@ -29,7 +29,8 @@ namespace CBSWebshopSeminarski.Services.Services
             order.TrackingNumber = request.TrackingNumber;
             order.EstimatedDeliveryDate = request.EstimatedDeliveryDate;
 
-            if (order.ShippingStatus == ShippingStatusEntity.Pending)
+            if (order.ShippingStatus == ShippingStatusEntity.Pending
+                || order.ShippingStatus == ShippingStatusEntity.Processing)
             {
                 order.ShippingStatus = ShippingStatusEntity.Shipped;
                 order.LastStatusUpdate = DateTime.UtcNow;

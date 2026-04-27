@@ -16,7 +16,19 @@ namespace CSBWebshopSeminarski.Filters
             var isDev = env?.IsDevelopment() ?? false;
             string message;
 
-            if (context.Exception is UserException || context.Exception is InvalidOperationException)
+            if (context.Exception is KeyNotFoundException)
+            {
+                message = context.Exception.Message;
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
+            else if (context.Exception is UnauthorizedAccessException)
+            {
+                message = string.IsNullOrWhiteSpace(context.Exception.Message)
+                    ? "Pristup odbijen."
+                    : context.Exception.Message;
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            }
+            else if (context.Exception is UserException || context.Exception is InvalidOperationException)
             {
                 message = context.Exception.Message;
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;

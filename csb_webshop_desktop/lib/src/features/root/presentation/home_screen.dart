@@ -41,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Najave', route: '/announcement/new'),
       if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Giveaway', route: '/giveaways/admin'),
       if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Izvještaji', route: '/reports'),
+      if (isAdmin) const _NavShortcut(icon: Icons.receipt_long_outlined, label: 'Narudžbe', route: '/admin/narudzbe'),
     ];
 
     return Scaffold(

@@ -225,6 +225,7 @@ namespace CBSWebshopSeminarski.Services.Services
         private static readonly Dictionary<ShippingStatusEntity, string> ShippingStatusLabels = new()
         {
             { ShippingStatusEntity.Pending, "Kreirano" },
+            { ShippingStatusEntity.Processing, "Obrada narudžbe" },
             { ShippingStatusEntity.Shipped, "Poslano" },
             { ShippingStatusEntity.InTransit, "U tranzitu" },
             { ShippingStatusEntity.AtCustoms, "Na carini" },

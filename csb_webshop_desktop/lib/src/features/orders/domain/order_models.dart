@@ -48,6 +48,7 @@ class OrderModel {
     required this.items,
     this.paymentStatus,
     this.shippingStatus,
+    this.userUserName,
   });
 
   final int id;
@@ -58,6 +59,8 @@ class OrderModel {
   final List<OrderItemModel> items;
   final String? paymentStatus;
   final String? shippingStatus;
+  /// Kupac (korisničko ime) kada API vrati [UserUserName].
+  final String? userUserName;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final List<OrderItemModel> items = <OrderItemModel>[];
@@ -80,6 +83,7 @@ class OrderModel {
       items: items,
       paymentStatus: (json['PaymentStatus'] ?? json['paymentStatus'])?.toString(),
       shippingStatus: (json['ShippingStatus'] ?? json['shippingStatus'])?.toString(),
+      userUserName: (json['UserUserName'] ?? json['userUserName'])?.toString(),
     );
   }
 }
