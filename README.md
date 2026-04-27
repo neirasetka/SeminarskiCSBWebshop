@@ -1,53 +1,47 @@
 # SeminarskiCSBWebshop
 
-## CSB Webshop — Pokretanje aplikacije
+## CSB Webshop — Starting the app
 
-### Docker (backend/infrastruktura)
-U direktoriju gdje se nalazi projekat pokrenite sljedece naredbe:
+### Docker
+Run the following commands in the directory where the project is located:
 
 ```bash
 docker-compose build
 docker-compose up
 ```
 
-### Backend (ASP.NET Core API)
-Preduslov: SQL Server (lokalni ili Express). Podesite connection string u
-`CSBWebshopSeminarski/CSBWebshopSeminarski/appsettings.json` po potrebi.
-
-```bash
-cd CSBWebshopSeminarski
-dotnet restore
-dotnet run --project CSBWebshopSeminarski/CSBWebshopSeminarski.csproj
-```
-
-API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
-
-### Desktop klijent (Windows)
-- Prijava:
+### Desktop user (Windows)
   - username: admin
   - password: Admin123!
-- Pokretanje aplikacije:
-
-```bash
-cd csb_webshop_desktop
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:5265 -d windows
-```
-
-### Mobilni klijent (Android Emulator)
-- Prijava:
+ 
   - username: buyer
   - password: Buyer123!
-- Pokretanje aplikacije:
+    
+- Starting the app:
+
+If you want to start desktop application using dart define
+flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api -d windows
+
+### Mobile user
+  - username: buyer
+  - password: Buyer123!
+ 
+  - username: admin
+  - password: Admin123!
+ 
+  These are default mobile users. You can create your own by clicking register button.
+  
+- Starting the app:
 
 ```bash
-cd csb_webshop_mobile
 flutter pub get
-flutter emulators --launch "Pixel 2 API 35"
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
+flutter emulators --launch Medium_Phone_API_36.1
+flutter run
 ```
+If you want to start application using dart define
+flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api
 
-### Testna kreditna kartica (Stripe Test mode)
-- Broj kartice: **4242 4242 4242 4242**
-- Datum isteka: bilo koji budući datum (npr. 12/34)
-- CVC: bilo koje 3 cifre
+### Test credit card(Stripe Test mode)
+- Card number: **4242 4242 4242 4242**
+- Expiry date: any future date (for example: 12/34)
+- CVC: any 3 numbers
