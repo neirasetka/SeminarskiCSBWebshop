@@ -15,6 +15,7 @@ import '../features/orders/presentation/payment_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
 import '../features/root/presentation/root_screen.dart';
 import '../features/root/presentation/home_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
 import '../features/events/presentation/event_detail_screen.dart';
 import '../features/giveaways/presentation/giveaways_list_screen.dart';
 import '../features/lookbook/presentation/lookbook_screen.dart';
@@ -108,6 +109,16 @@ final GoRouter appRouter = GoRouter(
           name: 'cart',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: CartScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'profil',
+          name: 'profil',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: ProfileScreen(
+              title: 'Moj profil',
+              showBackToHome: true,
+            ),
           ),
         ),
         GoRoute(

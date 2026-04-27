@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
@@ -9,11 +10,17 @@ import '../../announcements/presentation/announcements_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/auth_session.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key, required this.title});
+  const ProfileScreen({
+    super.key,
+    required this.title,
+    this.showBackToHome = false,
+  });
 
   final String title;
+  final bool showBackToHome;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,6 +28,19 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
+        leading: showBackToHome
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Natrag na početnu',
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
+              )
+            : null,
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -38,7 +58,10 @@ class ProfileScreen extends ConsumerWidget {
           if (profile == null) {
             return const Center(child: Text('Niste prijavljeni ili profil nije dostupan.'));
           }
-          return _ProfileDetails(profile: profile);
+          return _ProfileDetails(
+            profile: profile,
+            session: ref.watch(authControllerProvider).value,
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object error, StackTrace stackTrace) => Center(
@@ -60,70 +83,192 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: profileAsync.hasValue && profileAsync.value != null
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                final UserProfile? current = ref.read(userProfileProvider).value;
-                if (current == null) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => ProfileUpdateScreen(initial: current),
-                  ),
-                );
-                // After returning, refresh to ensure data is up to date
-                await ref.read(userProfileProvider.notifier).refreshProfile();
-              },
-              icon: const Icon(Icons.edit),
-              label: const Text('Uredi profil'),
-            )
-          : null,
+      floatingActionButton: profileAsync.maybeWhen(
+        data: (UserProfile? profile) => profile != null
+            ? FloatingActionButton.extended(
+                onPressed: () async {
+                  final UserProfile? current = await ref.read(userProfileProvider.notifier).ensureLoaded();
+                  if (!context.mounted) return;
+                  if (current == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profil trenutno nije dostupan. Pokušajte ponovo.'),
+                      ),
+                    );
+                    return;
+                  }
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => ProfileUpdateScreen(initial: current),
+                    ),
+                  );
+                  await ref.read(userProfileProvider.notifier).refreshProfile();
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Uredi profil'),
+              )
+            : null,
+        orElse: () => null,
+      ),
     );
   }
 }
 
 class _ProfileDetails extends StatelessWidget {
-  const _ProfileDetails({required this.profile});
+  const _ProfileDetails({required this.profile, this.session});
 
   final UserProfile profile;
+  final AuthSession? session;
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     final Widget adminSection = _AdminActions();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        Center(
-          child: CircleAvatar(
-            radius: 48,
-            backgroundImage: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
-                ? NetworkImage(profile.avatarUrl!)
-                : null,
-            child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
-                ? Text(
-                    _initials(profile.fullName),
-                    style: const TextStyle(fontSize: 24),
-                  )
-                : null,
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: <Widget>[
+                Stack(
+                  children: <Widget>[
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      child: Text(
+                        _initials(_initialsSource(profile, session)),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.cardColor, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  profile.fullName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  profile.username,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 24),
-        _infoTile(title: 'Ime i prezime', value: profile.fullName),
-        _infoTile(title: 'Email', value: profile.email),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+        const SizedBox(height: 16),
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Kontakt informacije',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              _InfoTile(
+                icon: Icons.email_outlined,
+                title: 'Email',
+                value: profile.email,
+              ),
+              if (profile.phone != null && profile.phone!.isNotEmpty)
+                _InfoTile(
+                  icon: Icons.phone_outlined,
+                  title: 'Telefon',
+                  value: profile.phone!,
+                ),
+              const SizedBox(height: 8),
+            ],
           ),
-          icon: const Icon(Icons.receipt_long),
-          label: const Text('Moje narudžbe'),
         ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+        const SizedBox(height: 16),
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Brze akcije',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.receipt_long,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                title: const Text('Narudžbe'),
+                subtitle: const Text('Pogledajte historiju narudžbi'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                ),
+              ),
+              const Divider(height: 1, indent: 72),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.campaign_outlined,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+                ),
+                title: const Text('Najave i obavijesti'),
+                subtitle: const Text('Pratite novosti'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AnnouncementsListScreen()),
+                ),
+              ),
+            ],
           ),
-          icon: const Icon(Icons.campaign_outlined),
-          label: const Text('Najave i obavijesti'),
         ),
         const SizedBox(height: 8),
         adminSection,
@@ -131,18 +276,50 @@ class _ProfileDetails extends StatelessWidget {
     );
   }
 
-  String _initials(String name) {
-    final List<String> parts = name.trim().split(RegExp(r"\s+"));
-    final String first = parts.isNotEmpty ? parts.first : '';
-    final String last = parts.length > 1 ? parts.last : '';
-    return (first.isNotEmpty ? first[0] : '') + (last.isNotEmpty ? last[0] : '');
+  String _initialsSource(UserProfile profile, AuthSession? session) {
+    String source = profile.fullName.trim();
+    if (source.isEmpty) source = profile.username.trim();
+    if (source.isEmpty) source = profile.email.trim();
+    if (source.isEmpty) source = (session?.username ?? '').trim();
+    return source;
   }
 
-  Widget _infoTile({required String title, required String value}) {
+  String _initials(String name) {
+    final String source = name.trim();
+    if (source.isEmpty) return '?';
+    final List<String> parts = source.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      final String p = parts.first;
+      if (p.isEmpty) return '?';
+      return p.length >= 2 ? p.substring(0, 2).toUpperCase() : p[0].toUpperCase();
+    }
+    final String first = parts.first.isNotEmpty ? parts.first[0] : '';
+    final String last = parts.last.isNotEmpty ? parts.last[0] : '';
+    final String two = (first + last).toUpperCase();
+    return two.isNotEmpty ? two : '?';
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16)),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
+      subtitle: Text(value, style: const TextStyle(fontSize: 15)),
     );
   }
 }
@@ -171,8 +348,7 @@ class _AdminActions extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }
-

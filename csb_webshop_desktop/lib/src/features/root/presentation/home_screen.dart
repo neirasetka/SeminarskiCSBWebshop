@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/auth_session.dart';
 import '../../bags/domain/bag.dart';
 import '../../belts/domain/belt.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../../recommendations/application/recommendations_provider.dart';
-import '../../reports/application/bestselling_bags_provider.dart';
 import 'info_panel.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -25,7 +25,10 @@ class HomeScreen extends ConsumerWidget {
     final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
     final bool isAdmin = isAdminAsync.value ?? false;
 
-    // Base shortcuts for all users
+    final AsyncValue<AuthSession?> authState = ref.watch(authControllerProvider);
+    final bool isLoggedIn = authState.value?.userId != null && authState.value!.userId! > 0;
+
+    // Base shortcuts for all users (kupci nakon prijave ostaju na `/` — dodaj `/profil` jer nemaju RootScreen donju traku)
     final List<_NavShortcut> shortcuts = <_NavShortcut>[
       const _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
       const _NavShortcut(icon: Icons.straighten, label: 'Kaiševi', route: '/kaisevi'),
@@ -34,14 +37,11 @@ class HomeScreen extends ConsumerWidget {
       // Favoriti i Korpa samo za buyere, ne za admine
       if (!isAdmin) const _NavShortcut(icon: Icons.favorite_border, label: 'Moji favoriti', route: '/favoriti'),
       if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/cart'),
-      // Admin-only shortcuts
+      if (isLoggedIn) const _NavShortcut(icon: Icons.person_outline, label: 'Profil', route: '/profil'),
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Najave', route: '/announcement/new'),
       if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Giveaway', route: '/giveaways/admin'),
       if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Izvještaji', route: '/reports'),
     ];
-
-    final authState = ref.watch(authControllerProvider);
-    final bool isLoggedIn = authState.value?.userId != null && authState.value!.userId! > 0;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -85,12 +85,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // For You – ispod torbice, samo za prijavljene
-                if (isLoggedIn) ...<Widget>[
-                  SizedBox(height: 280, child: _ForYouSection(isAdmin: isAdmin)),
+                // For You – ispod torbice, samo za prijavljene kupce (ne admine)
+                if (isLoggedIn && !isAdmin) ...<Widget>[
+                  const SizedBox(height: 280, child: _BuyerForYouSection()),
                   const SizedBox(height: 24),
                 ],
-                // Info panel ispod For You
+                // Info panel
                 const InfoPanel(),
                 const SizedBox(height: 24),
               ],
@@ -102,22 +102,7 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// For You section: buyer = personalized recommendations, admin = top-selling bags.
-class _ForYouSection extends ConsumerWidget {
-  const _ForYouSection({required this.isAdmin});
-
-  final bool isAdmin;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (isAdmin) {
-      return _AdminForYouSection();
-    }
-    return _BuyerForYouSection();
-  }
-}
-
-/// Buyer: personalized recommendations based on favorites.
+/// Personalized recommendations based on favorites.
 class _BuyerForYouSection extends ConsumerWidget {
   const _BuyerForYouSection();
 
@@ -251,113 +236,6 @@ class _BuyerForYouSection extends ConsumerWidget {
                     );
                   }
                   return _RecommendationsGrid(recommendations: recommendations);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Admin: top-selling bags.
-class _AdminForYouSection extends ConsumerWidget {
-  const _AdminForYouSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bestsellingBagsProvider);
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(Icons.trending_up, color: colorScheme.primary, size: 28),
-                const SizedBox(width: 12),
-                Text(
-                  'For You',
-                  style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh',
-                  onPressed: () {
-                    ref.invalidate(bestsellingBagsProvider);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Torbice koje se najviše prodaju',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: bagsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (Object error, StackTrace stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Unable to load top selling bags',
-                        style: textTheme.bodyLarge?.copyWith(color: colorScheme.error),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => ref.invalidate(bestsellingBagsProvider),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Try Again'),
-                      ),
-                    ],
-                  ),
-                ),
-                data: (List<Bag> bags) {
-                  if (bags.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'Još nema prodanih torbi.',
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }
-                  return SizedBox(
-                    height: 180,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: bags.length,
-                      separatorBuilder: (BuildContext context, int index) => const SizedBox(width: 12),
-                      itemBuilder: (BuildContext context, int index) {
-                        final Bag bag = bags[index];
-                        return _ProductCard(
-                          name: bag.name,
-                          price: bag.price,
-                          imageUrl: bag.displayImageUrl,
-                          onTap: () => context.go('/torbice/${bag.id}'),
-                        );
-                      },
-                    ),
-                  );
                 },
               ),
             ),

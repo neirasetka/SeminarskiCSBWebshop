@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -28,18 +29,22 @@ class ProfileApi {
       final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
       return UserProfile.fromJson(jsonMap);
     }
-    throw Exception('Failed to load profile: ${response.statusCode}');
+    final String detail = _readApiErrorDetail(response.body);
+    if (kDebugMode) {
+      debugPrint('GET $_usersPath/$userId failed ${response.statusCode}: ${response.body}');
+    }
+    throw Exception('Failed to load profile (${response.statusCode}): $detail');
   }
 
+  /// Vlastiti profil (Buyer/Admin) — isti endpoint kao mobile aplikacija.
   Future<UserProfile> updateMe({
     required String firstName,
     required String lastName,
     required String email,
     required String userName,
-    String? imageBase64,
+    String? phone,
   }) async {
-    final int? userId = await _getUserIdFromToken();
-    if (userId == null) {
+    if (await _getUserIdFromToken() == null) {
       throw Exception('No valid token');
     }
     final Map<String, dynamic> body = <String, dynamic>{
@@ -47,19 +52,69 @@ class ProfileApi {
       'Surname': lastName,
       'Email': email,
       'UserName': userName,
+      'Phone': phone ?? '',
     };
-    if (imageBase64 != null && imageBase64.isNotEmpty) {
-      body['Image'] = imageBase64;
-    }
     final http.Response response = await _apiClient.put(
-      '$_usersPath/$userId',
+      '$_usersPath/profile',
       body: json.encode(body),
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
       return UserProfile.fromJson(jsonMap);
     }
-    throw Exception('Failed to update profile: ${response.statusCode}');
+    final String detail = _readApiErrorDetail(response.body);
+    if (kDebugMode) {
+      debugPrint('PUT $_usersPath/profile failed ${response.statusCode}: ${response.body}');
+    }
+    throw Exception('Failed to update profile (${response.statusCode}): $detail');
+  }
+
+  static String _readApiErrorDetail(String body) {
+    final String trimmed = body.trim();
+    if (trimmed.isEmpty) {
+      return '(prazan odgovor)';
+    }
+    try {
+      final Object? decoded = json.decode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final Object? simple = decoded['error'];
+        if (simple != null && simple.toString().isNotEmpty) {
+          return simple.toString();
+        }
+        final Object? errors = decoded['errors'];
+        if (errors is Map<String, dynamic>) {
+          final List<String> parts = <String>[];
+          for (final MapEntry<String, dynamic> e in errors.entries) {
+            final Object? v = e.value;
+            if (v is List) {
+              for (final Object x in v) {
+                parts.add('${e.key}: $x');
+              }
+            } else if (v != null) {
+              parts.add('${e.key}: $v');
+            }
+          }
+          if (parts.isNotEmpty) {
+            return parts.join('; ');
+          }
+        }
+        final Object? detail = decoded['detail'];
+        if (detail != null && detail.toString().isNotEmpty) {
+          return detail.toString();
+        }
+        final Object? title = decoded['title'];
+        if (title != null && title.toString().isNotEmpty) {
+          return title.toString();
+        }
+      }
+    } catch (_) {
+      /* nije JSON */
+    }
+    const int maxLen = 500;
+    if (trimmed.length > maxLen) {
+      return '${trimmed.substring(0, maxLen)}…';
+    }
+    return trimmed;
   }
 
   Future<bool> isAdmin() async {
@@ -95,6 +150,7 @@ class ProfileApi {
     addRoleValue(decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role']);
     return roles;
   }
+
   Future<int?> _getUserIdFromToken() async {
     final String? token = await _secureStorage.getToken();
     if (token == null || token.isEmpty) return null;
@@ -107,4 +163,3 @@ class ProfileApi {
     return int.tryParse(sub.toString());
   }
 }
-
