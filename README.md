@@ -33,13 +33,17 @@ flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api -d windows
 - Prijava:
   - username: admin
   - password: Admin123!
+ 
+  These are default mobile users. You can create your own by clicking register button.
 - Pokretanje aplikacije:
 
 ```bash
 flutter pub get
 flutter emulators --launch Medium_Phone_API_36.1
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
+flutter run
 ```
+If you want to start application using dart define
+flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api
 
 ### Testna kreditna kartica (Stripe Test mode)
 - Broj kartice: **4242 4242 4242 4242**
