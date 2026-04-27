@@ -456,20 +456,59 @@ namespace CSBWebshopSeminarski.Database
 
         private static async Task EnsureGiveawayAndParticipantsAsync(CocoSunBagsWebshopDbContext context, ILogger logger)
         {
-            if (!await context.Giveaways.AnyAsync())
+            const string seedGiveawayTitle = "Back to School Giveaway";
+
+            Giveaways? giveaway = await context.Giveaways.FirstOrDefaultAsync(g => g.Title == seedGiveawayTitle);
+            if (giveaway == null && !await context.Giveaways.AnyAsync())
             {
-                var giveaway = new Giveaways
+                giveaway = new Giveaways
                 {
-                    Title = "Back to School Giveaway",
+                    Title = seedGiveawayTitle,
                     StartDate = DateTime.UtcNow.AddDays(-10),
                     EndDate = DateTime.UtcNow.AddDays(10),
                     IsClosed = false
                 };
                 await context.Giveaways.AddAsync(giveaway);
                 await context.SaveChangesAsync();
-                // No seed participants – list shows only real users who register via the app
-                logger.LogInformation("Seeded Giveaways (no seed participants).");
+                logger.LogInformation("Seeded Giveaways.");
             }
+            else if (giveaway == null)
+            {
+                return;
+            }
+
+            if (await context.Participants.AnyAsync(p => p.GiveawayId == giveaway.Id))
+            {
+                return;
+            }
+
+            var entryBase = DateTime.UtcNow.AddDays(-3);
+            await context.Participants.AddRangeAsync(new[]
+            {
+                new Participants
+                {
+                    Name = "Ana Horvat",
+                    Email = "seed.participant1@coco-seed.invalid",
+                    GiveawayId = giveaway.Id,
+                    EntryDate = entryBase.AddHours(-5)
+                },
+                new Participants
+                {
+                    Name = "Marko Novak",
+                    Email = "seed.participant2@coco-seed.invalid",
+                    GiveawayId = giveaway.Id,
+                    EntryDate = entryBase.AddHours(-2)
+                },
+                new Participants
+                {
+                    Name = "Ivana Kovač",
+                    Email = "seed.participant3@coco-seed.invalid",
+                    GiveawayId = giveaway.Id,
+                    EntryDate = entryBase
+                }
+            });
+            await context.SaveChangesAsync();
+            logger.LogInformation("Seeded {Count} giveaway participants for giveaway {GiveawayId}.", 3, giveaway.Id);
         }
 
         private static string GenerateSalt()
