@@ -22,28 +22,35 @@ dotnet run --project CSBWebshopSeminarski/CSBWebshopSeminarski.csproj
 
 API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
 
-### Desktop klijent (Windows)
+### Desktop user (Windows)
 - Prijava:
   - username: admin
   - password: Admin123!
-- Pokretanje aplikacije:
-
-```bash
-cd csb_webshop_desktop
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://localhost:5265 -d windows
-```
-
-### Mobilni klijent (Android Emulator)
+ 
 - Prijava:
   - username: buyer
   - password: Buyer123!
 - Pokretanje aplikacije:
 
 ```bash
+If you want to start desktop application using dart define
+flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api -d windows
+```
+
+### Mobilni klijent (Android Emulator)
+- Prijava:
+  - username: buyer
+  - password: Buyer123!
+ 
+- Prijava:
+  - username: admin
+  - password: Admin123!
+- Pokretanje aplikacije:
+
+```bash
 cd csb_webshop_mobile
 flutter pub get
-flutter emulators --launch "Pixel 2 API 35"
+flutter emulators --launch Medium_Phone_API_36.1
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
 ```
 
