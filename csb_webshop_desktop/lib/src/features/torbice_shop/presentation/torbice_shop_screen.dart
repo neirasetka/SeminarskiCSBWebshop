@@ -269,7 +269,10 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
               textColor: Colors.white,
               onPressed: () {
                 messenger.hideCurrentSnackBar();
-                GoRouter.of(messenger.context).go('/cart');
+                // Ne koristiti messenger.context — nema GoRoutera iznad ScaffoldMessenger-a.
+                if (mounted) {
+                  context.go('/cart');
+                }
               },
             ),
           ),

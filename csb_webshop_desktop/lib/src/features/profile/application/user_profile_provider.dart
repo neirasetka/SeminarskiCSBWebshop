@@ -8,11 +8,11 @@ final Provider<ProfileApi> profileApiProvider = Provider<ProfileApi>((Ref ref) {
 });
 
 class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
-  late final ProfileApi _api;
+  /// Ne smije biti [late final] — [build] se može ponoviti nakon invalidate (npr. nakon prijave).
+  ProfileApi get _api => ref.read(profileApiProvider);
 
   @override
   Future<UserProfile?> build() async {
-    _api = ref.read(profileApiProvider);
     return _load();
   }
 

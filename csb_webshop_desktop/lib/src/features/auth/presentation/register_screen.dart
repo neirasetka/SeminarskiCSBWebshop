@@ -159,6 +159,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 labelText: 'Ime',
                                 prefixIcon: Icon(Icons.person_outline),
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
                               validator: (String? value) {
@@ -177,6 +178,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 labelText: 'Prezime',
                                 prefixIcon: Icon(Icons.person_outline),
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
                               validator: (String? value) {
@@ -198,6 +200,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           labelText: 'Email',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
+                          errorMaxLines: 5,
                         ),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
@@ -228,6 +231,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 labelText: 'Korisničko ime',
                                 prefixIcon: Icon(Icons.account_circle_outlined),
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
                               validator: (String? value) {
@@ -245,52 +249,46 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Lozinka i Potvrda lozinke u istom redu
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Lozinka',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined),
-                                  onPressed: () =>
-                                      setState(() => _obscurePassword = !_obscurePassword),
-                                ),
-                              ),
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.next,
-                              validator: _validatePassword,
-                            ),
+                      // Lozinka u punoj širini (poruke validacije se lome u više redaka)
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Lozinka',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
+                          errorMaxLines: 5,
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _passwordConfirmController,
-                              decoration: InputDecoration(
-                                labelText: 'Potvrdite lozinku',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscurePasswordConfirm
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined),
-                                  onPressed: () => setState(
-                                      () => _obscurePasswordConfirm = !_obscurePasswordConfirm),
-                                ),
-                              ),
-                              obscureText: _obscurePasswordConfirm,
-                              textInputAction: TextInputAction.done,
-                              validator: _validatePasswordConfirm,
-                              onFieldSubmitted: (_) => _onRegister(),
-                            ),
+                        ),
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.next,
+                        validator: _validatePassword,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordConfirmController,
+                        decoration: InputDecoration(
+                          labelText: 'Potvrdite lozinku',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
+                          errorMaxLines: 5,
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePasswordConfirm
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined),
+                            onPressed: () => setState(
+                                () => _obscurePasswordConfirm = !_obscurePasswordConfirm),
                           ),
-                        ],
+                        ),
+                        obscureText: _obscurePasswordConfirm,
+                        textInputAction: TextInputAction.done,
+                        validator: _validatePasswordConfirm,
+                        onFieldSubmitted: (_) => _onRegister(),
                       ),
                       const SizedBox(height: 32),
 

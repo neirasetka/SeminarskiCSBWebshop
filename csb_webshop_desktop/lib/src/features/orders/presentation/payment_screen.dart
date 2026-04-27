@@ -91,6 +91,19 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     setState(() => _isProcessing = true);
 
+    if (mounted && cartUsesHostedStripeCheckout) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Otvara se preglednik za plaćanje. Nakon uplate ekran može još nekoliko '
+            'sekundi prikazivati obradu dok sustav potvrdi uplatu.',
+          ),
+          duration: Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
     try {
       // Start checkout using the cart provider
       await ref.read(cartProvider.notifier).startCheckout(

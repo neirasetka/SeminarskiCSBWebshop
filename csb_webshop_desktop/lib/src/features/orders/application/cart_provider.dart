@@ -27,6 +27,9 @@ bool get _isStripeSupportedPlatform {
   }
 }
 
+/// True kada se koristi Stripe Checkout u pregledniku i polling GET /Orders/{id} (desktop).
+bool get cartUsesHostedStripeCheckout => !_isStripeSupportedPlatform;
+
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
 Future<T> _cartStep<T>(String stepLabelHr, Future<T> Function() action) async {
@@ -234,12 +237,17 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       throw Exception('Nije moguće otvoriti preglednik za plaćanje');
     }
 
-    const Duration pollInterval = Duration(seconds: 3);
+    // Stripe ažurira narudžbu preko webhooka; GET mora čekati backend.
+    // Prije: prvo čekanje 3 s + interval 3 s — korisnik je dugo vidio "Obrada..." i nakon brzog plaćanja.
+    const Duration pollInterval = Duration(seconds: 1);
+    const Duration firstPollDelay = Duration(milliseconds: 600);
     const Duration timeout = Duration(minutes: 10);
     final DateTime deadline = DateTime.now().add(timeout);
+    bool firstPoll = true;
 
     while (DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(pollInterval);
+      await Future<void>.delayed(firstPoll ? firstPollDelay : pollInterval);
+      firstPoll = false;
       final Map<String, dynamic>? orderData = await _api.getOrder(orderId: order.id);
       if (orderData == null) continue;
       final String? status =

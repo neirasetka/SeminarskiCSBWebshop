@@ -154,6 +154,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Ime',
                           prefixIcon: Icon(Icons.person_outline),
+                          errorMaxLines: 5,
                         ),
                         textInputAction: TextInputAction.next,
                         validator: (String? value) {
@@ -171,6 +172,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Prezime',
                           prefixIcon: Icon(Icons.person_outline),
+                          errorMaxLines: 5,
                         ),
                         textInputAction: TextInputAction.next,
                         validator: (String? value) {
@@ -188,6 +190,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Email',
                           prefixIcon: Icon(Icons.email_outlined),
+                          errorMaxLines: 5,
                         ),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
@@ -201,6 +204,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Telefon (opcionalno)',
                           prefixIcon: Icon(Icons.phone_outlined),
+                          errorMaxLines: 5,
                         ),
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
@@ -213,6 +217,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Korisničko ime',
                           prefixIcon: Icon(Icons.account_circle_outlined),
+                          errorMaxLines: 5,
                         ),
                         textInputAction: TextInputAction.next,
                         validator: (String? value) {
@@ -233,6 +238,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: InputDecoration(
                           labelText: 'Lozinka',
                           prefixIcon: const Icon(Icons.lock_outline),
+                          errorMaxLines: 5,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePassword
                                 ? Icons.visibility_outlined
@@ -253,6 +259,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         decoration: InputDecoration(
                           labelText: 'Potvrdite lozinku',
                           prefixIcon: const Icon(Icons.lock_outline),
+                          errorMaxLines: 5,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePasswordConfirm
                                 ? Icons.visibility_outlined
