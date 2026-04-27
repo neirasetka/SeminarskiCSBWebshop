@@ -10,18 +10,6 @@ docker-compose build
 docker-compose up
 ```
 
-### Backend (ASP.NET Core API)
-Preduslov: SQL Server (lokalni ili Express). Podesite connection string u
-`CSBWebshopSeminarski/CSBWebshopSeminarski/appsettings.json` po potrebi.
-
-```bash
-cd CSBWebshopSeminarski
-dotnet restore
-dotnet run --project CSBWebshopSeminarski/CSBWebshopSeminarski.csproj
-```
-
-API ce biti dostupan na `http://localhost:5265` (Swagger: `/swagger`).
-
 ### Desktop user (Windows)
 - Prijava:
   - username: admin
@@ -48,7 +36,6 @@ flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api -d windows
 - Pokretanje aplikacije:
 
 ```bash
-cd csb_webshop_mobile
 flutter pub get
 flutter emulators --launch Medium_Phone_API_36.1
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5265
