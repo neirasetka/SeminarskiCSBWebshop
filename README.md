@@ -20,10 +20,8 @@ docker-compose up
   - password: Buyer123!
 - Pokretanje aplikacije:
 
-```bash
 If you want to start desktop application using dart define
 flutter run --dart-define=baseUrl=http://10.0.2.2:8080/api -d windows
-```
 
 ### Mobilni klijent (Android Emulator)
 - Prijava:
