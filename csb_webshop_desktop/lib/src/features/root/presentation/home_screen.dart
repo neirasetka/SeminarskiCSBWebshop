@@ -201,7 +201,7 @@ class _BuyerForYouSection extends ConsumerWidget {
                     } else {
                       title = 'Preporuke još nisu dostupne';
                       subtitle =
-                          'Add some bags or belts to your favorites\nto get personalized recommendations!';
+                          'Dodaj neke torbice ili kaiševe u favorite\npa ćete dobiti personalizirane preporuke!';
                     }
                     return Center(
                       child: SingleChildScrollView(
