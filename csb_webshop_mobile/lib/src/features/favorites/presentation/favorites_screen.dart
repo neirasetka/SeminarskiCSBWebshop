@@ -145,7 +145,7 @@ class FavoritesScreen extends ConsumerWidget {
                                   children: <Widget>[
                                     if (index > 0) const Divider(height: 1),
                                     ListTile(
-                                      leading: _BagThumbnail(imageUrl: bag.imageUrl),
+                                      leading: _BagThumbnail(imageUrl: bag.displayImageUrl),
                                       title: Text(bag.name),
                                       subtitle: Text(
                                         bag.description,
@@ -400,6 +400,18 @@ class _BagThumbnail extends StatelessWidget {
       child: const Icon(Icons.shopping_bag),
     );
     if (imageUrl == null || imageUrl!.isEmpty) return placeholder;
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final String base64Part = imageUrl!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(bytes, width: 56, height: 56, fit: BoxFit.cover),
+        );
+      } catch (_) {
+        return placeholder;
+      }
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Image.network(

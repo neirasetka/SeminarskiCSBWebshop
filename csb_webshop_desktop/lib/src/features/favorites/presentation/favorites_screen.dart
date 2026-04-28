@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -468,6 +471,20 @@ class _Image extends StatelessWidget {
     );
 
     if (url == null || url!.isEmpty) return placeholder;
+
+    if (url!.startsWith('data:image')) {
+      try {
+        final String base64Part = url!.split(',').last;
+        final Uint8List bytes = base64Decode(base64Part);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => placeholder,
+        );
+      } catch (_) {
+        return placeholder;
+      }
+    }
 
     return Image.network(
       url!,
