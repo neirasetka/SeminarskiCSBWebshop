@@ -13,18 +13,15 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private new readonly CocoSunBagsWebshopDbContext _context;
         private new readonly IMapper _mapper;
-        private readonly IEventPublisher _eventPublisher;
         private readonly IPaymentsService _paymentsService;
 
         public OrdersService(
             CocoSunBagsWebshopDbContext context,
             IMapper mapper,
-            IEventPublisher eventPublisher,
             IPaymentsService paymentsService) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
-            _eventPublisher = eventPublisher;
             _paymentsService = paymentsService;
         }
 
@@ -87,24 +84,6 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.SaveChangesAsync();
 
             var result = _mapper.Map<Order>(entity);
-
-            try
-            {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == entity.UserID);
-                var evt = new CBSWebshopSeminarski.Model.Events.OrderCreatedEvent
-                {
-                    OrderID = entity.OrderID,
-                    OrderNumber = entity.OrderNumber,
-                    UserID = entity.UserID,
-                    UserEmail = user?.Email,
-                    Amount = (decimal)entity.Price,
-                    CreatedAtUtc = DateTime.UtcNow
-                };
-                await _eventPublisher.PublishAsync("orders.created", evt);
-            }
-            catch
-            {
-            }
 
             return result;
         }

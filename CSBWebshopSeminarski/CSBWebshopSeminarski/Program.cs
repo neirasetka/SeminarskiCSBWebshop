@@ -107,25 +107,7 @@ builder.Services.AddTransient<IReviewsService, ReviewsService>();
 builder.Services.AddTransient<ICRUDService<Purchase, PurchaseSearchRequest, PurchaseUpsertRequest, PurchaseUpsertRequest>, PurchasesService>();
 builder.Services.AddTransient<IOrderService, OrdersService>();
 
-// RabbitMQ publisher for domain events (falls back to NoOp when RabbitMQ is unavailable)
-builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.IEventPublisher>(sp =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var logger = sp.GetRequiredService<ILogger<Program>>();
-    var host = configuration["RabbitMQ:HostName"] ?? "localhost";
-    var exchange = configuration["RabbitMQ:Exchange"] ?? "webshop.events";
-    var userName = configuration["RabbitMQ:UserName"] ?? "guest";
-    var password = configuration["RabbitMQ:Password"] ?? "guest";
-    try
-    {
-        return new CBSWebshopSeminarski.Services.Services.RabbitMqEventPublisher(host, exchange, userName, password);
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "RabbitMQ unreachable at {Host}. Domain events will not be published. Start RabbitMQ to enable event publishing.", host);
-        return new CBSWebshopSeminarski.Services.Services.NoOpEventPublisher();
-    }
-});
+builder.Services.AddTransient<RabbitMqMailPublisher>();
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();

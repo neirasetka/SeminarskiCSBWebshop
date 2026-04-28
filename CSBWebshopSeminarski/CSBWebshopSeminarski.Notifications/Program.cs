@@ -7,7 +7,7 @@ namespace CSBWebshopSeminarski.Notifications
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddHostedService<RabbitMqOrderCreatedConsumer>();
+                    services.AddHostedService<RabbitMqEmailConsumer>();
                 })
                 .Build()
                 .Run();

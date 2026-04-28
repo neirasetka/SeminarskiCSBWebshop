@@ -9,16 +9,16 @@ namespace CBSWebshopSeminarski.Services.Services
     public class PaymentsService : IPaymentsService
     {
         private readonly CocoSunBagsWebshopDbContext _db;
-        private readonly EmailService _emailService;
+        private readonly RabbitMqMailPublisher _mailPublisher;
         private readonly ILogger<PaymentsService> _logger;
 
         public PaymentsService(
             CocoSunBagsWebshopDbContext db,
-            EmailService emailService,
+            RabbitMqMailPublisher mailPublisher,
             ILogger<PaymentsService> logger)
         {
             _db = db;
-            _emailService = emailService;
+            _mailPublisher = mailPublisher;
             _logger = logger;
         }
 
@@ -109,20 +109,24 @@ namespace CBSWebshopSeminarski.Services.Services
                     $"Ukupan iznos: {order.Price:N2} KM\n\n" +
                     "Hvala Vam na povjerenju.\n\n" +
                     "CocoSunBags tim";
-                await _emailService.SendEmailAsync(to, subject, message);
+                _mailPublisher.Publish(
+                    sender: "no-reply@cocosunbags.local",
+                    recipient: to,
+                    subject: subject,
+                    content: message);
                 order.PaymentConfirmationEmailSent = true;
                 await _db.SaveChangesAsync();
                 _logger.LogInformation(
-                    "Payment confirmation email sent for order {OrderId} to {Recipient}.",
+                    "Payment confirmation email queued for order {OrderId} to {Recipient}.",
                     orderId,
                     to);
             }
             catch (Exception ex)
             {
-                // Order stays paid; email can be retried from another path if needed
+                // Order stays paid; email can be retried from another path if needed.
                 _logger.LogError(
                     ex,
-                    "Payment confirmation email failed for order {OrderId} to {Recipient}.",
+                    "Payment confirmation email queue publish failed for order {OrderId} to {Recipient}.",
                     orderId,
                     to);
             }

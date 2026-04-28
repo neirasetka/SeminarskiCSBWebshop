@@ -20,12 +20,12 @@ namespace CBSWebshopSeminarski.Services.Services
     public class GiveawaysService
     {
         private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly EmailService _emailService;
+        private readonly RabbitMqMailPublisher _mailPublisher;
 
-        public GiveawaysService(CocoSunBagsWebshopDbContext context, EmailService emailService)
+        public GiveawaysService(CocoSunBagsWebshopDbContext context, RabbitMqMailPublisher mailPublisher)
         {
             _context = context;
-            _emailService = emailService;
+            _mailPublisher = mailPublisher;
         }
 
         public async Task<Giveaways> CreateGiveawayAsync(string title, DateTime startDate, DateTime endDate)
@@ -150,20 +150,22 @@ namespace CBSWebshopSeminarski.Services.Services
             return participants[index];
         }
 
-        public async Task NotifyWinnerAsync(Participants winner)
+        public Task NotifyWinnerAsync(Participants winner)
         {
             if (!string.IsNullOrWhiteSpace(winner.Email))
             {
                 var winnerDisplayName = !string.IsNullOrWhiteSpace(winner.Name) ? winner.Name : "Dragi korisniče";
-                await _emailService.SendEmailAsync(
-                    winner.Email,
-                    "Čestitamo! Osvojili ste giveaway",
-                    $"{winnerDisplayName},\n\n" +
-                    "Čestitamo, osvojili ste torbicu kod CocoSunBags u našem darivanju!\n\n" +
-                    "Uskoro ćemo Vas kontaktirati sa svim detaljima.\n\n" +
-                    "Srdačan pozdrav,\nCocoSunBags tim"
-                );
+                _mailPublisher.Publish(
+                    sender: "no-reply@cocosunbags.local",
+                    recipient: winner.Email,
+                    subject: "Čestitamo! Osvojili ste giveaway",
+                    content: $"{winnerDisplayName},\n\n" +
+                             "Čestitamo, osvojili ste torbicu kod CocoSunBags u našem darivanju!\n\n" +
+                             "Uskoro ćemo Vas kontaktirati sa svim detaljima.\n\n" +
+                             "Srdačan pozdrav,\nCocoSunBags tim");
             }
+
+            return Task.CompletedTask;
         }
 
         public async Task<Participants?> DrawAndPersistWinnerAsync(int giveawayId)
@@ -286,15 +288,15 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 try
                 {
-                    await _emailService.SendEmailAsync(
-                        winner.Email,
-                        $"Čestitamo! Pobjednik ste giveaway-a \"{giveaway.Title}\"!",
-                        $"Dragi/a {winnerDisplayName},\n\n" +
-                        $"Sa zadovoljstvom Vam javljamo da ste izabrani kao pobjednik našeg giveaway-a \"{giveaway.Title}\"!\n\n" +
-                        $"Uskoro ćemo Vas kontaktirati sa detaljima o preuzimanju nagrade.\n\n" +
-                        $"Hvala što ste dio naše zajednice!\n\n" +
-                        $"S poštovanjem,\nVaš CocoSunBags tim"
-                    );
+                    _mailPublisher.Publish(
+                        sender: "no-reply@cocosunbags.local",
+                        recipient: winner.Email,
+                        subject: $"Čestitamo! Pobjednik ste giveaway-a \"{giveaway.Title}\"!",
+                        content: $"Dragi/a {winnerDisplayName},\n\n" +
+                                 $"Sa zadovoljstvom Vam javljamo da ste izabrani kao pobjednik našeg giveaway-a \"{giveaway.Title}\"!\n\n" +
+                                 $"Uskoro ćemo Vas kontaktirati sa detaljima o preuzimanju nagrade.\n\n" +
+                                 $"Hvala što ste dio naše zajednice!\n\n" +
+                                 $"S poštovanjem,\nVaš CocoSunBags tim");
                 }
                 catch
                 {
@@ -316,15 +318,15 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 try
                 {
-                    await _emailService.SendEmailAsync(
-                        subscriber.Email,
-                        $"Pobjednik giveaway-a \"{giveaway.Title}\" je izabran!",
-                        $"Poštovani,\n\n" +
-                        $"Imamo pobjednika! Giveaway \"{giveaway.Title}\" je završen, a sretni pobjednik je {winnerDisplayName}.\n\n" +
-                        $"Čestitamo pobjedniku i hvala svima na učešću!\n\n" +
-                        $"Pratite nas za nove giveaway-e i uzbudljive prilike.\n\n" +
-                        $"S poštovanjem,\nVaš CocoSunBags tim"
-                    );
+                    _mailPublisher.Publish(
+                        sender: "no-reply@cocosunbags.local",
+                        recipient: subscriber.Email,
+                        subject: $"Pobjednik giveaway-a \"{giveaway.Title}\" je izabran!",
+                        content: $"Poštovani,\n\n" +
+                                 $"Imamo pobjednika! Giveaway \"{giveaway.Title}\" je završen, a sretni pobjednik je {winnerDisplayName}.\n\n" +
+                                 $"Čestitamo pobjedniku i hvala svima na učešću!\n\n" +
+                                 $"Pratite nas za nove giveaway-e i uzbudljive prilike.\n\n" +
+                                 $"S poštovanjem,\nVaš CocoSunBags tim");
                     subscribersNotified++;
                 }
                 catch

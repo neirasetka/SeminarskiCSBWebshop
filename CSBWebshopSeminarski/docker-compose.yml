@@ -52,6 +52,9 @@ services:
       RabbitMQ__Port: "5672"
       RabbitMQ__UserName: webshop
       RabbitMQ__Password: webshop123
+      RabbitMQ__Exchange: EmailExchange
+      RabbitMQ__QueueName: EmailQueue
+      RabbitMQ__RoutingKey: email_queue
     networks:
       - csb_network
     depends_on:
@@ -71,8 +74,9 @@ services:
       RabbitMQ__Port: "5672"
       RabbitMQ__UserName: webshop
       RabbitMQ__Password: webshop123
-      RabbitMQ__Exchange: webshop.events
-      RabbitMQ__OrderCreatedRoutingKey: orders.created
+      RabbitMQ__Exchange: EmailExchange
+      RabbitMQ__QueueName: EmailQueue
+      RabbitMQ__RoutingKey: email_queue
       Smtp__Host: smtp.gmail.com
       Smtp__Port: "587"
       Smtp__User: neirasetka@gmail.com
