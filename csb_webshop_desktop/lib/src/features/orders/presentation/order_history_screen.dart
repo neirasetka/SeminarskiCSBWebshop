@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/order_history_provider.dart';
 import '../domain/order_models.dart';
 import 'order_detail_screen.dart';
@@ -12,10 +11,13 @@ class OrderHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(orderHistoryProvider);
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Moje narudžbe'),
       ),
       body: ordersAsync.when(
@@ -60,7 +62,6 @@ class OrderHistoryScreen extends ConsumerWidget {
           ),
         ),
       ),
-    ),
     );
   }
 }

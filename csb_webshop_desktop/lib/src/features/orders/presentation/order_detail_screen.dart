@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/back_confirmation_dialog.dart';
 import '../domain/order_models.dart';
 import 'shipping_status_timeline.dart';
 
@@ -46,14 +45,16 @@ class OrderDetailScreen extends StatelessWidget {
       return body;
     }
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
-        appBar: AppBar(
-          leading: buildBackButtonWithConfirmation(context),
-          title: Text('Narudžba ${order.orderNumber}'),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: body,
+        title: Text('Narudžba ${order.orderNumber}'),
       ),
+      body: body,
     );
   }
 

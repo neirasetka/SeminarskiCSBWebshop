@@ -244,7 +244,7 @@ class _AnnouncementsSection extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Najave & Obavijesti',
+                  'Najave',
                   style: textTheme.labelLarge?.copyWith(
                     color: colorScheme.secondary,
                     fontWeight: FontWeight.w600,
