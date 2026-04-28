@@ -253,7 +253,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
       await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
       if (mounted) {
         final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
+        final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(
           SnackBar(
             content: Row(
               children: <Widget>[
@@ -277,6 +277,10 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             ),
           ),
         );
+        Future<void>.delayed(const Duration(seconds: 5), () {
+          if (!mounted) return;
+          controller.close();
+        });
       }
     } catch (e, st) {
       final String displayMsg = ApiException.formatForDisplay(e);

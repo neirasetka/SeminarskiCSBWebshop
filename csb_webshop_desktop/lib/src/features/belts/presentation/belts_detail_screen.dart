@@ -133,64 +133,25 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
   }
 
   void _showAddedToCartDialog(BuildContext context, Belt belt) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.check_circle,
-                  size: 48, color: Colors.green.shade600),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Artikal uspješno dodan u korpu!',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$_quantity x ${belt.name}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.outline,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${(belt.price * _quantity).toStringAsFixed(2)} KM',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        content: Text(
+          'Artikal uspješno dodan u korpu (${_quantity}x ${belt.name})',
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Nastavi kupovinu'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.go('/cart');
-            },
-            child: const Text('NARUČI'),
-          ),
-        ],
+        action: SnackBarAction(
+          label: 'NARUČI',
+          onPressed: () => context.go('/cart'),
+        ),
       ),
     );
+    Future<void>.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      controller.close();
+    });
   }
 }
 

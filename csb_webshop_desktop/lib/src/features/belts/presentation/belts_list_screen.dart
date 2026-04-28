@@ -138,7 +138,8 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                   try {
                                     await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+                                      final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(
                                         SnackBar(
                                           content: const Text('Artikal uspješno dodan u korpu'),
                                           duration: const Duration(seconds: 5),
@@ -148,6 +149,10 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                           ),
                                         ),
                                       );
+                                      Future<void>.delayed(const Duration(seconds: 5), () {
+                                        if (!context.mounted) return;
+                                        controller.close();
+                                      });
                                     }
                                   } catch (e, st) {
                                     if (context.mounted) {

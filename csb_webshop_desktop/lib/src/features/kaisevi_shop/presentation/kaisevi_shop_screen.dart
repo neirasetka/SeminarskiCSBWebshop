@@ -248,28 +248,33 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
     try {
       await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: <Widget>[
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text('Artikal uspješno dodan u korpu')),
-            ],
+        final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+        final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: <Widget>[
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Artikal uspješno dodan u korpu')),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'NARUČI',
+              textColor: Colors.white,
+              onPressed: () {
+                if (mounted) {
+                  context.go('/cart');
+                }
+              },
+            ),
           ),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'NARUČI',
-            textColor: Colors.white,
-            onPressed: () {
-              if (mounted) {
-                context.go('/cart');
-              }
-            },
-          ),
-        ),
-      );
+        );
+        Future<void>.delayed(const Duration(seconds: 5), () {
+          if (!mounted) return;
+          controller.close();
+        });
       }
     } catch (e, st) {
       final String displayMsg = ApiException.formatForDisplay(e);

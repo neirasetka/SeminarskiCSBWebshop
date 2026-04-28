@@ -64,6 +64,27 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     state = await AsyncValue.guard(_loadActiveCart);
   }
 
+  /// Backend ponekad kasni par stotina ms nakon AddToCart.
+  /// Retry izbjegava lažno "praznu korpu" odmah nakon dodavanja.
+  Future<void> _refreshAfterAdd({required OrderModel fallbackOrder}) async {
+    const int maxAttempts = 4;
+    const Duration delayBetweenAttempts = Duration(milliseconds: 250);
+
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      final OrderModel? reloaded = await _loadActiveCart();
+      if (reloaded != null && reloaded.items.isNotEmpty) {
+        state = AsyncValue.data(reloaded);
+        return;
+      }
+      if (attempt < maxAttempts - 1) {
+        await Future<void>.delayed(delayBetweenAttempts);
+      }
+    }
+
+    // Ako backend još nije vratio korpu, zadrži postojeću da UI ne "isprazni" korpu.
+    state = AsyncValue.data(fallbackOrder);
+  }
+
   Future<void> addBagToCart({required int bagId, required double price, int quantity = 1}) async {
     if (bagId < 1) {
       throw Exception('Neispravan ID torbe. Osvježite katalog i pokušajte ponovno.');
@@ -104,7 +125,10 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       '4) Dodavanje torbe (POST /OrderItems/AddToCart, bagId=$bagId, qty=$quantity)',
       () => _api.addItem(orderId: cartOrder.id, bagId: bagId, quantity: quantity, price: price),
     );
-    await _cartStep('5) Osvježavanje prikaza korpe nakon dodavanja', refresh);
+    await _cartStep(
+      '5) Osvježavanje prikaza korpe nakon dodavanja',
+      () => _refreshAfterAdd(fallbackOrder: cartOrder),
+    );
   }
 
   /// Resets local cart state after successful payment (does not call backend).
@@ -176,7 +200,10 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       '4) Dodavanje kaiša (POST /OrderItems/AddToCart, beltId=$beltId, qty=$quantity)',
       () => _api.addItem(orderId: cartOrder.id, beltId: beltId, quantity: quantity, price: price),
     );
-    await _cartStep('5) Osvježavanje prikaza korpe nakon dodavanja', refresh);
+    await _cartStep(
+      '5) Osvježavanje prikaza korpe nakon dodavanja',
+      () => _refreshAfterAdd(fallbackOrder: cartOrder),
+    );
   }
 
   Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
