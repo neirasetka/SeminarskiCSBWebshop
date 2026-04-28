@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/profile_api.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
+import 'newsletter_subscribers_screen.dart';
 import 'profile_update_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
@@ -186,6 +188,8 @@ class _ProfileDetails extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        _NewsletterSubscriptionCard(email: profile.email),
+        const SizedBox(height: 16),
         Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,6 +304,140 @@ class _ProfileDetails extends StatelessWidget {
   }
 }
 
+class _NewsletterSubscriptionCard extends ConsumerStatefulWidget {
+  const _NewsletterSubscriptionCard({required this.email});
+
+  final String email;
+
+  @override
+  ConsumerState<_NewsletterSubscriptionCard> createState() => _NewsletterSubscriptionCardState();
+}
+
+class _NewsletterSubscriptionCardState extends ConsumerState<_NewsletterSubscriptionCard> {
+  bool _isLoading = true;
+  bool _isSaving = false;
+  bool _subscribed = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final bool value = await ref.read(profileApiProvider).getNewCollectionSubscription(widget.email);
+      if (!mounted) return;
+      setState(() {
+        _subscribed = value;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Ne mogu učitati status newsletter pretplate.';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Greška pri učitavanju newsletter statusa: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _onChanged(bool? value) async {
+    if (value == null || _isSaving) return;
+    final bool previous = _subscribed;
+    setState(() {
+      _subscribed = value;
+      _isSaving = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref.read(profileApiProvider).setNewCollectionSubscription(
+            email: widget.email,
+            subscribed: value,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Uspješno ste prijavljeni na newsletter za nove kolekcije.'
+                : 'Uspješno ste odjavljeni sa newslettera za nove kolekcije.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _subscribed = previous;
+        _errorMessage = 'Spremanje nije uspjelo. Pokušajte ponovo.';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Greška pri spremanju newsletter postavke: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
+    if (isAdminAsync.valueOrNull == true || isAdminAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Newsletter',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _subscribed,
+              onChanged: (_isLoading || _isSaving) ? null : _onChanged,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Želim primati obavijesti o novim kolekcijama'),
+              subtitle: _isLoading
+                  ? const Text('Učitavanje statusa...')
+                  : const Text('Primajte newsletter mailove za nove torbice i kolekcije.'),
+            ),
+            if (_isSaving)
+              const LinearProgressIndicator(),
+            if (_errorMessage != null) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _InfoTile extends StatelessWidget {
   const _InfoTile({
     required this.icon,
@@ -343,6 +481,14 @@ class _AdminActions extends ConsumerWidget {
               ),
               icon: const Icon(Icons.celebration_outlined),
               label: const Text('Upravljanje giveawayima'),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const NewsletterSubscribersScreen()),
+              ),
+              icon: const Icon(Icons.mark_email_read_outlined),
+              label: const Text('Lista newsletter pretplatnika'),
             ),
           ],
         );

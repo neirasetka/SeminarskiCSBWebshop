@@ -18,6 +18,7 @@ class ProfileApi {
   final SecureStorageService _secureStorage;
 
   static const String _usersPath = '/api/Users';
+  static const String _newsletterPath = '/api/Newsletter';
 
   Future<UserProfile> getMe() async {
     final int? userId = await _getUserIdFromToken();
@@ -34,6 +35,53 @@ class ProfileApi {
       debugPrint('GET $_usersPath/$userId failed ${response.statusCode}: ${response.body}');
     }
     throw Exception('Failed to load profile (${response.statusCode}): $detail');
+  }
+
+  Future<bool> getNewCollectionSubscription(String email) async {
+    final String trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) return false;
+    final String query = Uri(queryParameters: <String, String>{'email': trimmedEmail}).query;
+    final http.Response response = await _apiClient.get('$_newsletterPath/subscription-status?$query');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
+      return (jsonMap['isSubscribedToNewCollections'] as bool?) ?? false;
+    }
+    final String detail = _readApiErrorDetail(response.body);
+    throw Exception('Failed to load newsletter status (${response.statusCode}): $detail');
+  }
+
+  Future<void> setNewCollectionSubscription({
+    required String email,
+    required bool subscribed,
+  }) async {
+    final String trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) {
+      throw Exception('Email je obavezan za newsletter pretplatu.');
+    }
+    final Map<String, dynamic> body = <String, dynamic>{
+      'email': trimmedEmail,
+      'isSubscribedToNewCollections': subscribed,
+    };
+    final http.Response response = await _apiClient.post(
+      '$_newsletterPath/subscribe',
+      body: json.encode(body),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final String detail = _readApiErrorDetail(response.body);
+      throw Exception('Failed to update newsletter status (${response.statusCode}): $detail');
+    }
+  }
+
+  Future<List<NewsletterSubscriber>> getNewsletterSubscribers() async {
+    final http.Response response = await _apiClient.get('$_newsletterPath/subscribers');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
+      return list
+          .map((dynamic e) => NewsletterSubscriber.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    final String detail = _readApiErrorDetail(response.body);
+    throw Exception('Failed to load subscribers (${response.statusCode}): $detail');
   }
 
   /// Vlastiti profil (Buyer/Admin) — isti endpoint kao mobile aplikacija.
@@ -161,5 +209,28 @@ class ProfileApi {
         decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
     if (sub == null) return null;
     return int.tryParse(sub.toString());
+  }
+}
+
+class NewsletterSubscriber {
+  const NewsletterSubscriber({
+    required this.id,
+    required this.email,
+    required this.isSubscribedToGiveaway,
+    required this.isSubscribedToNewCollections,
+  });
+
+  final int id;
+  final String email;
+  final bool isSubscribedToGiveaway;
+  final bool isSubscribedToNewCollections;
+
+  factory NewsletterSubscriber.fromJson(Map<String, dynamic> json) {
+    return NewsletterSubscriber(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      email: (json['email'] as String?) ?? '',
+      isSubscribedToGiveaway: (json['isSubscribedToGiveaway'] as bool?) ?? false,
+      isSubscribedToNewCollections: (json['isSubscribedToNewCollections'] as bool?) ?? false,
+    );
   }
 }

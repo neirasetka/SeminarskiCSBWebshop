@@ -86,41 +86,43 @@ class AnnouncementsApi {
   }
 
   /// Creates a new bag announcement via Announcements API.
-  /// Returns the created announcement (refreshed from News or dummy).
+  /// Returns the created announcement (refreshed from News).
   Future<Announcement> createBagAnnouncement({
     required String bagName,
     required double bagPrice,
     required String bagColor,
   }) async {
-    try {
-      const String path = '/api/Announcements/new-collection';
-      final Map<String, dynamic> bodyMap = <String, dynamic>{
-        'subject': 'Nova torbica: $bagName',
-        'body': 'Predstavljamo vam novu torbicu "$bagName" u boji $bagColor po cijeni od ${bagPrice.toStringAsFixed(2)} KM. Pogledajte našu ponudu!',
-        'segment': 'NewCollectionSubscribers',
-        'productName': bagName,
-        'price': bagPrice,
-        'color': bagColor,
-      };
-      final http.Response response = await _apiClient.post(path, body: json.encode(bodyMap));
-      if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('HTTP ${response.statusCode}');
-      final List<Announcement> list = await getAnnouncements(page: 1, pageSize: 1);
-      if (list.isNotEmpty) return list.first;
-    } catch (_) {
-      // fallback to dummy
+    const String path = '/api/Announcements/new-collection';
+    final String title = 'Nova torbica: $bagName';
+    final String body =
+        'Predstavljamo vam novu torbicu "$bagName" u boji $bagColor po cijeni od ${bagPrice.toStringAsFixed(2)} KM. Pogledajte našu ponudu!';
+    final Map<String, dynamic> bodyMap = <String, dynamic>{
+      'subject': title,
+      'body': body,
+      'segment': 'NewCollectionSubscribers',
+      'productName': bagName,
+      'price': bagPrice,
+      'color': bagColor,
+    };
+    final http.Response response = await _apiClient.post(path, body: json.encode(bodyMap));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('HTTP ${response.statusCode}');
     }
-    final int newId = _dummyAnnouncements.isEmpty
-        ? 1
-        : _dummyAnnouncements.map((Announcement a) => a.id).reduce((int a, int b) => a > b ? a : b) + 1;
-    final Announcement newAnnouncement = Announcement(
-      id: newId,
-      title: 'Nova torbica: $bagName',
-      body: 'Predstavljamo vam novu torbicu "$bagName" u boji $bagColor po cijeni od ${bagPrice.toStringAsFixed(2)} KM. Pogledajte našu ponudu!',
+
+    final List<Announcement> list = await getAnnouncements(page: 1, pageSize: 20);
+    for (final Announcement announcement in list) {
+      if (announcement.title == title && announcement.body == body) {
+        return announcement;
+      }
+    }
+
+    return Announcement(
+      id: 0,
+      title: title,
+      body: body,
       publishedAt: DateTime.now(),
       type: AnnouncementType.announcement,
     );
-    _dummyAnnouncements.insert(0, newAnnouncement);
-    return newAnnouncement;
   }
 }
 

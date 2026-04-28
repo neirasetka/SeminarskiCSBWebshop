@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 
@@ -115,116 +114,118 @@ class _AnnouncementEditScreenState extends ConsumerState<AnnouncementEditScreen>
         final ColorScheme colorScheme = Theme.of(context).colorScheme;
         final TextTheme textTheme = Theme.of(context).textTheme;
 
-        return BackConfirmationWrapper(
-          child: Scaffold(
-            appBar: AppBar(
-              leading: buildBackButtonWithConfirmation(context),
-              title: const Text('Uredi obavijest'),
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Nazad',
+              onPressed: _isSubmitting ? null : _close,
             ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Naslov',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            title: const Text('Uredi obavijest'),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Naslov',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      validator: (String? value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Naslov je obavezan';
-                        }
-                        return null;
-                      },
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _bodyController,
-                      decoration: InputDecoration(
-                        labelText: 'Sadržaj',
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    validator: (String? value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Naslov je obavezan';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _bodyController,
+                    decoration: InputDecoration(
+                      labelText: 'Sadržaj',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      maxLines: 6,
-                      validator: (String? value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Sadržaj je obavezan';
-                        }
-                        return null;
-                      },
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     ),
-                    const SizedBox(height: 20),
-                    DropdownButtonFormField<AnnouncementType>(
-                      value: _type,
-                      decoration: InputDecoration(
-                        labelText: 'Tip',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    maxLines: 6,
+                    validator: (String? value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Sadržaj je obavezan';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<AnnouncementType>(
+                    value: _type,
+                    decoration: InputDecoration(
+                      labelText: 'Tip',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      items: AnnouncementType.values
-                          .map((AnnouncementType t) => DropdownMenuItem<AnnouncementType>(
-                                value: t,
-                                child: Text(t.displayLabel),
-                              ))
-                          .toList(),
-                      onChanged: (AnnouncementType? value) {
-                        if (value != null) setState(() => _type = value);
-                      },
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     ),
-                    const SizedBox(height: 32),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isSubmitting ? null : _close,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                    items: AnnouncementType.values
+                        .map((AnnouncementType t) => DropdownMenuItem<AnnouncementType>(
+                              value: t,
+                              child: Text(t.displayLabel),
+                            ))
+                        .toList(),
+                    onChanged: (AnnouncementType? value) {
+                      if (value != null) setState(() => _type = value);
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSubmitting ? null : _close,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text('Odustani'),
                           ),
+                          child: const Text('Odustani'),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 2,
-                          child: FilledButton(
-                            onPressed: _isSubmitting ? null : _submit,
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton(
+                          onPressed: _isSubmitting ? null : _submit,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Text('Spremi'),
                           ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Spremi'),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

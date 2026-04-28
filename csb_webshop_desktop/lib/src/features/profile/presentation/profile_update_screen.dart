@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/auth_controller.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
@@ -77,13 +76,74 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
     }
   }
 
+  String _normalizedPhone(String? phone) {
+    return (phone ?? '').trim();
+  }
+
+  bool _hasUnsavedChanges() {
+    final String firstNameCurrent = _firstNameController.text.trim();
+    final String lastNameCurrent = _lastNameController.text.trim();
+    final String phoneCurrent = _normalizedPhone(_phoneController.text);
+
+    final String firstNameInitial = widget.initial.firstName.trim();
+    final String lastNameInitial = widget.initial.lastName.trim();
+    final String phoneInitial = _normalizedPhone(widget.initial.phone);
+
+    return firstNameCurrent != firstNameInitial ||
+        lastNameCurrent != lastNameInitial ||
+        phoneCurrent != phoneInitial;
+  }
+
+  Future<bool> _confirmDiscardIfNeeded() async {
+    if (!_hasUnsavedChanges()) {
+      return true;
+    }
+
+    final bool? result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Napustiti stranicu?'),
+        content: const Text('Imate nedovršene izmjene, da li ste sigurni da želite napustiti stranicu?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Ne'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Da'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
+  Future<void> _handleBackPressed() async {
+    if (_submitting) return;
+    final bool shouldLeave = await _confirmDiscardIfNeeded();
+    if (!mounted || !shouldLeave) return;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return BackConfirmationWrapper(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        await _handleBackPressed();
+      },
       child: Scaffold(
         appBar: AppBar(
-          leading: buildBackButtonWithConfirmation(context),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Nazad',
+            onPressed: _handleBackPressed,
+          ),
           title: const Text('Uredi profil'),
         ),
         body: Form(

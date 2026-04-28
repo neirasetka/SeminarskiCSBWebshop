@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,6 +17,9 @@ class AnnouncementFormScreen extends ConsumerStatefulWidget {
 }
 
 class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen> {
+  static final RegExp _lettersWithSpaceRegex = RegExp(r'^[A-Za-z\sčćžšđČĆŽŠĐ]+$');
+  static final RegExp _digitsOnlyRegex = RegExp(r'^[0-9]+$');
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -172,14 +176,28 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                               decoration: _buildInputDecoration(
                                 'Unesite naziv torbice',
                                 colorScheme,
+                              ).copyWith(
+                                helperText: 'Dozvoljeno: samo slova, max 25 znakova',
+                                helperMaxLines: 2,
                               ),
+                              inputFormatters: <TextInputFormatter>[
+                                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z\sčćžšđČĆŽŠĐ]')),
+                                LengthLimitingTextInputFormatter(25),
+                              ],
                               textInputAction: TextInputAction.next,
                               validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
+                                final String trimmed = value?.trim() ?? '';
+                                if (trimmed.isEmpty) {
                                   return 'Naziv torbice je obavezan';
                                 }
-                                if (value.trim().length < 2) {
+                                if (trimmed.length < 2) {
                                   return 'Naziv mora imati najmanje 2 znaka';
+                                }
+                                if (trimmed.length > 25) {
+                                  return 'Naziv može imati najviše 25 znakova';
+                                }
+                                if (!_lettersWithSpaceRegex.hasMatch(trimmed)) {
+                                  return 'Dozvoljena su samo slova';
                                 }
                                 return null;
                               },
@@ -192,17 +210,31 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                             TextFormField(
                               controller: _priceController,
                               decoration: _buildInputDecoration(
-                                'Unesite cijenu (npr. 150.00)',
+                                'Unesite cijenu (npr. 150)',
                                 colorScheme,
                                 suffixText: 'KM',
+                              ).copyWith(
+                                helperText: 'Dozvoljeno: samo brojevi, max 5 cifara',
+                                helperMaxLines: 2,
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: <TextInputFormatter>[
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(5),
+                              ],
                               textInputAction: TextInputAction.next,
                               validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
+                                final String trimmed = value?.trim() ?? '';
+                                if (trimmed.isEmpty) {
                                   return 'Cijena je obavezna';
                                 }
-                                final double? price = double.tryParse(value.replaceAll(',', '.').trim());
+                                if (trimmed.length > 5) {
+                                  return 'Cijena može imati najviše 5 cifara';
+                                }
+                                if (!_digitsOnlyRegex.hasMatch(trimmed)) {
+                                  return 'Dozvoljeni su samo brojevi';
+                                }
+                                final double? price = double.tryParse(trimmed);
                                 if (price == null) {
                                   return 'Unesite ispravnu cijenu';
                                 }
@@ -222,12 +254,26 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                               decoration: _buildInputDecoration(
                                 'Unesite boju (npr. crna, smeđa)',
                                 colorScheme,
+                              ).copyWith(
+                                helperText: 'Dozvoljeno: samo slova, max 15 znakova',
+                                helperMaxLines: 2,
                               ),
+                              inputFormatters: <TextInputFormatter>[
+                                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z\sčćžšđČĆŽŠĐ]')),
+                                LengthLimitingTextInputFormatter(15),
+                              ],
                               textInputAction: TextInputAction.done,
                               onFieldSubmitted: (_) => _submitAnnouncement(),
                               validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
+                                final String trimmed = value?.trim() ?? '';
+                                if (trimmed.isEmpty) {
                                   return 'Boja je obavezna';
+                                }
+                                if (trimmed.length > 15) {
+                                  return 'Boja može imati najviše 15 znakova';
+                                }
+                                if (!_lettersWithSpaceRegex.hasMatch(trimmed)) {
+                                  return 'Dozvoljena su samo slova';
                                 }
                                 return null;
                               },

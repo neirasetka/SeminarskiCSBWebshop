@@ -65,13 +65,12 @@ namespace CSBWebshopSeminarski.Controllers
                 ErrorMessage = error
             });
 
-            if (error != null)
-            {
-                return Problem(detail: error, statusCode: 500);
-            }
-
             await PersistNewsAsync(subject, body, request, AnnouncementSegment.GiveawaySubscribers);
-            return Ok(new { sent });
+            return Ok(new
+            {
+                sent,
+                emailWarning = error
+            });
         }
 
         [HttpPost("new-collection")]
@@ -104,13 +103,12 @@ namespace CSBWebshopSeminarski.Controllers
                 ErrorMessage = error
             });
 
-            if (error != null)
-            {
-                return Problem(detail: error, statusCode: 500);
-            }
-
             await PersistNewsAsync(subject, body, request, AnnouncementSegment.NewCollectionSubscribers);
-            return Ok(new { sent });
+            return Ok(new
+            {
+                sent,
+                emailWarning = error
+            });
         }
 
         private async Task PersistNewsAsync(string subject, string body, AnnouncementRequest request, AnnouncementSegment segment)
