@@ -98,6 +98,15 @@ class OrdersApi {
     throw Exception('PaymentIntent API ${response.statusCode}$tail');
   }
 
+  Future<String> getStripePublishableKey() async {
+    final http.Response response = await _apiClient.get('$_paymentsPath/stripe-config');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+      return (data['PublishableKey'] ?? data['publishableKey'] ?? '').toString().trim();
+    }
+    return '';
+  }
+
   Future<void> updatePaymentStatus({
     required int orderId,
     required String status,

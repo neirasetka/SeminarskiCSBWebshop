@@ -5,6 +5,12 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 String formatCheckoutErrorForUi(Object error) {
   if (error is StripeException) {
     final LocalizedErrorMessage e = error.error;
+    final String raw = '${e.localizedMessage ?? ''} ${e.message ?? ''}'.toLowerCase();
+    if (e.stripeErrorCode == 'resource_missing' &&
+        (raw.contains('payment_intent') || raw.contains('no such payment_intent'))) {
+      return 'Plaćanje trenutno nije dostupno zbog Stripe konfiguracije. '
+          'Pokušajte ponovo za par sekundi ili kontaktirajte podršku.';
+    }
     final String? loc = e.localizedMessage?.trim();
     final String? msg = e.message?.trim();
     if (loc != null && loc.isNotEmpty) return loc;

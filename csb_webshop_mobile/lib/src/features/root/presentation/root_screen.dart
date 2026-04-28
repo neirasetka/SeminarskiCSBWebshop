@@ -136,6 +136,7 @@ class _MainMenuButton extends StatelessWidget {
 /// Home Screen sa glavnim meni gumbima (buyer-only na mobilu)
 class _HomeMenuScreen extends StatelessWidget {
   const _HomeMenuScreen({
+    required this.isAdmin,
     required this.onTorbice,
     required this.onKaisevi,
     required this.onFavoriti,
@@ -144,6 +145,7 @@ class _HomeMenuScreen extends StatelessWidget {
     required this.onLookbook,
   });
 
+  final bool isAdmin;
   final VoidCallback onTorbice;
   final VoidCallback onKaisevi;
   final VoidCallback onFavoriti;
@@ -179,24 +181,27 @@ class _HomeMenuScreen extends StatelessWidget {
                   color: colors.secondary,
                   onTap: onKaisevi,
                 ),
-                _MainMenuButton(
-                  icon: Icons.favorite_outline,
-                  label: 'Favoriti',
-                  color: Colors.pink,
-                  onTap: onFavoriti,
-                ),
-                _MainMenuButton(
-                  icon: Icons.recommend_outlined,
-                  label: 'Za vas',
-                  color: colors.tertiary,
-                  onTap: onZaVas,
-                ),
-                _MainMenuButton(
-                  icon: Icons.celebration_outlined,
-                  label: 'Giveaway',
-                  color: Colors.orange,
-                  onTap: onGiveaway,
-                ),
+                if (!isAdmin)
+                  _MainMenuButton(
+                    icon: Icons.favorite_outline,
+                    label: 'Favoriti',
+                    color: Colors.pink,
+                    onTap: onFavoriti,
+                  ),
+                if (!isAdmin)
+                  _MainMenuButton(
+                    icon: Icons.recommend_outlined,
+                    label: 'Za vas',
+                    color: colors.tertiary,
+                    onTap: onZaVas,
+                  ),
+                if (!isAdmin)
+                  _MainMenuButton(
+                    icon: Icons.celebration_outlined,
+                    label: 'Giveaway',
+                    color: Colors.orange,
+                    onTap: onGiveaway,
+                  ),
                 _MainMenuButton(
                   icon: Icons.photo_library_outlined,
                   label: 'Lookbook',
@@ -240,6 +245,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     final List<Widget> pages = <Widget>[
       // 0 - Home Menu
       _HomeMenuScreen(
+        isAdmin: isAdmin,
         onTorbice: () => _navigateToPage(1),
         onKaisevi: () => _navigateToPage(2),
         onFavoriti: () => _navigateToPage(3),
@@ -258,7 +264,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       // 2 - Kaiševi
       const BeltsListScreen(),
       // 3 - Favoriti
-      const FavoritesScreen(),
+      if (!isAdmin) const FavoritesScreen(),
       if (!isAdmin) ...<Widget>[
         // 4 - Korpa
         const CartScreen(),
@@ -370,10 +376,11 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             icon: Icon(Icons.checkroom_outlined),
             label: 'Kaiševi',
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outline),
-            label: 'Favoriti',
-          ),
+          if (!isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_outline),
+              label: 'Favoriti',
+            ),
           if (!isAdmin)
             const BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart_outlined),
@@ -432,7 +439,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       authControllerProvider,
     );
     final AuthSession? session = sessionAsync.value;
-    final int profilePageIndex = isAdmin ? 4 : 5;
+    final int profilePageIndex = isAdmin ? 3 : 5;
 
     await showModalBottomSheet<void>(
       context: context,

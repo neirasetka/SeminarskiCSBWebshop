@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../environment.dart';
 
 import '../../profile/data/profile_api.dart';
 import '../../profile/application/user_profile_provider.dart';
@@ -111,6 +112,20 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
+    final String backendPk = await _api.getStripePublishableKey();
+    final String appPk = EnvironmentConfig.stripePublishableKey.trim();
+    final String effectivePk = backendPk.isNotEmpty ? backendPk : appPk;
+    if (effectivePk.isEmpty || !effectivePk.startsWith('pk_')) {
+      throw Exception('Stripe publishable key nije konfigurisan na API-ju.');
+    }
+    if (Stripe.publishableKey != effectivePk) {
+      Stripe.publishableKey = effectivePk;
+      await Stripe.instance.applySettings();
+      if (kDebugMode) {
+        debugPrint('[checkout] Stripe publishable key osvjezen iz API-ja.');
+      }
+    }
+
     final OrderModel? order = state.value ?? await _loadActiveCart();
     if (order == null) {
       throw Exception('Nema korpe za plaćanje');

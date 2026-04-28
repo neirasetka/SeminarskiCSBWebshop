@@ -23,6 +23,11 @@ namespace CSBWebshopSeminarski.Controllers
             _paymentsService = paymentsService;
         }
 
+        public class StripeConfigResponse
+        {
+            public string PublishableKey { get; set; } = string.Empty;
+        }
+
         public class ConfirmCheckoutSessionRequest
         {
             public string SessionId { get; set; } = string.Empty;
@@ -106,6 +111,24 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 ClientSecret = intent.ClientSecret,
                 PaymentIntentId = intent.Id
+            });
+        }
+
+        /// <summary>
+        /// Returns Stripe publishable key used by this API instance.
+        /// Used by clients to detect pk/sk account mismatch early.
+        /// </summary>
+        [HttpGet("stripe-config")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(StripeConfigResponse), StatusCodes.Status200OK)]
+        public ActionResult<StripeConfigResponse> GetStripeConfig()
+        {
+            var publishableKey = HttpContext.RequestServices
+                .GetRequiredService<IConfiguration>()["Stripe:PublishableKey"] ?? string.Empty;
+
+            return Ok(new StripeConfigResponse
+            {
+                PublishableKey = publishableKey
             });
         }
 

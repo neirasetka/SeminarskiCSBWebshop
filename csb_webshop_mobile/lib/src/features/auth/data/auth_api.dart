@@ -26,7 +26,10 @@ class AuthApi {
       final Map<String, dynamic> jsonMap = json.decode(response.body) as Map<String, dynamic>;
       return AuthSession.fromTokenResponse(jsonMap);
     }
-    throw Exception('Prijava nije uspjela (${response.statusCode}).');
+    if (response.statusCode == 401) {
+      throw Exception('Pogrešno korisničko ime ili lozinka.');
+    }
+    throw Exception('Prijava trenutno nije moguća. Pokušajte ponovo.');
   }
 
   Future<Map<String, dynamic>> register({
