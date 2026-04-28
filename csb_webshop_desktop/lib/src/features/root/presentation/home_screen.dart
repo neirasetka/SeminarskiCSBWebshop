@@ -33,15 +33,15 @@ class HomeScreen extends ConsumerWidget {
       const _NavShortcut(icon: Icons.shopping_bag, label: 'Torbice', route: '/torbice'),
       const _NavShortcut(icon: Icons.straighten, label: 'Kaiševi', route: '/kaisevi'),
       const _NavShortcut(icon: Icons.grid_view_outlined, label: 'Lookbook', route: '/lookbook'),
-      const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
+      if (!isAdmin) const _NavShortcut(icon: Icons.card_giftcard, label: 'Giveaway', route: '/giveaways'),
       // Favoriti i Korpa samo za buyere, ne za admine
       if (!isAdmin) const _NavShortcut(icon: Icons.favorite_border, label: 'Moji favoriti', route: '/favoriti'),
       if (!isAdmin) const _NavShortcut(icon: Icons.shopping_cart, label: 'Korpa', route: '/cart'),
-      if (isLoggedIn) const _NavShortcut(icon: Icons.person_outline, label: 'Profil', route: '/profil'),
       if (isAdmin) const _NavShortcut(icon: Icons.campaign, label: 'Najave', route: '/announcement/new'),
       if (isAdmin) const _NavShortcut(icon: Icons.people_outline, label: 'Giveaway', route: '/giveaways/admin'),
-      if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Izvještaji', route: '/reports'),
       if (isAdmin) const _NavShortcut(icon: Icons.receipt_long_outlined, label: 'Narudžbe', route: '/admin/narudzbe'),
+      if (isAdmin) const _NavShortcut(icon: Icons.insights_outlined, label: 'Izvještaji', route: '/reports'),
+      if (isLoggedIn) const _NavShortcut(icon: Icons.person_outline, label: 'Profil', route: '/profil'),
     ];
 
     return Scaffold(

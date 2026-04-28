@@ -61,6 +61,24 @@ class GiveawaysApi {
     throw Exception('Failed to create giveaway: ${response.statusCode}');
   }
 
+  Future<Giveaway> updateGiveawayDuration({
+    required int giveawayId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'StartDate': startDate.toUtc().toIso8601String(),
+      'EndDate': endDate.toUtc().toIso8601String(),
+    };
+    final http.Response response = await _apiClient.put('$_basePath/$giveawayId/duration', body: json.encode(body));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return Giveaway.fromJson(map);
+    }
+    final String? apiMessage = giveawayApiMessageFromJsonBody(response.body);
+    throw Exception(apiMessage ?? 'Failed to update giveaway duration: ${response.statusCode}');
+  }
+
   Future<List<GiveawayParticipant>> getParticipants(int giveawayId) async {
     final http.Response response = await _apiClient.get('$_basePath/$giveawayId/participants');
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -98,7 +116,8 @@ class GiveawaysApi {
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return GiveawayParticipant.fromAdminJson(map);
     }
-    throw Exception('Failed to draw winner: ${response.statusCode}');
+    final String? apiMessage = giveawayApiMessageFromJsonBody(response.body);
+    throw Exception(apiMessage ?? 'Failed to draw winner: ${response.statusCode}');
   }
 
   Future<void> notifyWinner(int giveawayId) async {

@@ -98,6 +98,35 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(dto);
         }
 
+        [HttpPatch("{id:int}/duration")]
+        [HttpPut("{id:int}/duration")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateDuration(int id, [FromBody] UpdateGiveawayDurationRequest request)
+        {
+            try
+            {
+                var updated = await _giveawaysService.UpdateGiveawayDurationAsync(id, request.StartDate, request.EndDate);
+                var dto = new GiveawayDto
+                {
+                    Id = updated.Id,
+                    Title = updated.Title,
+                    StartDate = updated.StartDate,
+                    EndDate = updated.EndDate,
+                    IsClosed = updated.IsClosed,
+                    WinnerParticipantId = updated.WinnerParticipantId
+                };
+                return Ok(dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("{id:int}/participants")]
         [Authorize(Roles = "Admin")]
         public IActionResult GetParticipants(int id)

@@ -90,9 +90,9 @@ class GiveawaysListScreen extends ConsumerWidget {
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => isAdmin
-                            ? GiveawayParticipantsScreen(
+                            ? GiveawayDetailScreen(
                                 giveawayId: g.id,
-                                giveawayTitle: g.title,
+                                forAdmin: true,
                               )
                             : GiveawayRegisterScreen(giveawayId: g.id),
                       ),
@@ -134,10 +134,13 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
     final AsyncValue<Giveaway> giveawayAsync = ref.watch(giveawayDetailProvider(widget.giveawayId));
     final AsyncValue<List<GiveawayParticipant>> participantsAsync = ref.watch(participantsProvider);
 
-    return BackConfirmationWrapper(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        leading: buildBackButtonWithConfirmation(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Nazad',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Giveaway detalji'),
       ),
       body: giveawayAsync.when(
@@ -157,7 +160,20 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
             const SizedBox(height: 16),
             if (!widget.forAdmin)
               _RegisterCard(giveawayId: widget.giveawayId, isActive: g.isActiveNow && !g.isClosed),
-            if (widget.forAdmin) _AdminActions(giveawayId: widget.giveawayId, isClosed: g.isClosed),
+            if (widget.forAdmin) ...<Widget>[
+              OutlinedButton.icon(
+                onPressed: g.isClosed ? null : () => _editGiveawayDuration(g),
+                icon: const Icon(Icons.edit_calendar_outlined),
+                label: const Text('Uredi trajanje'),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (widget.forAdmin)
+              _AdminActions(
+                giveawayId: widget.giveawayId,
+                isClosed: g.isClosed,
+                hasEnded: DateTime.now().toUtc().isAfter(g.endDate),
+              ),
             if (widget.forAdmin) ...<Widget>[
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -196,8 +212,172 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace st) => Center(child: Text('Greška: $e')),
       ),
-    ),
     );
+  }
+
+  Future<void> _editGiveawayDuration(Giveaway giveaway) async {
+    DateTime start = giveaway.startDate.toLocal();
+    DateTime end = giveaway.endDate.toLocal();
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setDialogState) {
+            return AlertDialog(
+              title: const Text('Uredi trajanje giveawaya'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  OutlinedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: dialogContext,
+                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        initialDate: start,
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          start = DateTime(
+                            picked.year,
+                            picked.month,
+                            picked.day,
+                            start.hour,
+                            start.minute,
+                            start.second,
+                          );
+                          if (!end.isAfter(start)) {
+                            end = start.add(const Duration(days: 1));
+                          }
+                        });
+                      }
+                    },
+                    child: Text('Početak: ${start.toString().split('.').first}'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: dialogContext,
+                        initialTime: TimeOfDay.fromDateTime(start),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          start = DateTime(
+                            start.year,
+                            start.month,
+                            start.day,
+                            picked.hour,
+                            picked.minute,
+                          );
+                          if (!end.isAfter(start)) {
+                            end = start.add(const Duration(hours: 1));
+                          }
+                        });
+                      }
+                    },
+                    child: Text(
+                      'Vrijeme početka: ${TimeOfDay.fromDateTime(start).format(dialogContext)}',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: dialogContext,
+                        firstDate: start,
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        initialDate: end.isAfter(start) ? end : start.add(const Duration(days: 1)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          end = DateTime(
+                            picked.year,
+                            picked.month,
+                            picked.day,
+                            end.hour,
+                            end.minute,
+                            end.second,
+                          );
+                        });
+                      }
+                    },
+                    child: Text('Kraj: ${end.toString().split('.').first}'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: dialogContext,
+                        initialTime: TimeOfDay.fromDateTime(end),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          end = DateTime(
+                            end.year,
+                            end.month,
+                            end.day,
+                            picked.hour,
+                            picked.minute,
+                          );
+                        });
+                      }
+                    },
+                    child: Text(
+                      'Vrijeme kraja: ${TimeOfDay.fromDateTime(end).format(dialogContext)}',
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Odustani'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (!end.isAfter(start)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Datum kraja mora biti nakon datuma početka.')),
+                      );
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Sačuvaj'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) return;
+
+    final GiveawaysApi api = ref.read(giveawaysApiProvider);
+    try {
+      await api.updateGiveawayDuration(
+        giveawayId: giveaway.id,
+        startDate: start,
+        endDate: end,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Trajanje giveawaya je uspješno ažurirano.')),
+        );
+      }
+      await ref.read(giveawaysListProvider.notifier).refresh();
+      ref.invalidate(giveawayDetailProvider(giveaway.id));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Greška pri izmjeni trajanja: $e')),
+        );
+      }
+    }
   }
 }
 
@@ -285,10 +465,15 @@ class _RegisterCard extends ConsumerWidget {
 }
 
 class _AdminActions extends ConsumerWidget {
-  const _AdminActions({required this.giveawayId, required this.isClosed});
+  const _AdminActions({
+    required this.giveawayId,
+    required this.isClosed,
+    required this.hasEnded,
+  });
 
   final int giveawayId;
   final bool isClosed;
+  final bool hasEnded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -298,9 +483,17 @@ class _AdminActions extends ConsumerWidget {
       runSpacing: 8,
       children: <Widget>[
         ElevatedButton.icon(
-          onPressed: isClosed
-              ? null
-              : () async {
+          onPressed: () async {
+                  if (!hasEnded) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Pobjednika je moguće izvući tek kada giveaway završi.'),
+                        ),
+                      );
+                    }
+                    return;
+                  }
                   try {
                     final GiveawayParticipant winner = await api.drawWinner(giveawayId);
                     if (context.mounted) {

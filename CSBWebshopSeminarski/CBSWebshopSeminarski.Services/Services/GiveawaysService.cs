@@ -56,6 +56,32 @@ namespace CBSWebshopSeminarski.Services.Services
             return giveaway;
         }
 
+        public async Task<Giveaways> UpdateGiveawayDurationAsync(int giveawayId, DateTime startDate, DateTime endDate)
+        {
+            var giveaway = await _context.Giveaways.FindAsync(giveawayId)
+                           ?? throw new InvalidOperationException("Giveaway not found");
+
+            if (giveaway.IsClosed || giveaway.WinnerParticipantId.HasValue)
+            {
+                throw new InvalidOperationException("Nije moguće mijenjati trajanje zatvorenog giveawaya.");
+            }
+
+            // Normalize to UTC
+            var startUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Utc).ToUniversalTime();
+            var endUtc = DateTime.SpecifyKind(endDate, DateTimeKind.Utc).ToUniversalTime();
+
+            if (endUtc <= startUtc)
+            {
+                throw new ArgumentException("Datum kraja mora biti nakon datuma početka.");
+            }
+
+            giveaway.StartDate = startUtc;
+            giveaway.EndDate = endUtc;
+
+            await _context.SaveChangesAsync();
+            return giveaway;
+        }
+
         public async Task<Participants> RegisterParticipantAsync(int giveawayId, string name, string email)
         {
             if (string.IsNullOrWhiteSpace(email))

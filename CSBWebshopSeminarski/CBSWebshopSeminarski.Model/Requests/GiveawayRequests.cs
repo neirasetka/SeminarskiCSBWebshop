@@ -9,6 +9,12 @@ namespace CBSWebshopSeminarski.Model.Requests
         public DateTime EndDate { get; set; }
     }
 
+    public class UpdateGiveawayDurationRequest
+    {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+    }
+
     public class RegisterParticipantRequest
     {
         public string Name { get; set; } = string.Empty;
