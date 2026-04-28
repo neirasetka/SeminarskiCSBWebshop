@@ -115,10 +115,10 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
                   return GridView.builder(
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                      crossAxisCount: 4,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.75,
+                      childAspectRatio: 0.7,
                     ),
                     itemCount: bags.length,
                     itemBuilder: (BuildContext context, int index) {
