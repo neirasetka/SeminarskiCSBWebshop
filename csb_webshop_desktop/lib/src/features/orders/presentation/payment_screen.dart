@@ -406,6 +406,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(9),
+          ],
           decoration: InputDecoration(
             labelText: 'Broj telefona *',
             prefixIcon: const Icon(Icons.phone_outlined),
@@ -416,8 +420,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ),
           validator: (String? value) {
-            if (value == null || value.trim().isEmpty) {
+            final String phone = value?.trim() ?? '';
+            if (phone.isEmpty) {
               return 'Molimo unesite broj telefona';
+            }
+            if (!RegExp(r'^\d{9}$').hasMatch(phone)) {
+              return 'Broj telefona mora sadržavati tačno 9 cifara';
             }
             return null;
           },
@@ -452,6 +460,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               flex: 2,
               child: TextFormField(
                 controller: _cityController,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.allow(RegExp(r"[A-Za-zČĆŽŠĐčćžšđ]")),
+                  LengthLimitingTextInputFormatter(12),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Grad *',
                   prefixIcon: const Icon(Icons.location_city_outlined),
@@ -462,8 +474,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ),
                 validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) {
+                  final String city = value?.trim() ?? '';
+                  if (city.isEmpty) {
                     return 'Unesite grad';
+                  }
+                  if (!RegExp(r'^[A-Za-zČĆŽŠĐčćžšđ]{1,12}$').hasMatch(city)) {
+                    return 'Grad može sadržavati samo slova (max 12)';
                   }
                   return null;
                 },
@@ -474,6 +490,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               child: TextFormField(
                 controller: _postalCodeController,
                 keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(5),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Poštanski broj *',
                   prefixIcon: const Icon(Icons.markunread_mailbox_outlined),
@@ -484,8 +504,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ),
                 validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) {
+                  final String postalCode = value?.trim() ?? '';
+                  if (postalCode.isEmpty) {
                     return 'Unesite poštanski broj';
+                  }
+                  if (!RegExp(r'^\d{5}$').hasMatch(postalCode)) {
+                    return 'Poštanski broj mora sadržavati tačno 5 cifara';
                   }
                   return null;
                 },
