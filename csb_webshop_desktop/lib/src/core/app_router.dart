@@ -176,6 +176,25 @@ final GoRouter appRouter = GoRouter(
           ),
           routes: <RouteBase>[
             GoRoute(
+              path: 'bags/:id',
+              name: 'lookbookDetailBag',
+              builder: (BuildContext context, GoRouterState state) {
+                final String? idParam = state.pathParameters['id'];
+                final int bagId = int.tryParse(idParam ?? '') ?? 0;
+                return AuthGate(child: LookbookDetailScreen(bagId: bagId));
+              },
+            ),
+            GoRoute(
+              path: 'belts/:id',
+              name: 'lookbookDetailBelt',
+              builder: (BuildContext context, GoRouterState state) {
+                final String? idParam = state.pathParameters['id'];
+                final int beltId = int.tryParse(idParam ?? '') ?? 0;
+                return AuthGate(child: OutfitIdeaBeltScreen(beltId: beltId));
+              },
+            ),
+            // Backward-compatible old route (treated as bag detail).
+            GoRoute(
               path: ':id',
               name: 'lookbookDetail',
               builder: (BuildContext context, GoRouterState state) {
