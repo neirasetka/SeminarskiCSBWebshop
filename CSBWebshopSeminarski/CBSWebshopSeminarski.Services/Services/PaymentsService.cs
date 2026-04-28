@@ -1,6 +1,7 @@
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -9,11 +10,16 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private readonly CocoSunBagsWebshopDbContext _db;
         private readonly EmailService _emailService;
+        private readonly ILogger<PaymentsService> _logger;
 
-        public PaymentsService(CocoSunBagsWebshopDbContext db, EmailService emailService)
+        public PaymentsService(
+            CocoSunBagsWebshopDbContext db,
+            EmailService emailService,
+            ILogger<PaymentsService> logger)
         {
             _db = db;
             _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task HandlePaymentSucceededAsync(string paymentIntentId, IDictionary<string, string> metadata)
@@ -62,8 +68,24 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task SendPaymentConfirmationIfNotSentYetAsync(int orderId, string? receiptEmailOverride)
         {
             var order = await _db.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderID == orderId);
-            if (order == null || order.PaymentStatus != PaymentStatus.Paid || order.PaymentConfirmationEmailSent)
+            if (order == null)
             {
+                _logger.LogWarning("Payment confirmation email skipped: order {OrderId} not found.", orderId);
+                return;
+            }
+            if (order.PaymentStatus != PaymentStatus.Paid)
+            {
+                _logger.LogInformation(
+                    "Payment confirmation email skipped: order {OrderId} status is {Status}, expected Paid.",
+                    orderId,
+                    order.PaymentStatus);
+                return;
+            }
+            if (order.PaymentConfirmationEmailSent)
+            {
+                _logger.LogInformation(
+                    "Payment confirmation email skipped: already sent for order {OrderId}.",
+                    orderId);
                 return;
             }
 
@@ -72,6 +94,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 : order.User?.Email;
             if (string.IsNullOrWhiteSpace(to))
             {
+                _logger.LogWarning(
+                    "Payment confirmation email skipped: no recipient email for order {OrderId}.",
+                    orderId);
                 return;
             }
 
@@ -81,16 +106,25 @@ namespace CBSWebshopSeminarski.Services.Services
                 var message = "Poštovani/a,\n\n" +
                     "Uspješno smo zaprimili Vaše plaćanje.\n\n" +
                     $"Broj narudžbe: {order.OrderNumber}\n" +
-                    $"Ukupan iznos: {order.Price:N2} EUR\n\n" +
+                    $"Ukupan iznos: {order.Price:N2} KM\n\n" +
                     "Hvala Vam na povjerenju.\n\n" +
                     "CocoSunBags tim";
                 await _emailService.SendEmailAsync(to, subject, message);
                 order.PaymentConfirmationEmailSent = true;
                 await _db.SaveChangesAsync();
+                _logger.LogInformation(
+                    "Payment confirmation email sent for order {OrderId} to {Recipient}.",
+                    orderId,
+                    to);
             }
-            catch
+            catch (Exception ex)
             {
                 // Order stays paid; email can be retried from another path if needed
+                _logger.LogError(
+                    ex,
+                    "Payment confirmation email failed for order {OrderId} to {Recipient}.",
+                    orderId,
+                    to);
             }
         }
 

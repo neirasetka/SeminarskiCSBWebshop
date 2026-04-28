@@ -132,8 +132,12 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: 'success',
               name: 'checkoutSuccess',
-              builder: (BuildContext context, GoRouterState state) => const AuthGate(
-                child: OrderSuccessScreen(),
+              builder: (BuildContext context, GoRouterState state) => AuthGate(
+                child: OrderSuccessScreen(
+                  isPending: state.uri.queryParameters['pending'] == '1',
+                  orderId: int.tryParse(state.uri.queryParameters['orderId'] ?? ''),
+                  sessionId: state.uri.queryParameters['sessionId'],
+                ),
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using MailKit;
 using MimeKit;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -32,12 +33,36 @@ namespace CBSWebshopSeminarski.Services.Services
             try
             {
                 await smtp.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
+                // Gmail app-password auth uses basic mechanisms; XOAUTH2 can cause auth mismatch.
+                smtp.AuthenticationMechanisms.Remove("XOAUTH2");
                 await smtp.AuthenticateAsync(_smtpUser, _smtpPass);
                 await smtp.SendAsync(email);
             }
+            catch (AuthenticationException ex)
+            {
+                throw new InvalidOperationException(
+                    $"SMTP autentikacija nije uspjela za korisnika '{_smtpUser}'. " +
+                    "Provjerite App Password i da je 2FA uključena na Gmail nalogu.",
+                    ex);
+            }
+            catch (SmtpCommandException ex)
+            {
+                throw new InvalidOperationException(
+                    $"SMTP command error ({ex.StatusCode}): {ex.Message}",
+                    ex);
+            }
+            catch (SmtpProtocolException ex)
+            {
+                throw new InvalidOperationException(
+                    $"SMTP protocol error: {ex.Message}",
+                    ex);
+            }
             finally
             {
-                await smtp.DisconnectAsync(true);
+                if (smtp.IsConnected)
+                {
+                    await smtp.DisconnectAsync(true);
+                }
             }
         }
     }

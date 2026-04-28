@@ -1,5 +1,6 @@
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Database;
+using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,18 @@ namespace CSBWebshopSeminarski.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly CocoSunBagsWebshopDbContext _db;
+        private readonly IPaymentsService _paymentsService;
 
-        public PaymentsController(CocoSunBagsWebshopDbContext db)
+        public PaymentsController(CocoSunBagsWebshopDbContext db, IPaymentsService paymentsService)
         {
             _db = db;
+            _paymentsService = paymentsService;
+        }
+
+        public class ConfirmCheckoutSessionRequest
+        {
+            public string SessionId { get; set; } = string.Empty;
+            public int? OrderId { get; set; }
         }
 
         private static Dictionary<string, string> GetCheckoutMetadata(int orderId, string orderNumber, int userId, string? receiptEmail)
@@ -177,11 +186,118 @@ namespace CSBWebshopSeminarski.Controllers
 
             var session = await sessionService.CreateAsync(createOptions);
 
+            // Kada checkout sesija krene, narudžba više nije aktivna korpa.
+            // Ovo sprečava ponovno korištenje iste pending narudžbe pri narednoj kupovini.
+            if (order.ShippingStatus == CSBWebshopSeminarski.Core.Entities.ShippingStatus.Pending)
+            {
+                order.ShippingStatus = CSBWebshopSeminarski.Core.Entities.ShippingStatus.Processing;
+                order.LastStatusUpdate = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+
             return Ok(new CreateCheckoutSessionResponse
             {
                 Url = session.Url ?? string.Empty,
                 SessionId = session.Id
             });
+        }
+
+        /// <summary>
+        /// Fallback confirmation path when webhook delivery is delayed/unavailable.
+        /// Checks Stripe Checkout Session and updates order payment status if paid.
+        /// </summary>
+        [HttpPost("confirm-checkout-session")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult<object>> ConfirmCheckoutSession([FromBody] ConfirmCheckoutSessionRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.SessionId))
+            {
+                return BadRequest("SessionId is required.");
+            }
+
+            var sessionService = new SessionService();
+            Session session;
+            try
+            {
+                session = await sessionService.GetAsync(request.SessionId, new SessionGetOptions
+                {
+                    Expand = new List<string> { "payment_intent" }
+                });
+            }
+            catch (StripeException ex)
+            {
+                return BadRequest($"Stripe session lookup failed: {ex.Message}");
+            }
+
+            if (session == null)
+            {
+                return NotFound("Session not found.");
+            }
+
+            var paymentIntentId = session.PaymentIntentId;
+            if (string.IsNullOrWhiteSpace(paymentIntentId) && session.PaymentIntent is PaymentIntent piObj)
+            {
+                paymentIntentId = piObj.Id;
+            }
+            if (string.IsNullOrWhiteSpace(paymentIntentId))
+            {
+                return Ok(new { paid = false, reason = "payment_intent_missing" });
+            }
+
+            var paymentIntentService = new PaymentIntentService();
+            PaymentIntent paymentIntent;
+            try
+            {
+                paymentIntent = await paymentIntentService.GetAsync(paymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                return BadRequest($"Stripe payment intent lookup failed: {ex.Message}");
+            }
+
+            var metadata = paymentIntent.Metadata != null
+                ? new Dictionary<string, string>(paymentIntent.Metadata)
+                : new Dictionary<string, string>();
+            if (!metadata.TryGetValue("order_id", out var metadataOrderId))
+            {
+                return Ok(new { paid = false, reason = "order_id_missing_in_metadata" });
+            }
+
+            if (!int.TryParse(metadataOrderId, out var orderIdFromMetadata))
+            {
+                return Ok(new { paid = false, reason = "invalid_order_id_metadata" });
+            }
+
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderIdFromMetadata);
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || order.UserID != currentUserId)
+                {
+                    return Forbid();
+                }
+            }
+
+            if (request.OrderId.HasValue && request.OrderId.Value != order.OrderID)
+            {
+                return BadRequest("Session does not belong to provided order.");
+            }
+
+            var isPaid = string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+
+            if (isPaid)
+            {
+                await _paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, metadata);
+                return Ok(new { paid = true, orderId = order.OrderID, paymentIntentId = paymentIntent.Id });
+            }
+
+            return Ok(new { paid = false, orderId = order.OrderID, status = paymentIntent.Status });
         }
     }
 }

@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show debugPrint, defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:desktop_webview_window/desktop_webview_window.dart';
 
 import '../../../core/api_exception.dart';
 import '../../profile/data/profile_api.dart';
@@ -39,6 +41,60 @@ Future<T> _cartStep<T>(String stepLabelHr, Future<T> Function() action) async {
     debugPrint('[Korpa — $stepLabelHr] $e\n$st');
     throw Exception('[Korpa — $stepLabelHr] ${ApiException.formatForDisplay(e)}');
   }
+}
+
+String? _extractPaymentStatus(Map<String, dynamic> orderData) {
+  final List<Object?> candidates = <Object?>[
+    orderData['PaymentStatus'],
+    orderData['paymentStatus'],
+    orderData['PaymentStatusName'],
+    orderData['paymentStatusName'],
+    orderData['Status'],
+    orderData['status'],
+    orderData['PaymentStatusId'],
+    orderData['paymentStatusId'],
+  ];
+
+  for (final Object? candidate in candidates) {
+    if (candidate == null) continue;
+    final String value = candidate.toString().trim();
+    if (value.isNotEmpty) return value;
+  }
+  return null;
+}
+
+bool _isPaidPaymentStatus(String? rawStatus) {
+  if (rawStatus == null) return false;
+  final String normalized = rawStatus.trim().toLowerCase();
+  return normalized == '1' ||
+      normalized == 'paid' ||
+      normalized == 'succeeded' ||
+      normalized == 'success' ||
+      normalized == 'completed' ||
+      normalized == 'complete' ||
+      normalized == 'settled';
+}
+
+Future<Webview> _openHostedCheckoutInApp(String url) async {
+  if (kIsWeb) {
+    throw Exception('In-app checkout nije podržan na web platformi.');
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.windows) {
+    final bool webViewAvailable = await WebviewWindow.isWebviewAvailable();
+    if (!webViewAvailable) {
+      throw Exception(
+        'Nedostaje WebView2 runtime za in-app checkout. '
+        'Instalirajte WebView2 runtime i pokušajte ponovno.',
+      );
+    }
+  }
+
+  final Webview webview = await WebviewWindow.create();
+  webview
+    ..setApplicationNameForUserAgent('CSB Webshop Desktop')
+    ..launch(url);
+  return webview;
 }
 
 class CartNotifier extends AsyncNotifier<OrderModel?> {
@@ -241,6 +297,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
     await refresh();
     return <String, String>{
+      'orderId': order.id.toString(),
       'clientSecret': clientSecret,
       'paymentIntentId': (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString(),
     };
@@ -250,46 +307,86 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     required OrderModel order,
     String? receiptEmail,
   }) async {
+    const String successUrl = 'https://checkout.csb.local/success';
+    const String cancelUrl = 'https://checkout.csb.local/cancel';
+
     final Map<String, dynamic> resp = await _api.createCheckoutSession(
       orderId: order.id,
       receiptEmail: receiptEmail,
+      successUrl: successUrl,
+      cancelUrl: cancelUrl,
     );
     final String url = (resp['Url'] ?? resp['url'] ?? '').toString();
     if (url.isEmpty) {
       throw Exception('Nije moguće kreirati checkout sesiju');
     }
 
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Nije moguće otvoriti preglednik za plaćanje');
+    final Webview checkoutWebview = await _openHostedCheckoutInApp(url);
+    final Completer<String> checkoutOutcome = Completer<String>();
+
+    checkoutWebview.addOnUrlRequestCallback((String requestedUrl) {
+      final String lower = requestedUrl.toLowerCase();
+      if (!checkoutOutcome.isCompleted &&
+          lower.startsWith(successUrl)) {
+        checkoutOutcome.complete('success');
+      } else if (!checkoutOutcome.isCompleted &&
+          lower.startsWith(cancelUrl)) {
+        checkoutOutcome.complete('cancel');
+      }
+    });
+
+    unawaited(checkoutWebview.onClose.then((_) {
+      if (!checkoutOutcome.isCompleted) {
+        checkoutOutcome.complete('closed');
+      }
+    }));
+
+    final String outcome = await Future.any(<Future<String>>[
+      checkoutOutcome.future,
+      Future<String>.delayed(
+        const Duration(minutes: 10),
+        () => 'timeout',
+      ),
+    ]);
+
+    if (outcome == 'cancel') {
+      throw Exception('Plaćanje je otkazano.');
+    }
+    if (outcome == 'closed') {
+      throw Exception('Checkout prozor je zatvoren prije potvrde plaćanja.');
+    }
+    if (outcome == 'timeout') {
+      throw Exception('Plaćanje nije dovršeno u predviđenom vremenu.');
     }
 
-    // Stripe ažurira narudžbu preko webhooka; GET mora čekati backend.
-    // Prije: prvo čekanje 3 s + interval 3 s — korisnik je dugo vidio "Obrada..." i nakon brzog plaćanja.
-    const Duration pollInterval = Duration(seconds: 1);
-    const Duration firstPollDelay = Duration(milliseconds: 600);
-    const Duration timeout = Duration(minutes: 10);
-    final DateTime deadline = DateTime.now().add(timeout);
-    bool firstPoll = true;
+    checkoutWebview.close();
+    final String sessionId = resp['SessionId']?.toString() ?? '';
 
-    while (DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(firstPoll ? firstPollDelay : pollInterval);
-      firstPoll = false;
-      final Map<String, dynamic>? orderData = await _api.getOrder(orderId: order.id);
-      if (orderData == null) continue;
-      final String? status =
-          (orderData['PaymentStatus'] ?? orderData['paymentStatus'])?.toString();
-      if (status != null &&
-          (status.toLowerCase() == 'paid' || status == '1')) {
-        await refresh();
-        return <String, String>{'sessionId': resp['SessionId']?.toString() ?? ''};
+    if (sessionId.isNotEmpty) {
+      try {
+        await _api.confirmCheckoutSession(
+          sessionId: sessionId,
+          orderId: order.id,
+        );
+      } catch (_) {
+        // If confirm endpoint is unavailable, fallback to direct paid status update.
       }
     }
 
-    throw Exception(
-      'Plaćanje nije dovršeno u predviđenom vremenu. '
-      'Ako ste platili, provjerite status narudžbe.',
+    // Always call payment-status after successful checkout redirect.
+    // Backend method is idempotent and can send confirmation email if not sent yet.
+    await _api.updatePaymentStatus(
+      orderId: order.id,
+      status: 'Paid',
+      receiptEmail: receiptEmail,
     );
+
+    await refresh();
+    return <String, String>{
+      'orderId': order.id.toString(),
+      'sessionId': sessionId,
+      'pending': '0',
+    };
   }
 }
 

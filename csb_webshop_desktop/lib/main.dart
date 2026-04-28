@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'environment.dart';
 import 'src/core/app_router.dart';
 import 'src/core/notification_service.dart';
@@ -7,8 +8,11 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:window_manager/window_manager.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (runWebViewTitleBarWidget(args)) {
+    return;
+  }
 
   // flutter_stripe koristi dart:io Platform pri initu — na webu to baca UnsupportedError.
   if (!kIsWeb && EnvironmentConfig.stripePublishableKey.isNotEmpty) {

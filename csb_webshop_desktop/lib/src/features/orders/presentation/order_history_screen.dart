@@ -5,11 +5,24 @@ import '../application/order_history_provider.dart';
 import '../domain/order_models.dart';
 import 'order_detail_screen.dart';
 
-class OrderHistoryScreen extends ConsumerWidget {
+class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
+}
+
+class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(orderHistoryProvider.notifier).refresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ordersAsync = ref.watch(orderHistoryProvider);
     return Scaffold(
       appBar: AppBar(

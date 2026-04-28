@@ -253,5 +253,23 @@ class OrdersApi {
     }
     throw Exception('Failed to confirm mock checkout: ${response.statusCode}');
   }
+
+  Future<Map<String, dynamic>> confirmCheckoutSession({
+    required String sessionId,
+    int? orderId,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'sessionId': sessionId,
+      if (orderId != null) 'orderId': orderId,
+    };
+    final http.Response response = await _apiClient.post(
+      '$_paymentsPath/confirm-checkout-session',
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to confirm checkout session: ${response.statusCode}');
+  }
 }
 

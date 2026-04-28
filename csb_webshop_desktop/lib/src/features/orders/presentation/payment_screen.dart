@@ -27,7 +27,8 @@ String _formatPaymentError(Object e) {
   return 'Greška pri plaćanju: $e';
 }
 
-class _PaymentScreenState extends ConsumerState<PaymentScreen> {
+class _PaymentScreenState extends ConsumerState<PaymentScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -42,7 +43,18 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserProfile();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _isProcessing &&
+        cartUsesHostedStripeCheckout) {
+      // Refresh when returning from Stripe checkout window to surface backend updates ASAP.
+      ref.read(cartProvider.notifier).refresh();
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -61,6 +73,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
     _cityController.dispose();
@@ -87,8 +100,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Otvara se preglednik za plaćanje. Nakon uplate ekran može još nekoliko '
-            'sekundi prikazivati obradu dok sustav potvrdi uplatu.',
+            'Otvara se sigurni Stripe prozor za plaćanje unutar aplikacije. Nakon uplate '
+            'ekran može još nekoliko sekundi prikazivati obradu dok sistem potvrdi uplatu.',
           ),
           duration: Duration(seconds: 5),
           behavior: SnackBarBehavior.floating,
@@ -98,14 +111,22 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     try {
       // Start checkout using the cart provider
-      await ref.read(cartProvider.notifier).startCheckout(
+      final Map<String, String> checkoutResult =
+          await ref.read(cartProvider.notifier).startCheckout(
             currency: 'eur',
             email: _emailController.text.trim(),
           );
 
       if (mounted) {
-        ref.read(cartProvider.notifier).resetCartAfterPayment();
-        context.go('/checkout/success');
+        final bool isPending = checkoutResult['pending'] == '1';
+        if (cartUsesHostedStripeCheckout && isPending) {
+          final String orderId = checkoutResult['orderId'] ?? '';
+          final String sessionId = checkoutResult['sessionId'] ?? '';
+          context.go('/checkout/success?pending=1&orderId=$orderId&sessionId=$sessionId');
+        } else {
+          ref.read(cartProvider.notifier).resetCartAfterPayment();
+          context.go('/checkout/success');
+        }
       }
     } catch (e, _) {
       if (mounted) {
@@ -530,7 +551,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Detalje kartice unosite sigurno na Stripe stranici u pregledniku.',
+          'Detalje kartice unosite sigurno na Stripe stranici u prozoru aplikacije.',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.outline,
           ),
@@ -621,7 +642,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Nakon klika na plaćanje otvara se Stripe Checkout u pregledniku.',
+                      'Nakon klika na plaćanje otvara se Stripe Checkout u sigurnom prozoru aplikacije.',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -699,8 +720,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           icon: Icons.payment,
           title: 'Plaćanje',
           content: <String>[
-            'Podatke kartice unosite sigurno na Stripe stranici u pregledniku.',
-            'Nakon potvrde bit ćete preusmjereni na Stripe Checkout.',
+            'Podatke kartice unosite sigurno na Stripe stranici u prozoru aplikacije.',
+            'Nakon potvrde plaćanja status narudžbe se automatski provjerava.',
             'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
           ],
           colorScheme: colorScheme,
