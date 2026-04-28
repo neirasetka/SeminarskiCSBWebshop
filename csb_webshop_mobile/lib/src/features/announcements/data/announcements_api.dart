@@ -64,9 +64,14 @@ class AnnouncementsApi {
     required double price,
     required String color,
   }) async {
+    final String announcementBody =
+        'Predstavljamo vam novu torbicu "$bagName" u boji $color po cijeni od ${price.toStringAsFixed(2)} KM. Pogledajte našu ponudu!';
+
     final Map<String, dynamic> body = <String, dynamic>{
       'subject': 'Nova torbica: $bagName',
-      'body': 'Najavljujemo novu torbicu $bagName u $color boji po cijeni ${_formatPrice(price)} KM.',
+      'body': announcementBody,
+      'templateKey': '',
+      'variables': <String, String>{'message': announcementBody},
       'segment': 'NewCollectionSubscribers',
       'productName': bagName,
       'price': price,
@@ -85,7 +90,7 @@ class AnnouncementsApi {
       );
       _addDemoAnnouncement(
         title: 'Nova torbica: $bagName',
-        body: 'Model $bagName upravo je dodan u kolekciju u $color boji po cijeni ${_formatPrice(price)} KM.',
+        body: announcementBody,
         type: AnnouncementType.announcement,
         segment: 'NewCollectionSubscribers',
         productName: bagName,
@@ -100,11 +105,6 @@ class AnnouncementsApi {
       throw Exception('Failed to $action: ${response.statusCode} ${response.reasonPhrase}');
     }
   }
-}
-
-String _formatPrice(double price) {
-  final bool hasDecimals = price.remainder(1) != 0;
-  return hasDecimals ? price.toStringAsFixed(2) : price.toStringAsFixed(0);
 }
 
 List<Announcement> _demoAnnouncementsSnapshot() => List<Announcement>.unmodifiable(_demoAnnouncements);

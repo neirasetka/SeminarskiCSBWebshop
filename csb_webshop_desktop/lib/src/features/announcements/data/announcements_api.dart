@@ -99,6 +99,8 @@ class AnnouncementsApi {
     final Map<String, dynamic> bodyMap = <String, dynamic>{
       'subject': title,
       'body': body,
+      'templateKey': '',
+      'variables': <String, String>{'message': body},
       'segment': 'NewCollectionSubscribers',
       'productName': bagName,
       'price': bagPrice,

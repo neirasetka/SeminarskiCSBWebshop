@@ -77,7 +77,10 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<IActionResult> AnnounceNewCollection([FromBody] AnnouncementRequest request)
         {
             var subject = string.IsNullOrWhiteSpace(request.Subject) ? "Check Out Our New Collection!" : request.Subject!;
-            var body = _templateRenderer.Render(request.TemplateKey ?? "new-collection-default", request.Body, request.Variables);
+            var templateKey = string.IsNullOrWhiteSpace(request.TemplateKey) ? null : request.TemplateKey;
+            var body = !string.IsNullOrWhiteSpace(request.Body) && templateKey == null
+                ? request.Body!
+                : _templateRenderer.Render(templateKey ?? "new-collection-default", request.Body, request.Variables);
 
             int sent = 0;
             string? error = null;
@@ -96,7 +99,7 @@ namespace CSBWebshopSeminarski.Controllers
                 SentAtUtc = DateTime.UtcNow,
                 InitiatedBy = User?.Identity?.Name,
                 Subject = subject,
-                TemplateKey = request.TemplateKey ?? "new-collection-default",
+                TemplateKey = templateKey ?? "custom-body",
                 Segment = AnnouncementSegment.NewCollectionSubscribers.ToString(),
                 RecipientsCount = sent,
                 IsSuccess = error == null,
