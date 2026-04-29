@@ -16,15 +16,15 @@ class EnvironmentConfig {
     }
 
     if (kIsWeb) {
-      return 'http://localhost:5265';
+      return 'http://localhost:8080';
     }
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         // Android emulator reaches host machine through 10.0.2.2.
-        return 'http://10.0.2.2:5265';
+        return 'http://10.0.2.2:8080';
       default:
-        return 'http://localhost:5265';
+        return 'http://localhost:8080';
     }
   }
 

@@ -1,9 +1,25 @@
 **/.git
+**/.gitignore
 **/.vs
+**/.vscode
+**/.env
 **/bin
 **/obj
 **/node_modules
 **/.dockerignore
-**/Dockerfile*
-**/docker-compose*
+# Keep compose and Dockerfiles available when needed for nested builds.
 **/*.md
+**/*.dbmdl
+**/*.*proj.user
+**/.DS_Store
+**/.settings
+**/.classpath
+**/.project
+**/.toolstarget
+**/*.jfm
+**/charts
+**/npm-debug.log
+**/secrets.dev.yaml
+**/values.dev.yaml
+LICENSE
+README.md

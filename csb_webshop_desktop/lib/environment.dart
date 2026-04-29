@@ -1,16 +1,5 @@
-class EnvironmentConfig {
-  EnvironmentConfig._();
+docker compose ps
 
-  static const String flavor =
-      String.fromEnvironment('FLAVOR', defaultValue: 'prod');
-
-  static const String apiBaseUrl = String.fromEnvironment(
-    'baseUrl',
-    defaultValue: String.fromEnvironment(
-      'API_BASE_URL',
-      defaultValue: 'https://localhost:7224/api',
-    ),
-  );
 
   static const bool enableLogging =
       bool.fromEnvironment('ENABLE_LOGGING', defaultValue: false);

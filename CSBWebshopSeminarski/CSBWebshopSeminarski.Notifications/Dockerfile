@@ -4,10 +4,6 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["CSBWebshopSeminarski.Notifications/CSBWebshopSeminarski.Notifications.csproj", "CSBWebshopSeminarski.Notifications/"]
-COPY ["CBSWebshopSeminarski.Model/CBSWebshopSeminarski.Model.csproj", "CBSWebshopSeminarski.Model/"]
-COPY ["CSBWebshopSeminarski.Core/CSBWebshopSeminarski.Core.csproj", "CSBWebshopSeminarski.Core/"]
-COPY ["CSBWebshopSeminarski.Database/CSBWebshopSeminarski.Database.csproj", "CSBWebshopSeminarski.Database/"]
-COPY ["CBSWebshopSeminarski.Services/CBSWebshopSeminarski.Services.csproj", "CBSWebshopSeminarski.Services/"]
 RUN dotnet restore "CSBWebshopSeminarski.Notifications/CSBWebshopSeminarski.Notifications.csproj"
 
 COPY . .

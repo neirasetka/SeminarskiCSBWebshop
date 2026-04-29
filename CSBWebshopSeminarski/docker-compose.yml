@@ -1,10 +1,10 @@
 services:
   rabbitMQ:
     image: rabbitmq:3-management
-    container_name: csb_rabbitmq
+    container_name: 'rabbitmq_container'
     environment:
-      - RABBITMQ_DEFAULT_USER=webshop
-      - RABBITMQ_DEFAULT_PASS=webshop123
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -16,52 +16,39 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   csb_sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: csb_sqlserver
+    image: mcr.microsoft.com/mssql/server
+    container_name: ib180005_sqlserver
     restart: unless-stopped
     ports:
       - "1433:1433"
     environment:
+      SA_PASSWORD: ${SQL_SA_PASSWORD:-YourStrongPassword!}
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "CocoSunBags2025!"
-      MSSQL_PID: "Developer"
     volumes:
       - sqlserverdata:/var/opt/mssql
     networks:
       - csb_network
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" -b -o /dev/null || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 15
-      start_period: 30s
 
   csb_webapi:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: csb_api
+      dockerfile: CSBWebshopSeminarski/Dockerfile
+    container_name: ib180005_api
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: "http://+:80"
-      ConnectionStrings__CocoSunBagsWebshop: "Server=csb_sqlserver;Database=180005;User Id=sa;Password=CocoSunBags2025!;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+      ConnectionStrings__CocoSunBagsWebshop: "Server=csb_sqlserver;Database=180005;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrongPassword!};TrustServerCertificate=True;MultipleActiveResultSets=true;"
       RabbitMQ__HostName: rabbitMQ
       RabbitMQ__Port: "5672"
-      RabbitMQ__UserName: webshop
-      RabbitMQ__Password: webshop123
-      RabbitMQ__Exchange: EmailExchange
-      RabbitMQ__QueueName: EmailQueue
-      RabbitMQ__RoutingKey: email_queue
+      RabbitMQ__UserName: guest
+      RabbitMQ__Password: guest
     networks:
       - csb_network
     depends_on:
-      csb_sqlserver:
-        condition: service_healthy
-      rabbitMQ:
-        condition: service_started
+      - csb_sqlserver
+      - rabbitMQ
 
   csb_notifications:
     restart: unless-stopped
@@ -70,17 +57,14 @@ services:
       dockerfile: CSBWebshopSeminarski.Notifications/Dockerfile
     container_name: csb_notifications
     environment:
-      RabbitMQ__HostName: rabbitMQ
-      RabbitMQ__Port: "5672"
-      RabbitMQ__UserName: webshop
-      RabbitMQ__Password: webshop123
-      RabbitMQ__Exchange: EmailExchange
-      RabbitMQ__QueueName: EmailQueue
-      RabbitMQ__RoutingKey: email_queue
-      Smtp__Host: smtp.gmail.com
-      Smtp__Port: "587"
-      Smtp__User: neirasetka@gmail.com
-      Smtp__Pass: "abcd efgh ijkl mnop"
+      RABBITMQ_HOST: rabbitMQ
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      SMTP_SERVER: ${SMTP_SERVER:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     depends_on:
       - csb_sqlserver
       - csb_webapi
