@@ -5,6 +5,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class BagTypesService : CRUDService<BagType, BagTypeSearchRequest, BagTypes, BagTypeUpsertRequest, BagTypeUpsertRequest>
@@ -42,7 +44,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (await _context.BagTypes.AnyAsync(i => i.BagName == request.BagName))
             {
-                throw new Exception("Bag type already exists!");
+                throw new ConflictException("Bag type already exists!");
             }
             var entity = _mapper.Map<BagTypes>(request);
 
@@ -56,15 +58,15 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var vrsta = await _context.BagTypes.FindAsync(ID);
             if (vrsta == null)
-                throw new ArgumentException($"Bag type with ID {ID} not found.");
+                throw new NotFoundException($"Bag type with ID {ID} not found.");
             if (await _context.BagTypes.AnyAsync(i => i.BagName == request.BagName) && request.BagName != vrsta.BagName)
             {
-                throw new Exception("Bag type already exists!");
+                throw new ConflictException("Bag type already exists!");
             }
 
             var entity = _context.Set<BagTypes>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Bag type with ID {ID} not found.");
+                throw new NotFoundException($"Bag type with ID {ID} not found.");
             _context.Set<BagTypes>().Attach(entity);
             _context.Set<BagTypes>().Update(entity);
 

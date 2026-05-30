@@ -1,7 +1,7 @@
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,40 +28,23 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<OrderItem> AddToCart([FromBody] OrderItemUpsertRequest request)
         {
             if (request == null)
-                throw new UserException("Zahtjev za dodavanje stavke nije valjan.");
+                throw new ValidationException("Zahtjev za dodavanje stavke nije valjan.");
+
             try
             {
                 return await base.Insert(request);
-            }
-            catch (UserException)
-            {
-                throw;
             }
             catch (DbUpdateException ex)
             {
                 var inner = ex.InnerException?.Message ?? ex.Message;
                 _logger.LogWarning(ex, "DbUpdateException adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", request.OrderID, request.BagID, request.BeltID);
                 if (inner.Contains("FK_") || inner.Contains("foreign key") || inner.Contains("REFERENCE"))
-                    throw new UserException("Greška pri dodavanju u korpu: narudžba, torba ili kaiš nije pronađen. Osvježite stranicu i pokušajte ponovno.");
+                    throw new NotFoundException("Greška pri dodavanju u korpu: narudžba, torba ili kaiš nije pronađen. Osvježite stranicu i pokušajte ponovno.");
                 if (inner.Contains("Cannot insert the value NULL into column", StringComparison.OrdinalIgnoreCase)
                     && (inner.Contains("BagID", StringComparison.OrdinalIgnoreCase) || inner.Contains("BeltID", StringComparison.OrdinalIgnoreCase)))
-                    throw new UserException(
+                    throw new ValidationException(
                         "Struktura baze ne dopušta stavku samo s torbom ili samo s kaišem. Ponovno pokrenite web API (pri pokretanju se ispravljaju stupci OrderItems.BagID/BeltID). Ako problem ostane, ručno postavite te stupce na NULL u SQL Serveru.");
-                throw new UserException($"Greška pri dodavanju u korpu: {inner}");
-            }
-            catch (ArgumentException ex)
-            {
-                throw new UserException(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", request.OrderID, request.BagID, request.BeltID);
-                var inner = ex.InnerException;
-                var detail = inner == null
-                    ? $"{ex.GetType().Name}: {ex.Message}"
-                    : $"{ex.GetType().Name}: {ex.Message} | Unutarnje ({inner.GetType().Name}): {inner.Message}";
-                throw new UserException(
-                    $"Greška pri dodavanju u korpu (AddToCart/Insert). Osvježite stranicu ako treba. Tehnički detalj: {detail}");
+                throw;
             }
         }
     }

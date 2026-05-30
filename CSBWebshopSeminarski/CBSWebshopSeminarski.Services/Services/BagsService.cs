@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class BagsService : CRUDService<Bag, BagSearchRequest, Bags, BagUpsertRequest, BagUpsertRequest>, IBagsService
@@ -68,13 +70,13 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Bags.FindAsync(ID);
             if (entity == null)
             {
-                throw new Exception($"Bag with ID {ID} not found.");
+                throw new NotFoundException($"Bag with ID {ID} not found.");
             }
 
             // Enforce unique name across bags (excluding the current one).
             if (await _context.Bags.AnyAsync(i => i.BagName == request.BagName && i.BagID != ID))
             {
-                throw new Exception("Bag already exists!");
+                throw new ConflictException("Bag already exists!");
             }
 
             // Update scalar fields directly to avoid overwriting important values with defaults/nulls.

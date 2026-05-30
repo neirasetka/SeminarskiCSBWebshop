@@ -1,11 +1,13 @@
 using CBSWebshopSeminarski.Model.DTOs;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
-using CSBWebshopSeminarski.Core.Exceptions;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+
+using CBSWebshopSeminarski.Services.Exceptions;
+using ValidationException = CBSWebshopSeminarski.Services.Exceptions.ValidationException;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -38,7 +40,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     case "all":
                         break;
                     default:
-                        throw new ArgumentException("Invalid status. Use one of: active, closed, all");
+                        throw new ValidationException("Invalid status. Use one of: active, closed, all");
                 }
             }
 
@@ -97,7 +99,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (string.IsNullOrWhiteSpace(title))
             {
-                throw new ArgumentException("Title is required", nameof(title));
+                throw new ValidationException("Title is required.");
             }
             //Normalize to UTC
             var startUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Utc).ToUniversalTime();
@@ -105,7 +107,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (endUtc <= startUtc)
             {
-                throw new ArgumentException("EndDate must be after StartDate");
+                throw new ValidationException("EndDate must be after StartDate");
             }
             var giveaway = new Giveaways
             {
@@ -124,11 +126,11 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Giveaways> UpdateGiveawayDurationAsync(int giveawayId, DateTime startDate, DateTime endDate)
         {
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
-                           ?? throw new InvalidOperationException("Giveaway not found");
+                           ?? throw new NotFoundException("Giveaway not found");
 
             if (giveaway.IsClosed || giveaway.WinnerParticipantId.HasValue)
             {
-                throw new InvalidOperationException("Nije moguće mijenjati trajanje zatvorenog giveawaya.");
+                throw new BusinessException("Nije moguće mijenjati trajanje zatvorenog giveawaya.");
             }
 
             // Normalize to UTC
@@ -137,7 +139,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (endUtc <= startUtc)
             {
-                throw new ArgumentException("Datum kraja mora biti nakon datuma početka.");
+                throw new ValidationException("Datum kraja mora biti nakon datuma početka.");
             }
 
             giveaway.StartDate = startUtc;
@@ -151,34 +153,34 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (string.IsNullOrWhiteSpace(email))
             {
-                throw new ArgumentException("Email is required", nameof(email));
+                throw new ValidationException("Email is required.");
             }
             if (email.Length > 254)
             {
-                throw new ArgumentException("Email too long", nameof(email));
+                throw new ValidationException("Email too long.");
             }
             try
             {
-                var _ = new EmailAddressAttribute().IsValid(email) ? true : throw new ArgumentException("Invalid email format", nameof(email));
+                var _ = new EmailAddressAttribute().IsValid(email) ? true : throw new ValidationException("Invalid email format.");
             }
             catch
             {
-                throw new ArgumentException("Invalid email format", nameof(email));
+                throw new ValidationException("Invalid email format.");
             }
 
             var normalizedEmail = email.Trim().ToLowerInvariant();
 
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
-                           ?? throw new InvalidOperationException("Giveaway not found");
+                           ?? throw new NotFoundException("Giveaway not found");
             var now = DateTime.UtcNow;
             if (now < giveaway.StartDate || now > giveaway.EndDate || giveaway.IsClosed)
             {
-                throw new InvalidOperationException("Giveaway is not accepting entries");
+                throw new BusinessException("Giveaway is not accepting entries");
             }
             var alreadyExists = await _context.Participants.AnyAsync(p => p.GiveawayId == giveawayId && p.Email == normalizedEmail);
             if (alreadyExists)
             {
-                throw new AlreadyRegisteredForGiveawayException();
+                throw new ConflictException("VeÄ‡ uÄestvujete u giveawayu.");
             }
 
             var participant = new Participants
@@ -198,10 +200,10 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Participants?> SelectRandomWinnerAsync(int giveawayId)
         {
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
-                           ?? throw new InvalidOperationException("Giveaway not found");
+                           ?? throw new NotFoundException("Giveaway not found");
             if (DateTime.UtcNow < giveaway.EndDate)
             {
-                throw new InvalidOperationException("Giveaway has not ended yet");
+                throw new BusinessException("Giveaway has not ended yet");
             }
             var participants = await _context.Participants
                                              .Where(p => p.GiveawayId == giveawayId)
@@ -236,13 +238,13 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<Participants> NotifyWinnerForGiveawayAsync(int giveawayId)
         {
             var giveaway = await _context.Giveaways.FindAsync(giveawayId)
-                ?? throw new KeyNotFoundException("Winner not found for this giveaway");
+                ?? throw new NotFoundException("Winner not found for this giveaway");
 
             if (!giveaway.WinnerParticipantId.HasValue)
-                throw new KeyNotFoundException("Winner not found for this giveaway");
+                throw new NotFoundException("Winner not found for this giveaway");
 
             var winner = await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value)
-                ?? throw new KeyNotFoundException("Winner not found");
+                ?? throw new NotFoundException("Winner not found");
 
             await NotifyWinnerAsync(winner);
             return winner;
@@ -260,7 +262,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 var giveaway = await _context.Giveaways
                     .Include(g => g.Participants)
                     .FirstOrDefaultAsync(g => g.Id == giveawayId)
-                    ?? throw new InvalidOperationException("Giveaway not found");
+                    ?? throw new NotFoundException("Giveaway not found");
 
                 if (giveaway.IsClosed)
                 {
@@ -277,7 +279,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (DateTime.UtcNow < giveaway.EndDate)
                 {
                     await tx.RollbackAsync();
-                    throw new InvalidOperationException("Giveaway has not ended yet");
+                    throw new BusinessException("Giveaway has not ended yet");
                 }
 
                 var participants = giveaway.Participants.ToList();

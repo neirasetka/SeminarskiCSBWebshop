@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using BagOrBeltReferenceValidator = CBSWebshopSeminarski.Services.BagOrBeltReferenceValidator;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class FavoritesService : CRUDService<Favorite, FavoriteSearchRequest, Favorites, FavoriteUpsertRequest, FavoriteUpsertRequest>
@@ -58,7 +60,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var entity = _context.Set<Favorites>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Favorite with ID {ID} not found.");
+                throw new NotFoundException($"Favorite with ID {ID} not found.");
             _context.Set<Favorites>().Attach(entity);
             _context.Set<Favorites>().Update(entity);
 

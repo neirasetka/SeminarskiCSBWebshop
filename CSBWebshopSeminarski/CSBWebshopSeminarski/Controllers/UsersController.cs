@@ -52,14 +52,7 @@ namespace CSBWebshopSeminarski.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
-                return await _service.UpdateMyProfile(userId, request);
-            }
-            catch (ArgumentException)
-            {
-                return NotFound();
-            }
+            return await _service.UpdateMyProfile(userId, request);
         }
 
         [HttpPost("Token")]

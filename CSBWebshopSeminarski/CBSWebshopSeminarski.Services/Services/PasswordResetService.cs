@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class PasswordResetService : IPasswordResetService
@@ -57,14 +59,14 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
             if (request.NewPassword != request.ConfirmPassword)
-                throw new ArgumentException("Lozinke se ne podudaraju.");
+                throw new ValidationException("Lozinke se ne podudaraju.");
 
             var tokenEntity = await _db.PasswordResetTokens
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.Token == request.Token && !t.Used && t.ExpiresAt > DateTime.UtcNow);
 
             if (tokenEntity == null)
-                throw new InvalidOperationException("Token je nevažeći ili je istekao.");
+                throw new ValidationException("Token je nevažeći ili je istekao.");
 
             var user = tokenEntity.User;
             user.PasswordSalt = UsersService.GenerateSalt();

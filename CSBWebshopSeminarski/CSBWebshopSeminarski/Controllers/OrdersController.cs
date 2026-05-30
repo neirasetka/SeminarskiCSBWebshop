@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CSBWebshopSeminarski.Controllers
 {
     public class OrdersController : BaseCRUDController<Order, OrderSearchRequest, OrderUpsertRequest, OrderUpsertRequest>
@@ -31,14 +33,14 @@ namespace CSBWebshopSeminarski.Controllers
             var order = await _service.GetFullOrderByIdAsync(ID);
             if (order == null)
             {
-                throw new KeyNotFoundException("Narudžba nije pronađena.");
+                throw new NotFoundException("Narudžba nije pronađena.");
             }
             if (!User.IsInRole("Admin"))
             {
                 var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != order.UserID)
                 {
-                    throw new UnauthorizedAccessException();
+                    throw new ForbiddenException("Access denied.");
                 }
             }
             return order;
@@ -51,7 +53,7 @@ namespace CSBWebshopSeminarski.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException("Access denied.");
             }
             request.UserID = currentUserId;
             request.Price = 0;
@@ -129,11 +131,11 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var adminUserId))
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException("Access denied.");
 
             var cancelled = await _service.CancelOrderAsync(ID, adminUserId, "Cancelled by administrator");
             if (!cancelled)
-                throw new KeyNotFoundException("Narudžba nije pronađena ili je već otkazana.");
+                throw new NotFoundException("Narudžba nije pronađena ili je već otkazana.");
             return true;
         }
 

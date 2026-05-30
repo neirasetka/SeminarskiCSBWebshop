@@ -1,13 +1,14 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using BagOrBeltReferenceValidator = CBSWebshopSeminarski.Services.BagOrBeltReferenceValidator;
+
+using CBSWebshopSeminarski.Services.Exceptions;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -103,7 +104,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var entity = _context.Set<Reviews>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Review with ID {ID} not found.");
+                throw new NotFoundException($"Review with ID {ID} not found.");
             var ownerUserId = entity.UserID;
             _context.Set<Reviews>().Attach(entity);
             _context.Set<Reviews>().Update(entity);
@@ -132,7 +133,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Review {id} not found");
+                throw new NotFoundException($"Review {id} not found");
             }
             StateMachines.ReviewStateMachine.ValidateTransition(
                 entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved);
@@ -152,7 +153,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Review {id} not found");
+                throw new NotFoundException($"Review {id} not found");
             }
             StateMachines.ReviewStateMachine.ValidateTransition(
                 entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected);
@@ -172,7 +173,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Review {id} not found");
+                throw new NotFoundException($"Review {id} not found");
             }
             StateMachines.ReviewStateMachine.ValidateTransition(
                 entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Pending);

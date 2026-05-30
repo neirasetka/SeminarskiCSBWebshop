@@ -5,6 +5,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class NewsletterService : INewsletterService
@@ -52,7 +54,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<NewsletterSubscriptionStatusResult> GetSubscriptionStatusAsync(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email je obavezan.");
+                throw new ValidationException("Email je obavezan.");
 
             var normalizedEmail = email.Trim().ToLowerInvariant();
             var subscriber = await _context.Subscribers.AsNoTracking()

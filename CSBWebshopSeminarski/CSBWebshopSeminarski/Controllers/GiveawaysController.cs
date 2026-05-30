@@ -2,7 +2,6 @@ using CBSWebshopSeminarski.Model.DTOs;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Core.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,14 +24,7 @@ namespace CSBWebshopSeminarski.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] string? status)
         {
-            try
-            {
-                return Ok(await _giveawaysService.GetAllAsync(status));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(await _giveawaysService.GetAllAsync(status));
         }
 
         [HttpPost]
@@ -59,19 +51,8 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateDuration(int id, [FromBody] UpdateGiveawayDurationRequest request)
         {
-            try
-            {
-                var updated = await _giveawaysService.UpdateGiveawayDurationAsync(id, request.StartDate, request.EndDate);
-                return Ok(MapGiveaway(updated));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var updated = await _giveawaysService.UpdateGiveawayDurationAsync(id, request.StartDate, request.EndDate);
+            return Ok(MapGiveaway(updated));
         }
 
         [HttpGet("{id:int}/participants")]
@@ -85,35 +66,16 @@ namespace CSBWebshopSeminarski.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipantOnGiveaway(int id, [FromBody] RegisterParticipantRequest request)
         {
-            try
+            var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
+            var dto = new ParticipantPublicDto
             {
-                var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
-                var dto = new ParticipantPublicDto
-                {
-                    Id = created.Id,
-                    Name = created.Name,
-                    MaskedEmail = ObjectExtension.MaskEmail(created.Email ?? string.Empty),
-                    EntryDate = created.EntryDate,
-                    GiveawayId = created.GiveawayId
-                };
-                return Ok(dto);
-            }
-            catch (AlreadyRegisteredForGiveawayException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex) when (ex.Message == "Giveaway not found")
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex) when (ex.Message == "Giveaway is not accepting entries")
-            {
-                return BadRequest(new { message = "Giveaway trenutno ne prima prijave." });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                Id = created.Id,
+                Name = created.Name,
+                MaskedEmail = ObjectExtension.MaskEmail(created.Email ?? string.Empty),
+                EntryDate = created.EntryDate,
+                GiveawayId = created.GiveawayId
+            };
+            return Ok(dto);
         }
 
         [HttpPost("{id:int}/draw")]

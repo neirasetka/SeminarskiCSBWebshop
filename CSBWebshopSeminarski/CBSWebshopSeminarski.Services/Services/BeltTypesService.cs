@@ -5,6 +5,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class BeltTypesService : CRUDService<BeltType, BeltTypeSearchRequest, BeltTypes, BeltTypeUpsertRequest, BeltTypeUpsertRequest>
@@ -40,7 +42,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (await _context.BeltTypes.AnyAsync(i => i.BeltName == request.BeltName))
             {
-                throw new Exception("Belt already exists!");
+                throw new ConflictException("Belt already exists!");
             }
             var entity = _mapper.Map<BeltTypes>(request);
 
@@ -53,15 +55,15 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var vrsta = await _context.BeltTypes.FindAsync(ID);
             if (vrsta == null)
-                throw new ArgumentException($"Belt type with ID {ID} not found.");
+                throw new NotFoundException($"Belt type with ID {ID} not found.");
             if (await _context.BeltTypes.AnyAsync(i => i.BeltName == request.BeltName) && request.BeltName != vrsta.BeltName)
             {
-                throw new Exception("Belt already exists!");
+                throw new ConflictException("Belt already exists!");
             }
 
             var entity = _context.Set<BeltTypes>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Belt type with ID {ID} not found.");
+                throw new NotFoundException($"Belt type with ID {ID} not found.");
             _context.Set<BeltTypes>().Attach(entity);
             _context.Set<BeltTypes>().Update(entity);
 

@@ -1,8 +1,8 @@
 using System.Text.Json;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CSBWebshopSeminarski.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -107,44 +107,41 @@ namespace CSBWebshopSeminarski.Controllers
             }
             catch (JsonException ex)
             {
-                throw new UserException($"Neispravan JSON u zahtjevu: {ex.Message}");
+                throw new ValidationException($"Neispravan JSON u zahtjevu: {ex.Message}");
             }
             if (request == null || string.IsNullOrWhiteSpace(body))
             {
-                throw new UserException("Request body is required.");
+                throw new ValidationException("Request body is required.");
             }
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
             {
-                throw new UserException("Either BagID or BeltID must be set.");
+                throw new ValidationException("Either BagID or BeltID must be set.");
             }
             if (request.BagID.HasValue && request.BeltID.HasValue)
             {
-                throw new UserException("Only one of BagID or BeltID should be set.");
+                throw new ValidationException("Only one of BagID or BeltID should be set.");
             }
             if (request.UserID < 1)
             {
-                throw new UserException("UserID must be a valid positive integer.");
+                throw new ValidationException("UserID must be a valid positive integer.");
             }
             if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Length < 2)
             {
                 request.Title = "Outfit inspiracija";
             }
+
             try
             {
                 return await _outfitIdeasService.Insert(request);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new UserException(ex.Message);
             }
             catch (DbUpdateException ex)
             {
                 var inner = ex.InnerException?.Message ?? ex.Message;
                 if (inner.Contains("FK_") || inner.Contains("foreign key"))
-                    throw new UserException("Greška pri kreiranju outfit ideje: referencirani kaiš ili korisnik ne postoji u bazi.");
+                    throw new NotFoundException("Greška pri kreiranju outfit ideje: referencirani kaiš ili korisnik ne postoji u bazi.");
                 if (inner.Contains("duplicate") || inner.Contains("unique"))
-                    throw new UserException("Greška pri kreiranju outfit ideje: outfit ideja za ovaj kaiš i korisnika već postoji.");
-                throw new UserException($"Greška pri kreiranju outfit ideje: {inner}");
+                    throw new ConflictException("Greška pri kreiranju outfit ideje: outfit ideja za ovaj kaiš i korisnika već postoji.");
+                throw;
             }
         }
 

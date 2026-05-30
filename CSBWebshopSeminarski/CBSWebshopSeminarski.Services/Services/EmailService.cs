@@ -40,20 +40,20 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             catch (AuthenticationException ex)
             {
-                throw new InvalidOperationException(
+                throw new Exception(
                     $"SMTP autentikacija nije uspjela za korisnika '{_smtpUser}'. " +
                     "Provjerite App Password i da je 2FA uključena na Gmail nalogu.",
                     ex);
             }
             catch (SmtpCommandException ex)
             {
-                throw new InvalidOperationException(
+                throw new Exception(
                     $"SMTP command error ({ex.StatusCode}): {ex.Message}",
                     ex);
             }
             catch (SmtpProtocolException ex)
             {
-                throw new InvalidOperationException(
+                throw new Exception(
                     $"SMTP protocol error: {ex.Message}",
                     ex);
             }

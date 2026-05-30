@@ -5,6 +5,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class OrderItemsService : CRUDService<OrderItem, OrderItemSearchRequest, OrderItems, OrderItemUpsertRequest, OrderItemUpsertRequest>
@@ -34,11 +36,11 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)
         {
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
-                throw new ArgumentException("Order item must have either BagID or BeltID.");
+                throw new ValidationException("Order item must have either BagID or BeltID.");
             if (request.BagID.HasValue && request.BagID.Value < 1)
-                throw new ArgumentException("BagID must be a valid bag identifier.");
+                throw new ValidationException("BagID must be a valid bag identifier.");
             if (request.BeltID.HasValue && request.BeltID.Value < 1)
-                throw new ArgumentException("BeltID must be a valid belt identifier.");
+                throw new ValidationException("BeltID must be a valid belt identifier.");
 
             // Ako klijent pošalje cijenu 0, dohvati pravu cijenu iz artikla (Bag ili Belt)
             if (request.Price <= 0)
@@ -58,14 +60,14 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             if (request.Price <= 0)
-                throw new ArgumentException("Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
+                throw new ValidationException("Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
 
             var entity = _mapper.Map<OrderItems>(request);
 
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
-                ?? throw new ArgumentException($"Order with ID {entity.OrderID} not found.");
+                ?? throw new NotFoundException($"Order with ID {entity.OrderID} not found.");
 
             order.OrderItems.Add(entity);
             ApplyOrderTotal(order);
@@ -84,7 +86,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _context.Set<OrderItems>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Order item with ID {ID} not found.");
+                throw new NotFoundException($"Order item with ID {ID} not found.");
             _context.Set<OrderItems>().Attach(entity);
             _context.Set<OrderItems>().Update(entity);
 

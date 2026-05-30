@@ -5,6 +5,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class TransactionsService : CRUDService<Transaction, TransactionSearchRequest, Transactions, TransactionUpsertRequest, TransactionUpsertRequest>
@@ -58,7 +60,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _context.Set<Transactions>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Transaction with ID {ID} not found.");
+                throw new NotFoundException($"Transaction with ID {ID} not found.");
             _context.Set<Transactions>().Attach(entity);
             _context.Set<Transactions>().Update(entity);
 

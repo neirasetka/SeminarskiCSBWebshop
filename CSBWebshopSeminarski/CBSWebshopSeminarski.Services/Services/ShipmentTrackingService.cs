@@ -31,7 +31,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<ShippingInfo> SetTrackingInfoAsync(int orderId, SetShippingInfoRequest request)
         {
             var order = await _dbContext.Orders.Include(o => o.TrackingEvents).FirstOrDefaultAsync(o => o.OrderID == orderId)
-                ?? throw new KeyNotFoundException($"Order {orderId} not found");
+                ?? throw new NotFoundException($"Order {orderId} not found");
 
             var previousStatus = order.ShippingStatus;
 
@@ -67,7 +67,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var order = await _dbContext.Orders
                 .Include(o => o.TrackingEvents)
                 .FirstOrDefaultAsync(o => o.OrderID == orderId)
-                ?? throw new KeyNotFoundException($"Order {orderId} not found");
+                ?? throw new NotFoundException($"Order {orderId} not found");
 
             var result = _mapper.Map<ShippingInfo>(order);
             result.TrackingEvents = order.TrackingEvents
@@ -80,7 +80,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<ShippingInfo> UpdateStatusAsync(int orderId, UpdateShippingStatusRequest request)
         {
             var order = await _dbContext.Orders.Include(o => o.TrackingEvents).FirstOrDefaultAsync(o => o.OrderID == orderId)
-                ?? throw new KeyNotFoundException($"Order {orderId} not found");
+                ?? throw new NotFoundException($"Order {orderId} not found");
 
             var previousStatus = order.ShippingStatus;
             var newStatus = (ShippingStatusEntity)request.Status;
@@ -107,7 +107,7 @@ namespace CBSWebshopSeminarski.Services.Services
         public async Task<bool> RefreshFromCarrierAsync(int orderId)
         {
             var orderExists = await _dbContext.Orders.AnyAsync(o => o.OrderID == orderId);
-            if (!orderExists) throw new KeyNotFoundException($"Order {orderId} not found");
+            if (!orderExists) throw new NotFoundException($"Order {orderId} not found");
             return false;
         }
 

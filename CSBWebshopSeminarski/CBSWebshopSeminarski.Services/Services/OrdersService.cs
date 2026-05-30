@@ -9,6 +9,8 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class OrdersService : CRUDService<Order, OrderSearchRequest, Orders, OrderUpsertRequest, OrderUpsertRequest>, IOrderService
@@ -94,7 +96,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _context.Set<Orders>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Order with ID {ID} not found.");
+                throw new NotFoundException($"Order with ID {ID} not found.");
             _context.Set<Orders>().Attach(entity);
             _context.Set<Orders>().Update(entity);
 
@@ -126,7 +128,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException("Order not found");
+                throw new NotFoundException("Order not found");
             }
             return _mapper.Map<Order>(entity);
         }

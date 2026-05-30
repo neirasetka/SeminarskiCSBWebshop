@@ -1,5 +1,7 @@
 namespace CBSWebshopSeminarski.Services;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 /// <summary>
 /// Validates that a row refers to exactly one product: either a bag or a belt.
 /// </summary>
@@ -17,9 +19,9 @@ public static class BagOrBeltReferenceValidator
         var (bag, belt) = Normalize(bagId, beltId);
 
         if (!bag.HasValue && !belt.HasValue)
-            throw new ArgumentException($"{entityName} must have either BagID or BeltID.");
+            throw new ValidationException($"{entityName} must have either BagID or BeltID.");
 
         if (bag.HasValue && belt.HasValue)
-            throw new ArgumentException($"{entityName} cannot specify both BagID and BeltID.");
+            throw new ValidationException($"{entityName} cannot specify both BagID and BeltID.");
     }
 }

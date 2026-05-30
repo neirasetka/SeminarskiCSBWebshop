@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class BeltsService : CRUDService<Belt, BeltSearchRequest, Belts, BeltUpsertRequest, BeltUpsertRequest>, IBeltsService
@@ -46,10 +48,10 @@ namespace CBSWebshopSeminarski.Services.Services
 
             // Klijent (desktop) ne šalje BeltTypeID kad je "Bez tipa" — u modelu to postane 0 i krši FK.
             if (entity.BeltTypeID == 0)
-                throw new InvalidOperationException("Tip kaiša je obavezan. Odaberite tip u formi (ili dodajte tipove u administraciji).");
+                throw new BusinessException("Tip kaiša je obavezan. Odaberite tip u formi (ili dodajte tipove u administraciji).");
 
             if (entity.UserID == 0)
-                throw new InvalidOperationException("Nije moguće sačuvati kaiš bez vlasnika (UserID). Prijavite se ponovo.");
+                throw new BusinessException("Nije moguće sačuvati kaiš bez vlasnika (UserID). Prijavite se ponovo.");
 
             if (!string.IsNullOrWhiteSpace(request.Image))
                 entity.Image = Convert.FromBase64String(request.Image);
@@ -66,12 +68,12 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.Belts.FindAsync(ID);
             if (entity == null)
             {
-                throw new Exception($"Belt with ID {ID} not found.");
+                throw new NotFoundException($"Belt with ID {ID} not found.");
             }
 
             if (await _context.Belts.AnyAsync(i => i.BeltName == request.BeltName && i.BeltID != ID))
             {
-                throw new Exception("Belt already exists!");
+                throw new ConflictException("Belt already exists!");
             }
 
             entity.BeltName = request.BeltName;

@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Services.Exceptions;
 using CSBWebshopSeminarski.Core.Entities;
 
 namespace CBSWebshopSeminarski.Services.StateMachines
@@ -22,7 +23,7 @@ namespace CBSWebshopSeminarski.Services.StateMachines
         public static void ValidateTransition(ReviewStatus from, ReviewStatus to)
         {
             if (!CanTransition(from, to))
-                throw new InvalidOperationException($"Cannot transition review status from {from} to {to}.");
+                throw new BusinessException($"Cannot transition review status from {from} to {to}.");
         }
     }
 }

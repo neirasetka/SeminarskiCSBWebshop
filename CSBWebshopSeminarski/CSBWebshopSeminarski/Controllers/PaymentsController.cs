@@ -23,24 +23,9 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult<CreatePaymentIntentResponse>> CreatePaymentIntent([FromBody] CreatePaymentIntentRequest request)
         {
-            try
-            {
-                var (currentUserId, isAdmin) = GetCallerContext();
-                var result = await _paymentsService.CreatePaymentIntentAsync(request, currentUserId, isAdmin);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var (currentUserId, isAdmin) = GetCallerContext();
+            var result = await _paymentsService.CreatePaymentIntentAsync(request, currentUserId, isAdmin);
+            return Ok(result);
         }
 
         [HttpGet("stripe-config")]
@@ -57,29 +42,14 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult<CreateCheckoutSessionResponse>> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest request)
         {
-            try
+            var (currentUserId, isAdmin) = GetCallerContext();
+            var redirectContext = new CheckoutRedirectContext
             {
-                var (currentUserId, isAdmin) = GetCallerContext();
-                var redirectContext = new CheckoutRedirectContext
-                {
-                    RequestScheme = Request.Scheme,
-                    RequestHost = Request.Host.Value
-                };
-                var result = await _paymentsService.CreateCheckoutSessionAsync(request, currentUserId, isAdmin, redirectContext);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+                RequestScheme = Request.Scheme,
+                RequestHost = Request.Host.Value
+            };
+            var result = await _paymentsService.CreateCheckoutSessionAsync(request, currentUserId, isAdmin, redirectContext);
+            return Ok(result);
         }
 
         [HttpPost("confirm-checkout-session")]
@@ -91,29 +61,14 @@ namespace CSBWebshopSeminarski.Controllers
                 return BadRequest("SessionId is required.");
             }
 
-            try
-            {
-                var (currentUserId, isAdmin) = GetCallerContext();
-                var result = await _paymentsService.ConfirmCheckoutSessionAsync(
-                    request.SessionId,
-                    request.OrderId,
-                    currentUserId,
-                    isAdmin);
+            var (currentUserId, isAdmin) = GetCallerContext();
+            var result = await _paymentsService.ConfirmCheckoutSessionAsync(
+                request.SessionId,
+                request.OrderId,
+                currentUserId,
+                isAdmin);
 
-                return Ok(MapConfirmResult(result));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(MapConfirmResult(result));
         }
 
         [HttpPost("confirm-payment-intent")]
@@ -125,29 +80,14 @@ namespace CSBWebshopSeminarski.Controllers
                 return BadRequest("PaymentIntentId is required.");
             }
 
-            try
-            {
-                var (currentUserId, isAdmin) = GetCallerContext();
-                var result = await _paymentsService.ConfirmPaymentIntentAsync(
-                    request.PaymentIntentId,
-                    request.OrderId,
-                    currentUserId,
-                    isAdmin);
+            var (currentUserId, isAdmin) = GetCallerContext();
+            var result = await _paymentsService.ConfirmPaymentIntentAsync(
+                request.PaymentIntentId,
+                request.OrderId,
+                currentUserId,
+                isAdmin);
 
-                return Ok(MapConfirmResult(result));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(MapConfirmResult(result));
         }
 
         private (int? currentUserId, bool isAdmin) GetCallerContext()

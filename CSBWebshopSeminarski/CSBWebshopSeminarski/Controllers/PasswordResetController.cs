@@ -25,19 +25,8 @@ namespace CSBWebshopSeminarski.Controllers
         [HttpPost("reset")]
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            try
-            {
-                await _passwordResetService.ResetPasswordAsync(request);
-                return Ok(new { message = "Lozinka je uspješno promijenjena." });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _passwordResetService.ResetPasswordAsync(request);
+            return Ok(new { message = "Lozinka je uspješno promijenjena." });
         }
     }
 }

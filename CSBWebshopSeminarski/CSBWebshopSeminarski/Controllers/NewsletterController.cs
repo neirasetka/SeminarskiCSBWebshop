@@ -38,20 +38,13 @@ namespace CSBWebshopSeminarski.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetSubscriptionStatus([FromQuery] string email)
         {
-            try
+            var result = await _newsletterService.GetSubscriptionStatusAsync(email);
+            return Ok(new
             {
-                var result = await _newsletterService.GetSubscriptionStatusAsync(email);
-                return Ok(new
-                {
-                    email = result.Email,
-                    isSubscribedToGiveaway = result.IsSubscribedToGiveaway,
-                    isSubscribedToNewCollections = result.IsSubscribedToNewCollections
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                email = result.Email,
+                isSubscribedToGiveaway = result.IsSubscribedToGiveaway,
+                isSubscribedToNewCollections = result.IsSubscribedToNewCollections
+            });
         }
 
         [HttpGet("subscribers")]

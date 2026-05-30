@@ -49,17 +49,17 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (request.Password != request.PasswordConfirmation)
             {
-                throw new Exception("Passwords do not match!");
+                throw new ValidationException("Passwords do not match!");
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
             {
-                throw new InvalidOperationException("Korisničko ime je već zauzeto.");
+                throw new BusinessException("Korisničko ime je već zauzeto.");
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new InvalidOperationException("Email adresa je već registrirana.");
+                throw new BusinessException("Email adresa je već registrirana.");
             }
 
             var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
@@ -80,18 +80,18 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (await _context.Users.AnyAsync(u => u.Email == request.Email && u.UserID != userId))
             {
-                throw new InvalidOperationException("Email adresa je već registrirana.");
+                throw new BusinessException("Email adresa je već registrirana.");
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName && u.UserID != userId))
             {
-                throw new InvalidOperationException("Korisničko ime je već zauzeto.");
+                throw new BusinessException("Korisničko ime je već zauzeto.");
             }
 
             var entity = await _context.Users.FindAsync(userId);
             if (entity == null)
             {
-                throw new ArgumentException($"User with ID {userId} not found.");
+                throw new NotFoundException($"User with ID {userId} not found.");
             }
 
             entity.Name = request.Name;
@@ -119,7 +119,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _context.Users.Find(ID);
             if (entity == null)
-                throw new ArgumentException($"User with ID {ID} not found.");
+                throw new NotFoundException($"User with ID {ID} not found.");
 
             _context.Users.Attach(entity);
             _context.Users.Update(entity);
@@ -128,7 +128,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 if (request.Password != request.PasswordConfirmation)
                 {
-                    throw new Exception("Passwords do not match!");
+                    throw new ValidationException("Passwords do not match!");
                 }
 
                 entity.PasswordSalt = GenerateSalt();
@@ -257,17 +257,17 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (request.Password != request.PasswordConfirmation)
             {
-                throw new Exception("Passwords do not match!");
+                throw new ValidationException("Passwords do not match!");
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
             {
-                throw new InvalidOperationException("Korisničko ime je već zauzeto.");
+                throw new BusinessException("Korisničko ime je već zauzeto.");
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new InvalidOperationException("Email adresa je već registrirana.");
+                throw new BusinessException("Email adresa je već registrirana.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -347,7 +347,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 .SingleOrDefaultAsync();
 
             if (entity == null)
-                throw new ArgumentException("Favorite not found.");
+                throw new NotFoundException("Favorite not found.");
 
             _context.Favorites.Remove(entity);
             await _context.SaveChangesAsync();
@@ -400,7 +400,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 .SingleOrDefaultAsync();
 
             if (entity == null)
-                throw new ArgumentException("Favorite not found.");
+                throw new NotFoundException("Favorite not found.");
 
             _context.Favorites.Remove(entity);
             await _context.SaveChangesAsync();

@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Services.Exceptions;
 using CSBWebshopSeminarski.Core.Entities;
 
 namespace CBSWebshopSeminarski.Services.StateMachines
@@ -23,7 +24,7 @@ namespace CBSWebshopSeminarski.Services.StateMachines
         public static void ValidatePaymentTransition(PaymentStatus from, PaymentStatus to)
         {
             if (!CanTransitionPayment(from, to))
-                throw new InvalidOperationException($"Cannot transition payment status from {from} to {to}.");
+                throw new BusinessException($"Cannot transition payment status from {from} to {to}.");
         }
     }
 }

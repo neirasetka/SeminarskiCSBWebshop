@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using Stripe;
 using Stripe.Checkout;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class PaymentsService : IPaymentsService
@@ -66,25 +68,25 @@ namespace CBSWebshopSeminarski.Services.Services
             bool isAdmin)
         {
             var order = await _db.Orders.FindAsync(request.OrderID)
-                ?? throw new KeyNotFoundException("Order not found");
+                ?? throw new NotFoundException("Order not found");
 
             EnsureOrderAccess(order, currentUserId, isAdmin);
 
             var validationError = await ValidateOrderForPaymentAsync(order);
             if (validationError != null)
-                throw new InvalidOperationException(validationError);
+                throw new BusinessException(validationError);
 
             var (amountInCents, calcError) = await CalculateOrderTotalAsync(order.OrderID);
             if (calcError != null)
-                throw new InvalidOperationException(calcError);
+                throw new BusinessException(calcError);
 
             var currency = GetPaymentCurrency();
             var existingPayment = await GetExistingStripePaymentAsync(order);
             if (existingPayment.Error != null)
-                throw new InvalidOperationException(existingPayment.Error);
+                throw new BusinessException(existingPayment.Error);
 
             if (existingPayment.ActiveCheckoutSession != null)
-                throw new InvalidOperationException("An active checkout session is already in progress for this order.");
+                throw new ConflictException("An active checkout session is already in progress for this order.");
 
             if (existingPayment.ActivePaymentIntent != null)
             {
@@ -92,7 +94,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (activeIntent.Amount != amountInCents
                     || !string.Equals(activeIntent.Currency, currency, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidOperationException("Active payment amount does not match the current order total.");
+                    throw new ConflictException("Active payment amount does not match the current order total.");
                 }
 
                 return new CreatePaymentIntentResponse
@@ -138,33 +140,33 @@ namespace CBSWebshopSeminarski.Services.Services
             CheckoutRedirectContext redirectContext)
         {
             var order = await _db.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderID == request.OrderID)
-                ?? throw new KeyNotFoundException("Order not found");
+                ?? throw new NotFoundException("Order not found");
 
             EnsureOrderAccess(order, currentUserId, isAdmin);
 
             var validationError = await ValidateOrderForPaymentAsync(order);
             if (validationError != null)
-                throw new InvalidOperationException(validationError);
+                throw new BusinessException(validationError);
 
             var (amountInCents, calcError) = await CalculateOrderTotalAsync(order.OrderID);
             if (calcError != null)
-                throw new InvalidOperationException(calcError);
+                throw new BusinessException(calcError);
 
             var (successUrl, cancelUrl, successPrefix) = ResolveCheckoutRedirectUrls(redirectContext);
 
             var currency = GetPaymentCurrency();
             var existingPayment = await GetExistingStripePaymentAsync(order);
             if (existingPayment.Error != null)
-                throw new InvalidOperationException(existingPayment.Error);
+                throw new BusinessException(existingPayment.Error);
 
             if (existingPayment.ActivePaymentIntent != null)
-                throw new InvalidOperationException("An active payment intent is already in progress for this order.");
+                throw new ConflictException("An active payment intent is already in progress for this order.");
 
             if (existingPayment.ActiveCheckoutSession != null)
             {
                 var activeSession = existingPayment.ActiveCheckoutSession;
                 if (activeSession.AmountTotal.HasValue && activeSession.AmountTotal.Value != amountInCents)
-                    throw new InvalidOperationException("Active checkout amount does not match the current order total.");
+                    throw new ConflictException("Active checkout amount does not match the current order total.");
 
                 return new CreateCheckoutSessionResponse
                 {
@@ -241,7 +243,7 @@ namespace CBSWebshopSeminarski.Services.Services
             bool isAdmin)
         {
             if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ArgumentException("SessionId is required.");
+                throw new ValidationException("SessionId is required.");
 
             var sessionService = new SessionService();
             Session session;
@@ -254,7 +256,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             catch (StripeException ex)
             {
-                throw new InvalidOperationException($"Stripe session lookup failed: {ex.Message}");
+                throw new BusinessException($"Stripe session lookup failed: {ex.Message}");
             }
 
             var paymentIntentId = session.PaymentIntentId;
@@ -276,7 +278,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             catch (StripeException ex)
             {
-                throw new InvalidOperationException($"Stripe payment intent lookup failed: {ex.Message}");
+                throw new BusinessException($"Stripe payment intent lookup failed: {ex.Message}");
             }
 
             return await ConfirmPaidPaymentIntentAsync(paymentIntent, session.PaymentStatus, orderId, currentUserId, isAdmin);
@@ -289,7 +291,7 @@ namespace CBSWebshopSeminarski.Services.Services
             bool isAdmin)
         {
             if (string.IsNullOrWhiteSpace(paymentIntentId))
-                throw new ArgumentException("PaymentIntentId is required.");
+                throw new ValidationException("PaymentIntentId is required.");
 
             var paymentIntentService = new PaymentIntentService();
             PaymentIntent paymentIntent;
@@ -299,11 +301,11 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             catch (StripeException ex)
             {
-                throw new InvalidOperationException($"Stripe payment intent lookup failed: {ex.Message}");
+                throw new BusinessException($"Stripe payment intent lookup failed: {ex.Message}");
             }
 
             if (paymentIntent == null)
-                throw new KeyNotFoundException("Payment intent not found.");
+                throw new NotFoundException("Payment intent not found.");
 
             return await ConfirmPaidPaymentIntentAsync(paymentIntent, null, orderId, currentUserId, isAdmin);
         }
@@ -478,12 +480,12 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderIdFromMetadata)
-                ?? throw new KeyNotFoundException("Order not found.");
+                ?? throw new NotFoundException("Order not found.");
 
             EnsureOrderAccess(order, currentUserId, isAdmin);
 
             if (requestedOrderId.HasValue && requestedOrderId.Value != order.OrderID)
-                throw new InvalidOperationException("Payment does not belong to provided order.");
+                throw new BusinessException("Payment does not belong to provided order.");
 
             var isPaid = string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase)
                          || string.Equals(sessionPaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
@@ -513,7 +515,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
 
             if (!currentUserId.HasValue || order.UserID != currentUserId.Value)
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException("Access denied.");
         }
 
         private string GetPaymentCurrency() =>

@@ -8,6 +8,8 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using BagOrBeltReferenceValidator = CBSWebshopSeminarski.Services.BagOrBeltReferenceValidator;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class RatesService : IRatesService
@@ -80,7 +82,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var entity = _context.Set<Rates>().Find(ID);
             if (entity == null)
-                throw new ArgumentException($"Rate with ID {ID} not found.");
+                throw new NotFoundException($"Rate with ID {ID} not found.");
             var ownerUserId = entity.UserID;
             _context.Set<Rates>().Attach(entity);
             _context.Set<Rates>().Update(entity);

@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class LookbookService : CRUDService<LookbookItem, LookbookSearchRequest, LookbookItems, LookbookUpsertRequest, LookbookUpsertRequest>, ILookbookService
@@ -83,7 +85,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.LookbookItems.FindAsync(ID);
             if (entity == null)
-                throw new ArgumentException($"Lookbook item with ID {ID} not found.");
+                throw new NotFoundException($"Lookbook item with ID {ID} not found.");
             _context.Set<LookbookItems>().Attach(entity);
             _context.Set<LookbookItems>().Update(entity);
             _mapper.Map(request, entity);

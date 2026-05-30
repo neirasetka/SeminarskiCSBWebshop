@@ -6,6 +6,8 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services.Exceptions;
+
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class OutfitIdeasService : CRUDService<OutfitIdea, OutfitIdeaSearchRequest, OutfitIdeas, OutfitIdeaUpsertRequest, OutfitIdeaUpsertRequest>, IOutfitIdeasService
@@ -81,27 +83,27 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
             {
-                throw new ArgumentException("Either BagID or BeltID must be set.");
+                throw new ValidationException("Either BagID or BeltID must be set.");
             }
             if (request.BagID.HasValue && request.BeltID.HasValue)
             {
-                throw new ArgumentException("Only one of BagID or BeltID should be set.");
+                throw new ValidationException("Only one of BagID or BeltID should be set.");
             }
             // Validate foreign keys exist before insert
             var userExists = await _context.Users.AnyAsync(u => u.UserID == request.UserID);
             if (!userExists)
-                throw new ArgumentException("Korisnik sa tim ID-om ne postoji.");
+                throw new NotFoundException("Korisnik sa tim ID-om ne postoji.");
             if (request.BeltID.HasValue)
             {
                 var beltExists = await _context.Belts.AnyAsync(b => b.BeltID == request.BeltID.Value);
                 if (!beltExists)
-                    throw new ArgumentException("Kaiš sa tim ID-om ne postoji.");
+                    throw new ValidationException("Kaiš sa tim ID-om ne postoji.");
             }
             if (request.BagID.HasValue)
             {
                 var bagExists = await _context.Bags.AnyAsync(b => b.BagID == request.BagID.Value);
                 if (!bagExists)
-                    throw new ArgumentException("Torba sa tim ID-om ne postoji.");
+                    throw new NotFoundException("Torba sa tim ID-om ne postoji.");
             }
             var entity = _mapper.Map<OutfitIdeas>(request);
             entity.CreatedAt = DateTime.UtcNow;
@@ -117,7 +119,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = await _context.OutfitIdeas.FindAsync(id);
             if (entity == null)
             {
-                throw new Exception("Outfit idea not found");
+                throw new NotFoundException("Outfit idea not found");
             }
 
             _mapper.Map(request, entity);
@@ -133,7 +135,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var outfitIdea = await _context.OutfitIdeas.FindAsync(request.OutfitIdeaID);
             if (outfitIdea == null)
             {
-                throw new Exception("Outfit idea not found");
+                throw new NotFoundException("Outfit idea not found");
             }
 
             var imageEntity = new OutfitIdeaImages

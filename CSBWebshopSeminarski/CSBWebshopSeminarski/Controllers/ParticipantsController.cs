@@ -39,19 +39,12 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinnerForGiveaway(int giveawayId)
         {
-            try
+            var winner = await _giveawaysService.NotifyWinnerForGiveawayAsync(giveawayId);
+            return Ok(new
             {
-                var winner = await _giveawaysService.NotifyWinnerForGiveawayAsync(giveawayId);
-                return Ok(new
-                {
-                    message = "Uspješno obaviješten korisnik",
-                    winnerEmail = winner.Email
-                });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+                message = "Uspješno obaviješten korisnik",
+                winnerEmail = winner.Email
+            });
         }
     }
 }
