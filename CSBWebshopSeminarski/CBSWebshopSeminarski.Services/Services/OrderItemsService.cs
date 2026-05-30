@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
@@ -35,65 +36,74 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)
         {
-            await ResolveCatalogPriceAsync(request);
+            return await _context.ExecuteInTransactionAsync(async () =>
+            {
+                await ResolveCatalogPriceAsync(request);
 
-            var entity = _mapper.Map<OrderItems>(request);
+                var entity = _mapper.Map<OrderItems>(request);
 
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
-                ?? throw new NotFoundException($"Order with ID {entity.OrderID} not found.");
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
+                    ?? throw new NotFoundException($"Order with ID {entity.OrderID} not found.");
 
-            order.OrderItems.Add(entity);
-            ApplyOrderTotal(order);
-            await SaveChangesWithOrderItemsNullableRepairAsync();
-            var insertedId = entity.OrderItemID;
-            var forReturn = await _context.OrderItems
-                .AsNoTracking()
-                .Include(oi => oi.Bag)
-                .Include(oi => oi.Belt)
-                .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
-            return _mapper.Map<OrderItem>(forReturn ?? entity);
+                order.OrderItems.Add(entity);
+                ApplyOrderTotal(order);
+                await SaveChangesWithOrderItemsNullableRepairAsync();
+                var insertedId = entity.OrderItemID;
+                var forReturn = await _context.OrderItems
+                    .AsNoTracking()
+                    .Include(oi => oi.Bag)
+                    .Include(oi => oi.Belt)
+                    .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
+                return _mapper.Map<OrderItem>(forReturn ?? entity);
+            });
         }
 
         public override async Task<OrderItem> Update(int ID, OrderItemUpsertRequest request)
         {
-            var entity = _context.Set<OrderItems>().Find(ID);
-            if (entity == null)
-                throw new NotFoundException($"Order item with ID {ID} not found.");
+            return await _context.ExecuteInTransactionAsync(async () =>
+            {
+                var entity = _context.Set<OrderItems>().Find(ID);
+                if (entity == null)
+                    throw new NotFoundException($"Order item with ID {ID} not found.");
 
-            await ResolveCatalogPriceAsync(request);
+                await ResolveCatalogPriceAsync(request);
 
-            _context.Set<OrderItems>().Attach(entity);
-            _context.Set<OrderItems>().Update(entity);
+                _context.Set<OrderItems>().Attach(entity);
+                _context.Set<OrderItems>().Update(entity);
 
-            _mapper.Map(request, entity);
+                _mapper.Map(request, entity);
 
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
-            if (order != null)
-                ApplyOrderTotal(order);
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
+                if (order != null)
+                    ApplyOrderTotal(order);
 
-            await SaveChangesWithOrderItemsNullableRepairAsync();
-            return _mapper.Map<OrderItem>(entity);
+                await SaveChangesWithOrderItemsNullableRepairAsync();
+                return _mapper.Map<OrderItem>(entity);
+            });
         }
 
         public override async Task<bool> Delete(int ID)
         {
-            var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
-            if (entity == null) return false;
+            return await _context.ExecuteInTransactionAsync(async () =>
+            {
+                var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
+                if (entity == null) return false;
 
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
 
-            _context.OrderItems.Remove(entity);
-            if (order != null)
-                ApplyOrderTotal(order);
+                _context.OrderItems.Remove(entity);
+                if (order != null)
+                    ApplyOrderTotal(order);
 
-            await SaveChangesWithOrderItemsNullableRepairAsync();
-            return true;
+                await SaveChangesWithOrderItemsNullableRepairAsync();
+                return true;
+            });
         }
 
         private async Task ResolveCatalogPriceAsync(OrderItemUpsertRequest request)
@@ -103,21 +113,25 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (request.BagID.HasValue)
             {
-                var bag = await _context.Bags.FindAsync(request.BagID.Value);
-                if (bag != null)
-                    request.Price = bag.Price;
+                var bag = await _context.Bags.FindAsync(request.BagID.Value)
+                    ?? throw new NotFoundException($"Bag with ID {request.BagID.Value} not found.");
+                request.Price = bag.Price;
             }
             else if (request.BeltID.HasValue)
             {
-                var belt = await _context.Belts.FindAsync(request.BeltID.Value);
-                if (belt != null)
-                    request.Price = belt.Price;
+                var belt = await _context.Belts.FindAsync(request.BeltID.Value)
+                    ?? throw new NotFoundException($"Belt with ID {request.BeltID.Value} not found.");
+                request.Price = belt.Price;
+            }
+            else
+            {
+                throw new ValidationException("Order item must reference a bag or a belt.");
             }
 
-            if (!request.Price.HasValue || request.Price.Value <= 0)
+            if (request.Price.Value <= 0)
             {
                 throw new ValidationException(
-                    "Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
+                    "Cijena artikla u katalogu mora biti veća od 0. Provjerite artikal u administraciji.");
             }
         }
 
@@ -170,8 +184,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 var line = price * qty;
 
-                if (item.Discount.HasValue)
-                    line -= item.Discount.Value;
+                if (item.Discount.HasValue && item.Discount.Value > 0)
+                    line *= 1 - item.Discount.Value / 100m;
 
                 total += line;
             }

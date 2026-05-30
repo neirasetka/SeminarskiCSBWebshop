@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../../../utils/date_formatter.dart';
 import '../../giveaways/data/giveaways_api.dart'
     show GiveawayRegistrationConflictException, giveawayApiMessageFromJsonBody;
@@ -17,12 +18,19 @@ class EventsApi {
 
   Future<List<EventModel>> getEvents() async {
     try {
-      final http.Response response = await _apiClient.get('$_giveawaysPath?status=all');
-      if (response.statusCode < 200 || response.statusCode >= 300) return List<EventModel>.from(_dummyEvents);
-      final List<dynamic> items = json.decode(response.body) as List<dynamic>;
-      return items
-          .map((dynamic e) => _giveawayToEvent(e as Map<String, dynamic>))
-          .toList();
+      final List<Map<String, dynamic>> items = await PagedResult.collectAllPages<Map<String, dynamic>>(
+        fetchPage: (int page, int pageSize) async {
+          final http.Response response = await _apiClient.get(
+            '$_giveawaysPath?status=all&page=$page&pageSize=$pageSize',
+          );
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            throw Exception('HTTP ${response.statusCode}');
+          }
+          final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+          return PagedResult.fromJson(map, (Map<String, dynamic> e) => e);
+        },
+      );
+      return items.map((Map<String, dynamic> e) => _giveawayToEvent(e)).toList();
     } catch (_) {
       return List<EventModel>.from(_dummyEvents);
     }

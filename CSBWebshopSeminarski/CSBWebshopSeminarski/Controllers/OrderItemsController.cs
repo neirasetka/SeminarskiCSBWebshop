@@ -25,19 +25,28 @@ namespace CSBWebshopSeminarski.Controllers
         /// </summary>
         [HttpPost("AddToCart")]
         [Authorize(Roles = "Buyer, Admin")]
-        public async Task<OrderItem> AddToCart([FromBody] OrderItemUpsertRequest request)
+        public async Task<OrderItem> AddToCart([FromBody] AddToCartRequest request)
         {
             if (request == null)
                 throw new ValidationException("Zahtjev za dodavanje stavke nije valjan.");
 
+            var upsert = new OrderItemUpsertRequest
+            {
+                BagID = request.BagID,
+                BeltID = request.BeltID,
+                OrderID = request.OrderID,
+                Quantity = request.Quantity,
+                Discount = request.Discount
+            };
+
             try
             {
-                return await base.Insert(request);
+                return await base.Insert(upsert);
             }
             catch (DbUpdateException ex)
             {
                 var inner = ex.InnerException?.Message ?? ex.Message;
-                _logger.LogWarning(ex, "DbUpdateException adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", request.OrderID, request.BagID, request.BeltID);
+                _logger.LogWarning(ex, "DbUpdateException adding item to cart. OrderID={OrderId} BagID={BagId} BeltID={BeltId}", upsert.OrderID, upsert.BagID, upsert.BeltID);
                 if (inner.Contains("FK_") || inner.Contains("foreign key") || inner.Contains("REFERENCE"))
                     throw new NotFoundException("Greška pri dodavanju u korpu: narudžba, torba ili kaiš nije pronađen. Osvježite stranicu i pokušajte ponovno.");
                 if (inner.Contains("Cannot insert the value NULL into column", StringComparison.OrdinalIgnoreCase)

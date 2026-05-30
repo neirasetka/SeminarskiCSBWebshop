@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Stripe;
 using Stripe.Checkout;
 
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Exceptions;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -359,14 +360,17 @@ namespace CBSWebshopSeminarski.Services.Services
                 StripeId = paymentIntentId
             };
 
-            _db.Purchases.Add(purchase);
-            _inAppNotifications.StageCreate(
-                order.UserID,
-                InAppNotificationTypes.OrderPaid,
-                "Plaćanje potvrđeno",
-                $"Uspješno plaćena narudžba #{order.OrderNumber}.",
-                order.OrderID);
-            await _db.SaveChangesAsync();
+            await _db.ExecuteInTransactionAsync(async () =>
+            {
+                _db.Purchases.Add(purchase);
+                _inAppNotifications.StageCreate(
+                    order.UserID,
+                    InAppNotificationTypes.OrderPaid,
+                    "Plaćanje potvrđeno",
+                    $"Uspješno plaćena narudžba #{order.OrderNumber}.",
+                    order.OrderID);
+                await _db.SaveChangesAsync();
+            });
 
             var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
                 ? email.Trim()
@@ -595,12 +599,12 @@ namespace CBSWebshopSeminarski.Services.Services
             foreach (var item in orderItems)
             {
                 decimal unitPrice = 0m;
-                if (item.Bag != null)
+                if (item.Price.HasValue && item.Price.Value > 0)
+                    unitPrice = (decimal)item.Price.Value;
+                else if (item.Bag != null)
                     unitPrice = (decimal)item.Bag.Price;
                 else if (item.Belt != null)
                     unitPrice = (decimal)item.Belt.Price;
-                else if (item.Price.HasValue)
-                    unitPrice = (decimal)item.Price.Value;
 
                 var qty = item.Quantity ?? 1;
                 var discount = item.Discount ?? 0m;

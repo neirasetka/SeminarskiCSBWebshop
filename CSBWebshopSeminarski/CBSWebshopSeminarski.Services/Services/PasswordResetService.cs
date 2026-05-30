@@ -6,6 +6,7 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Exceptions;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -68,12 +69,14 @@ namespace CBSWebshopSeminarski.Services.Services
             if (tokenEntity == null)
                 throw new ValidationException("Token je nevažeći ili je istekao.");
 
-            var user = tokenEntity.User;
-            user.PasswordSalt = UsersService.GenerateSalt();
-            user.PasswordHash = UsersService.GenerateHash(user.PasswordSalt, request.NewPassword);
-
-            tokenEntity.Used = true;
-            await _db.SaveChangesAsync();
+            await _db.ExecuteInTransactionAsync(async () =>
+            {
+                var user = tokenEntity.User;
+                user.PasswordSalt = UsersService.GenerateSalt();
+                user.PasswordHash = UsersService.GenerateHash(user.PasswordSalt, request.NewPassword);
+                tokenEntity.Used = true;
+                await _db.SaveChangesAsync();
+            });
         }
     }
 }

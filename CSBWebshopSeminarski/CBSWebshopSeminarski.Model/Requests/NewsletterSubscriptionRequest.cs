@@ -4,8 +4,8 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class NewsletterSubscriptionRequest
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Email je obavezan.")]
+        [EmailAddress(ErrorMessage = "Unesite ispravnu email adresu.")]
         public string Email { get; set; } = string.Empty;
 
         public bool? IsSubscribedToGiveaway { get; set; }

@@ -3,25 +3,21 @@ using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class OrderItemUpsertRequest : IValidatableObject
+    /// <summary>
+    /// Buyer request za dodavanje stavke u korpu — bez cijene (server je dohvaća iz kataloga).
+    /// </summary>
+    public class AddToCartRequest : IValidatableObject
     {
         public int? BagID { get; set; }
         public int? BeltID { get; set; }
-        
+
         [Required(ErrorMessage = "Order ID is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Order ID must be valid.")]
         public int OrderID { get; set; }
-        
+
         [Required(ErrorMessage = "Quantity is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
-
-        /// <summary>
-        /// Admin može ručno postaviti cijenu. Buyer koristi <see cref="AddToCartRequest"/> bez cijene;
-        /// servis tada dohvaća cijenu iz kataloga.
-        /// </summary>
-        [Range(0.01, 100_000_000, ErrorMessage = "Price must be greater than zero.")]
-        public decimal? Price { get; set; }
 
         [Range(0, 100, ErrorMessage = "Discount must be between 0 and 100.")]
         public decimal? Discount { get; set; }

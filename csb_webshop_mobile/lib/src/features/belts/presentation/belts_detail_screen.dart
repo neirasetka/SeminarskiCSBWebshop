@@ -123,7 +123,7 @@ class _BeltDetailBody extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)));
                   }

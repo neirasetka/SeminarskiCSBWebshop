@@ -74,7 +74,7 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                   for (int i = 0; i < _quantity; i++) {
                     await ref
                         .read(cartProvider.notifier)
-                        .addBagToCart(bagId: bag.id, price: bag.price);
+                        .addBagToCart(bagId: bag.id);
                   }
                   if (context.mounted) {
                     _showAddedToCartDialog(context, bag);

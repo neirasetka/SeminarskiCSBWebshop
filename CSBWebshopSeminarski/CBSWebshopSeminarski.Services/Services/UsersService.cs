@@ -1,8 +1,8 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -62,19 +62,22 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new BusinessException("Email adresa je već registrirana.");
             }
 
-            var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
-            var entity = _mapper.Map<Users>(request);
-            entity.PasswordSalt = GenerateSalt();
-            entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
-            entity.Image = request.Image ?? Array.Empty<byte>();
-            entity.UserRoles = roleIds
-                .Select(roleId => new UserRoles { RolesID = roleId })
-                .ToList();
+            return await _context.ExecuteInTransactionAsync(async () =>
+            {
+                var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
+                var entity = _mapper.Map<Users>(request);
+                entity.PasswordSalt = GenerateSalt();
+                entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
+                entity.Image = request.Image ?? Array.Empty<byte>();
+                entity.UserRoles = roleIds
+                    .Select(roleId => new UserRoles { RolesID = roleId })
+                    .ToList();
 
-            await _context.Users.AddAsync(entity);
-            await _context.SaveChangesAsync();
+                await _context.Users.AddAsync(entity);
+                await _context.SaveChangesAsync();
 
-            return _mapper.Map<User>(entity);
+                return _mapper.Map<User>(entity);
+            });
         }
         public async Task<User> UpdateMyProfile(int userId, UserProfileUpdateRequest request)
         {
@@ -117,55 +120,58 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<User> Update(int ID, UserUpsertRequest request)
         {
-            var entity = _context.Users.Find(ID);
-            if (entity == null)
-                throw new NotFoundException($"User with ID {ID} not found.");
-
-            _context.Users.Attach(entity);
-            _context.Users.Update(entity);
-
-            if (!string.IsNullOrWhiteSpace(request.Password))
+            return await _context.ExecuteInTransactionAsync(async () =>
             {
-                if (request.Password != request.PasswordConfirmation)
+                var entity = _context.Users.Find(ID);
+                if (entity == null)
+                    throw new NotFoundException($"User with ID {ID} not found.");
+
+                _context.Users.Attach(entity);
+                _context.Users.Update(entity);
+
+                if (!string.IsNullOrWhiteSpace(request.Password))
                 {
-                    throw new ValidationException("Passwords do not match!");
-                }
-
-                entity.PasswordSalt = GenerateSalt();
-                entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
-            }
-
-            foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNames))
-            {
-                var userRoles = await _context.UserRoles
-                    .Where(i => i.RolesID == roleId && i.UserID == ID)
-                    .SingleOrDefaultAsync();
-
-                if (userRoles == null)
-                {
-                    await _context.Set<UserRoles>().AddAsync(new UserRoles
+                    if (request.Password != request.PasswordConfirmation)
                     {
-                        UserID = ID,
-                        RolesID = roleId
-                    });
+                        throw new ValidationException("Passwords do not match!");
+                    }
+
+                    entity.PasswordSalt = GenerateSalt();
+                    entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
                 }
-            }
 
-            foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNamesDelete))
-            {
-                var userRoles = await _context.UserRoles
-                    .Where(i => i.RolesID == roleId && i.UserID == ID)
-                    .SingleOrDefaultAsync();
-
-                if (userRoles != null)
+                foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNames))
                 {
-                    _context.Set<UserRoles>().Remove(userRoles);
-                }
-            }
-            _mapper.Map(request, entity);
-            await _context.SaveChangesAsync();
+                    var userRoles = await _context.UserRoles
+                        .Where(i => i.RolesID == roleId && i.UserID == ID)
+                        .SingleOrDefaultAsync();
 
-            return _mapper.Map<User>(entity);
+                    if (userRoles == null)
+                    {
+                        await _context.Set<UserRoles>().AddAsync(new UserRoles
+                        {
+                            UserID = ID,
+                            RolesID = roleId
+                        });
+                    }
+                }
+
+                foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNamesDelete))
+                {
+                    var userRoles = await _context.UserRoles
+                        .Where(i => i.RolesID == roleId && i.UserID == ID)
+                        .SingleOrDefaultAsync();
+
+                    if (userRoles != null)
+                    {
+                        _context.Set<UserRoles>().Remove(userRoles);
+                    }
+                }
+                _mapper.Map(request, entity);
+                await _context.SaveChangesAsync();
+
+                return _mapper.Map<User>(entity);
+            });
         }
         public override async Task<bool> Delete(int ID)
         {

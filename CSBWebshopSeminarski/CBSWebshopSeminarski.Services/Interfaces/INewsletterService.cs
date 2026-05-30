@@ -1,4 +1,5 @@
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 
 namespace CBSWebshopSeminarski.Services.Interfaces
@@ -7,6 +8,6 @@ namespace CBSWebshopSeminarski.Services.Interfaces
     {
         Task<NewsletterSubscriptionResult> SubscribeAsync(NewsletterSubscriptionRequest request);
         Task<NewsletterSubscriptionStatusResult> GetSubscriptionStatusAsync(string email);
-        Task<IReadOnlyList<NewsletterSubscriberDto>> GetSubscribersAsync();
+        Task<PagedResult<NewsletterSubscriberDto>> GetSubscribersAsync(PagedSearchRequest search);
     }
 }

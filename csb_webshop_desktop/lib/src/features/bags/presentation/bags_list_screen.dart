@@ -172,7 +172,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                                 tooltip: 'Dodaj u korpu',
                                 onPressed: () async {
                                   try {
-                                    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                    await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
                                     if (context.mounted) {
                                       final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
                                       final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(

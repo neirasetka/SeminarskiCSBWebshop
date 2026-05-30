@@ -48,15 +48,14 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost("Create")]
         [Authorize(Roles = "Buyer, Admin")]
-        public async Task<Order> Create([FromBody] OrderUpsertRequest request)
+        public async Task<Order> Create([FromBody] CreateOrderRequest request)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 throw new ForbiddenException("Access denied.");
             }
-            request.UserID = currentUserId;
-            return await _service.Insert(request);
+            return await _service.CreateForBuyerAsync(currentUserId, request);
         }
 
         [HttpGet("GetByOrderNumber")]

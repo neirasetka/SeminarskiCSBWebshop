@@ -108,7 +108,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     state = AsyncValue.data(fallbackOrder);
   }
 
-  Future<void> addBagToCart({required int bagId, required double price, int quantity = 1}) async {
+  Future<void> addBagToCart({required int bagId, int quantity = 1}) async {
     if (bagId < 1) {
       throw Exception('Neispravan ID torbe. Osvježite katalog i pokušajte ponovno.');
     }
@@ -140,7 +140,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     await _cartStep(
       '4) Dodavanje torbe (POST /OrderItems/AddToCart, bagId=$bagId, qty=$quantity)',
-      () => _api.addItem(orderId: cartOrder.id, bagId: bagId, quantity: quantity, price: price),
+      () => _api.addItem(orderId: cartOrder.id, bagId: bagId, quantity: quantity),
     );
     await _cartStep(
       '5) Osvježavanje prikaza korpe nakon dodavanja',
@@ -173,7 +173,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
-  Future<void> addBeltToCart({required int beltId, required double price, int quantity = 1}) async {
+  Future<void> addBeltToCart({required int beltId, int quantity = 1}) async {
     if (beltId < 1) {
       throw Exception('Neispravan ID kaiša. Osvježite katalog i pokušajte ponovno.');
     }
@@ -205,7 +205,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     await _cartStep(
       '4) Dodavanje kaiša (POST /OrderItems/AddToCart, beltId=$beltId, qty=$quantity)',
-      () => _api.addItem(orderId: cartOrder.id, beltId: beltId, quantity: quantity, price: price),
+      () => _api.addItem(orderId: cartOrder.id, beltId: beltId, quantity: quantity),
     );
     await _cartStep(
       '5) Osvježavanje prikaza korpe nakon dodavanja',

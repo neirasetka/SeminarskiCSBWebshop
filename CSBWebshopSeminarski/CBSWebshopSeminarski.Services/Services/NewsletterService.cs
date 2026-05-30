@@ -1,4 +1,6 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
@@ -68,9 +70,10 @@ namespace CBSWebshopSeminarski.Services.Services
             };
         }
 
-        public async Task<IReadOnlyList<NewsletterSubscriberDto>> GetSubscribersAsync()
+        public async Task<PagedResult<NewsletterSubscriberDto>> GetSubscribersAsync(PagedSearchRequest search)
         {
-            return await _context.Subscribers
+            search ??= new PagedSearchRequest();
+            var query = _context.Subscribers
                 .AsNoTracking()
                 .Where(s => s.IsSubscribedToNewCollections)
                 .OrderBy(s => s.Email)
@@ -80,8 +83,22 @@ namespace CBSWebshopSeminarski.Services.Services
                     Email = s.Email,
                     IsSubscribedToGiveaway = s.IsSubscribedToGiveaway,
                     IsSubscribedToNewCollections = s.IsSubscribedToNewCollections
-                })
+                });
+
+            var (page, pageSize) = PaginationHelper.Normalize(search);
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return new PagedResult<NewsletterSubscriberDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
 }

@@ -22,9 +22,9 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAll([FromQuery] string? status)
+        public async Task<IActionResult> GetAll([FromQuery] GiveawaySearchRequest search)
         {
-            return Ok(await _giveawaysService.GetAllAsync(status));
+            return Ok(await _giveawaysService.GetAllAsync(search));
         }
 
         [HttpPost]
@@ -57,9 +57,9 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("{id:int}/participants")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetParticipants(int id)
+        public async Task<IActionResult> GetParticipants(int id, [FromQuery] PagedSearchRequest search)
         {
-            return Ok(await _giveawaysService.GetParticipantsAsync(id));
+            return Ok(await _giveawaysService.GetParticipantsAsync(id, search));
         }
 
         [HttpPost("{id:int}/participants")]

@@ -30,7 +30,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     state = await AsyncValue.guard(_loadActiveCart);
   }
 
-  Future<void> addBagToCart({required int bagId, required double price, int quantity = 1}) async {
+  Future<void> addBagToCart({required int bagId, int quantity = 1}) async {
     if (bagId < 1) {
       throw Exception('Neispravan ID torbe. Osvježite katalog i pokušajte ponovno.');
     }
@@ -46,7 +46,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       );
       order = OrderModel.fromJson(created);
     }
-    await _api.addItem(orderId: order.id, bagId: bagId, quantity: quantity, price: price);
+    await _api.addItem(orderId: order.id, bagId: bagId, quantity: quantity);
     await refresh();
   }
 
@@ -75,7 +75,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
-  Future<void> addBeltToCart({required int beltId, required double price, int quantity = 1}) async {
+  Future<void> addBeltToCart({required int beltId, int quantity = 1}) async {
     if (beltId < 1) {
       throw Exception('Neispravan ID kaiša. Osvježite katalog i pokušajte ponovno.');
     }
@@ -90,7 +90,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       );
       order = OrderModel.fromJson(created);
     }
-    await _api.addItem(orderId: order.id, beltId: beltId, quantity: quantity, price: price);
+    await _api.addItem(orderId: order.id, beltId: beltId, quantity: quantity);
     await refresh();
   }
 

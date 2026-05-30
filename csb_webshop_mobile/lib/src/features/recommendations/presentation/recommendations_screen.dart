@@ -235,12 +235,10 @@ class _RecommendationTile extends ConsumerWidget {
                   if (product.isBag) {
                     await ref.read(cartProvider.notifier).addBagToCart(
                           bagId: product.productId,
-                          price: product.price,
                         );
                   } else {
                     await ref.read(cartProvider.notifier).addBeltToCart(
                           beltId: product.productId,
-                          price: product.price,
                         );
                   }
                   if (context.mounted) {

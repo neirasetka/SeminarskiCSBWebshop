@@ -144,7 +144,7 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                                 icon: const Icon(Icons.add_shopping_cart),
                                 tooltip: 'Dodaj u korpu',
                                 onPressed: () async {
-                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),

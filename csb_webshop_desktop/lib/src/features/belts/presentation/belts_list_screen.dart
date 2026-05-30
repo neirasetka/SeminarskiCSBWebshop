@@ -161,7 +161,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                 tooltip: 'Dodaj u korpu',
                                 onPressed: () async {
                                   try {
-                                    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                                    await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
                                     if (context.mounted) {
                                       final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
                                       final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(

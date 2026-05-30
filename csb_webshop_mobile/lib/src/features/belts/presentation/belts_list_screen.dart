@@ -139,7 +139,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                 icon: const Icon(Icons.add_shopping_cart),
                                 tooltip: 'Dodaj u korpu',
                                 onPressed: () async {
-                                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Artikal uspješno dodan u korpu'), duration: Duration(seconds: 5)),

@@ -13,6 +13,22 @@ class PagedResult<T> {
 
   bool get hasMore => page * pageSize < totalCount;
 
+  /// Dohvati sve stranice dok API vraća `hasMore == true`.
+  static Future<List<T>> collectAllPages<T>({
+    required Future<PagedResult<T>> Function(int page, int pageSize) fetchPage,
+    int pageSize = 100,
+  }) async {
+    final List<T> all = <T>[];
+    var page = 1;
+    while (true) {
+      final PagedResult<T> result = await fetchPage(page, pageSize);
+      all.addAll(result.items);
+      if (!result.hasMore) break;
+      page++;
+    }
+    return all;
+  }
+
   factory PagedResult.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic> json) itemFromJson,

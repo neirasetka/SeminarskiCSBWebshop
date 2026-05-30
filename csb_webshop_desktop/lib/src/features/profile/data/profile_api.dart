@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../../../core/secure_storage_service.dart';
 import '../domain/user_profile.dart';
 
@@ -72,16 +73,26 @@ class ProfileApi {
     }
   }
 
-  Future<List<NewsletterSubscriber>> getNewsletterSubscribers() async {
-    final http.Response response = await _apiClient.get('$_newsletterPath/subscribers');
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list
-          .map((dynamic e) => NewsletterSubscriber.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    final String detail = _readApiErrorDetail(response.body);
-    throw Exception('Failed to load subscribers (${response.statusCode}): $detail');
+  Future<List<NewsletterSubscriber>> getNewsletterSubscribers({
+    int pageSize = 100,
+  }) async {
+    return PagedResult.collectAllPages<NewsletterSubscriber>(
+      pageSize: pageSize,
+      fetchPage: (int page, int psz) async {
+        final http.Response response = await _apiClient.get(
+          '$_newsletterPath/subscribers?page=$page&pageSize=$psz',
+        );
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+          return PagedResult.fromJson(
+            map,
+            (Map<String, dynamic> e) => NewsletterSubscriber.fromJson(e),
+          );
+        }
+        final String detail = _readApiErrorDetail(response.body);
+        throw Exception('Failed to load subscribers (${response.statusCode}): $detail');
+      },
+    );
   }
 
   /// Vlastiti profil (Buyer/Admin) — isti endpoint kao mobile aplikacija.

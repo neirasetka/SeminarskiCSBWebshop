@@ -73,7 +73,7 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   for (int i = 0; i < _quantity; i++) {
                     await ref
                         .read(cartProvider.notifier)
-                        .addBeltToCart(beltId: belt.id, price: belt.price);
+                        .addBeltToCart(beltId: belt.id);
                   }
                   if (context.mounted) {
                     _showAddedToCartDialog(context, belt);

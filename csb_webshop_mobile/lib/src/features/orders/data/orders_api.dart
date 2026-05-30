@@ -37,13 +37,10 @@ class OrdersApi {
   Future<Map<String, dynamic>> createOrder({
     required String orderNumber,
     required DateTime date,
-    double? price,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
       'OrderNumber': orderNumber,
       'Date': date.toUtc().toIso8601String(),
-      if (price != null) 'Price': price,
-      'items': <Map<String, dynamic>>[],
     };
     final http.Response response = await _apiClient.post('$_ordersPath/Create', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -58,7 +55,6 @@ class OrdersApi {
     int? bagId,
     int? beltId,
     required int quantity,
-    required double price,
     double? discount,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
@@ -66,7 +62,6 @@ class OrdersApi {
       if (beltId != null) 'BeltID': beltId,
       'OrderID': orderId,
       'Quantity': quantity,
-      'Price': price,
       if (discount != null) 'Discount': discount,
     };
     final http.Response response = await _apiClient.post('$_orderItemsPath/AddToCart', body: json.encode(body));

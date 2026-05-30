@@ -275,7 +275,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
 
   Future<void> _addToCart(Belt belt) async {
     try {
-      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
       if (mounted) {
         final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
         final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(

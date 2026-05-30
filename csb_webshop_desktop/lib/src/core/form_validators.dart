@@ -252,6 +252,21 @@ class FormValidators {
 
 
 
+  static String? quantity(String? value, {String fieldName = 'Količina'}) {
+    final String? requiredError = required(value, fieldName: fieldName);
+    if (requiredError != null) return requiredError;
+    final int? parsed = int.tryParse(value!.trim());
+    if (parsed == null || parsed < 1) {
+      return '$fieldName mora biti cijeli broj veći od 0';
+    }
+    return null;
+  }
+
+  /// Ime/prezime — min 2 znaka (RegisterRequest).
+  static String? personName(String? value, {required String fieldName}) {
+    return minLength(value, 2, fieldName: fieldName);
+  }
+
   static String? loginUsername(String? value) {
 
     return required(value, fieldName: 'Korisničko ime');

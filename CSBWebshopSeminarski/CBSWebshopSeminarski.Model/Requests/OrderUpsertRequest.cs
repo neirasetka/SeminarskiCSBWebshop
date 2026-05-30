@@ -6,20 +6,20 @@ namespace CBSWebshopSeminarski.Model.Requests
     {
         public int OrderID { get; set; }
         
-        [Required(ErrorMessage = "Order ID is required.")]
         public string OrderNumber { get; set; } = null!;
-        
-        [Required(ErrorMessage = "Date is required.")]
+
         public DateTime Date { get; set; }
         
         /// <summary>
-        /// Opcionalno pri kreiranju prazne korpe — server postavlja 0 dok nema stavki.
-        /// Kad je poslano, mora biti veće od 0.
+        /// Samo za admin ažuriranje — buyer koristi <see cref="CreateOrderRequest"/>.
+        /// Server računa total iz stavki narudžbe.
         /// </summary>
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
         public decimal? Price { get; set; }
-        
-        [Required(ErrorMessage = "User ID is required.")]
+
+        /// <summary>
+        /// Samo za admin — buyer Create endpoint postavlja ID iz JWT tokena.
+        /// </summary>
         [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]
         public int UserID { get; set; }
         

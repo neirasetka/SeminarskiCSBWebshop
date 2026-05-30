@@ -1,4 +1,7 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -22,14 +25,15 @@ namespace CBSWebshopSeminarski.Services.Services
             _mailPublisher = mailPublisher;
         }
 
-        public Task<IReadOnlyList<GiveawayDto>> GetAllAsync(string? status)
+        public async Task<PagedResult<GiveawayDto>> GetAllAsync(GiveawaySearchRequest search)
         {
+            search ??= new GiveawaySearchRequest();
             var now = DateTime.UtcNow;
             var query = _context.Giveaways.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(search.Status))
             {
-                switch (status.Trim().ToLowerInvariant())
+                switch (search.Status.Trim().ToLowerInvariant())
                 {
                     case "active":
                         query = query.Where(g => !g.IsClosed && g.StartDate <= now && g.EndDate >= now);
@@ -44,7 +48,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 }
             }
 
-            var dto = query
+            var projected = query
                 .OrderByDescending(g => g.StartDate)
                 .Select(g => new GiveawayDto
                 {
@@ -54,10 +58,22 @@ namespace CBSWebshopSeminarski.Services.Services
                     EndDate = g.EndDate,
                     IsClosed = g.IsClosed,
                     WinnerParticipantId = g.WinnerParticipantId
-                })
-                .ToList();
+                });
 
-            return Task.FromResult<IReadOnlyList<GiveawayDto>>(dto);
+            var (page, pageSize) = PaginationHelper.Normalize(search);
+            var totalCount = await projected.CountAsync();
+            var items = await projected
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<GiveawayDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<GiveawayDto?> GetByIdAsync(int id)
@@ -69,10 +85,12 @@ namespace CBSWebshopSeminarski.Services.Services
             return MapToDto(giveaway);
         }
 
-        public async Task<IReadOnlyList<ParticipantDto>> GetParticipantsAsync(int giveawayId)
+        public async Task<PagedResult<ParticipantDto>> GetParticipantsAsync(int giveawayId, PagedSearchRequest search)
         {
-            return await _context.Participants
+            search ??= new PagedSearchRequest();
+            var query = _context.Participants
                 .Where(p => p.GiveawayId == giveawayId)
+                .OrderByDescending(p => p.EntryDate)
                 .Select(p => new ParticipantDto
                 {
                     Id = p.Id,
@@ -80,8 +98,22 @@ namespace CBSWebshopSeminarski.Services.Services
                     Email = p.Email,
                     EntryDate = p.EntryDate,
                     GiveawayId = p.GiveawayId
-                })
+                });
+
+            var (page, pageSize) = PaginationHelper.Normalize(search);
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return new PagedResult<ParticipantDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         private static GiveawayDto MapToDto(Giveaways g) =>

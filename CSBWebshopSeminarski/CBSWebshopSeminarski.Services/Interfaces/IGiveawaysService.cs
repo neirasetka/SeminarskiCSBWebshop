@@ -1,13 +1,15 @@
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
 
 namespace CBSWebshopSeminarski.Services.Interfaces
 {
     public interface IGiveawaysService
     {
-        Task<IReadOnlyList<GiveawayDto>> GetAllAsync(string? status);
+        Task<PagedResult<GiveawayDto>> GetAllAsync(GiveawaySearchRequest search);
         Task<GiveawayDto?> GetByIdAsync(int id);
-        Task<IReadOnlyList<ParticipantDto>> GetParticipantsAsync(int giveawayId);
+        Task<PagedResult<ParticipantDto>> GetParticipantsAsync(int giveawayId, PagedSearchRequest search);
         Task<Giveaways> CreateGiveawayAsync(string title, DateTime startDate, DateTime endDate);
         Task<Giveaways> UpdateGiveawayDurationAsync(int giveawayId, DateTime startDate, DateTime endDate);
         Task<Participants> RegisterParticipantAsync(int giveawayId, string name, string email);

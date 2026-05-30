@@ -183,7 +183,7 @@ class FavoritesScreen extends ConsumerWidget {
   static Future<void> _addBagToCart(
       BuildContext context, WidgetRef ref, Bag bag) async {
     try {
-      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -209,7 +209,7 @@ class FavoritesScreen extends ConsumerWidget {
   static Future<void> _addBeltToCart(
       BuildContext context, WidgetRef ref, Belt belt) async {
     try {
-      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+      await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -160,7 +160,7 @@ class FavoritesScreen extends ConsumerWidget {
                                         isAdmin: isAdmin,
                                         onRemoveFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
                                         onAddToCart: () async {
-                                          await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+                                          await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
                                           if (context.mounted) {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(
@@ -217,7 +217,7 @@ class FavoritesScreen extends ConsumerWidget {
                                         isAdmin: isAdmin,
                                         onRemoveFavorite: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
                                         onAddToCart: () async {
-                                          await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id, price: belt.price);
+                                          await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
                                           if (context.mounted) {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(

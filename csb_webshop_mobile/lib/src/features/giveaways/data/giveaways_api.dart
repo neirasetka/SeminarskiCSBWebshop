@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/giveaway.dart';
 import '../domain/participant.dart';
 
@@ -33,14 +34,24 @@ class GiveawaysApi {
 
   static const String _basePath = '/api/Giveaways';
 
-  Future<List<Giveaway>> getGiveaways({String status = 'all'}) async {
-    final String path = status.isEmpty || status == 'all' ? _basePath : '$_basePath?status=$status';
-    final http.Response response = await _apiClient.get(path);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list.map((dynamic e) => Giveaway.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    throw Exception('Failed to load giveaways: ${response.statusCode}');
+  Future<List<Giveaway>> getGiveaways({
+    String status = 'all',
+    int pageSize = 100,
+  }) async {
+    return PagedResult.collectAllPages<Giveaway>(
+      pageSize: pageSize,
+      fetchPage: (int page, int psz) async {
+        final String statusQuery = status.isEmpty || status == 'all' ? '' : 'status=$status&';
+        final http.Response response = await _apiClient.get(
+          '$_basePath?${statusQuery}page=$page&pageSize=$psz',
+        );
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+          return PagedResult.fromJson(map, (Map<String, dynamic> e) => Giveaway.fromJson(e));
+        }
+        throw Exception('Failed to load giveaways: ${response.statusCode}');
+      },
+    );
   }
 
   Future<Giveaway> createGiveaway({
@@ -61,13 +72,26 @@ class GiveawaysApi {
     throw Exception('Failed to create giveaway: ${response.statusCode}');
   }
 
-  Future<List<GiveawayParticipant>> getParticipants(int giveawayId) async {
-    final http.Response response = await _apiClient.get('$_basePath/$giveawayId/participants');
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list.map((dynamic e) => GiveawayParticipant.fromAdminJson(e as Map<String, dynamic>)).toList();
-    }
-    throw Exception('Failed to load participants: ${response.statusCode}');
+  Future<List<GiveawayParticipant>> getParticipants(
+    int giveawayId, {
+    int pageSize = 100,
+  }) async {
+    return PagedResult.collectAllPages<GiveawayParticipant>(
+      pageSize: pageSize,
+      fetchPage: (int page, int psz) async {
+        final http.Response response = await _apiClient.get(
+          '$_basePath/$giveawayId/participants?page=$page&pageSize=$psz',
+        );
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+          return PagedResult.fromJson(
+            map,
+            (Map<String, dynamic> e) => GiveawayParticipant.fromAdminJson(e),
+          );
+        }
+        throw Exception('Failed to load participants: ${response.statusCode}');
+      },
+    );
   }
 
   Future<GiveawayParticipant> registerParticipant({

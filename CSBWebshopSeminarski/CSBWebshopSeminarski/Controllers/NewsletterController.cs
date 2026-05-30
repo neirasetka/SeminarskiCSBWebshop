@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -49,16 +50,22 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("subscribers")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetSubscribers()
+        public async Task<IActionResult> GetSubscribers([FromQuery] PagedSearchRequest search)
         {
-            var subscribers = await _newsletterService.GetSubscribersAsync();
-            return Ok(subscribers.Select(s => new
+            var result = await _newsletterService.GetSubscribersAsync(search);
+            return Ok(new
             {
-                id = s.Id,
-                email = s.Email,
-                isSubscribedToGiveaway = s.IsSubscribedToGiveaway,
-                isSubscribedToNewCollections = s.IsSubscribedToNewCollections
-            }));
+                items = result.Items.Select(s => new
+                {
+                    id = s.Id,
+                    email = s.Email,
+                    isSubscribedToGiveaway = s.IsSubscribedToGiveaway,
+                    isSubscribedToNewCollections = s.IsSubscribedToNewCollections
+                }),
+                totalCount = result.TotalCount,
+                page = result.Page,
+                pageSize = result.PageSize
+            });
         }
     }
 }

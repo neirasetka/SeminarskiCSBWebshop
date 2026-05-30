@@ -71,14 +71,29 @@ namespace CBSWebshopSeminarski.Services.Services
             return entity == null ? null : _mapper.Map<Order>(entity);
         }
 
+        public async Task<Order> CreateForBuyerAsync(int userId, CreateOrderRequest request)
+        {
+            var entity = new Orders
+            {
+                UserID = userId,
+                Price = 0,
+                OrderNumber = string.IsNullOrWhiteSpace(request.OrderNumber)
+                    ? GenerateOrderNumber()
+                    : request.OrderNumber.Trim(),
+                Date = request.Date ?? DateTime.UtcNow,
+                PaymentStatus = PaymentStatus.Pending,
+                ShippingStatus = ShippingStatusEntity.Pending
+            };
+
+            _context.Set<Orders>().Add(entity);
+            await _context.SaveChangesAsync();
+            return _mapper.Map<Order>(entity);
+        }
+
         public override async Task<Order> Insert(OrderUpsertRequest request)
         {
             var entity = _mapper.Map<Orders>(request);
-
-            if (!request.Price.HasValue)
-            {
-                entity.Price = 0;
-            }
+            entity.Price = 0;
 
             if (string.IsNullOrWhiteSpace(entity.OrderNumber))
             {
@@ -92,9 +107,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _context.Set<Orders>().Add(entity);
             await _context.SaveChangesAsync();
 
-            var result = _mapper.Map<Order>(entity);
-
-            return result;
+            return _mapper.Map<Order>(entity);
         }
 
         public override async Task<Order> Update(int ID, OrderUpsertRequest request)

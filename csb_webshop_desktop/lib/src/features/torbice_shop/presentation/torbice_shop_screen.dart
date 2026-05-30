@@ -279,7 +279,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
 
   Future<void> _addToCart(Bag bag) async {
     try {
-      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id, price: bag.price);
+      await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
       if (mounted) {
         final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
         final ScaffoldFeatureController<SnackBar, SnackBarClosedReason> controller = messenger.showSnackBar(
