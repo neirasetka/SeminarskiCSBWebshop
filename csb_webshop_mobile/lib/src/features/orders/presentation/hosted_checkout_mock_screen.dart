@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -78,6 +79,18 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
       }
     }
 
+    if (!kDebugMode) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Plaćanje nije dostupno — Stripe nije konfiguriran.'),
+          ),
+        );
+      }
+      return;
+    }
+
     await Future<void>.delayed(const Duration(seconds: 2));
 
     if (mounted) {
@@ -112,11 +125,18 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                if (!stripeConfigured) ...<Widget>[
+                if (!stripeConfigured && kDebugMode) ...<Widget>[
                   Text(
-                    'Nema valjanog Stripe pk_ ključa — ovo je demo tok bez stvarne naplate.',
+                    'Nema valjanog Stripe pk_ ključa — ovo je demo tok bez stvarne naplate (samo debug).',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                ] else if (!stripeConfigured) ...<Widget>[
+                  Text(
+                    'Plaćanje nije dostupno — Stripe publishable key nije konfiguriran.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -152,7 +172,9 @@ class _HostedCheckoutMockScreenState extends ConsumerState<HostedCheckoutMockScr
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _isProcessing ? null : _processPayment,
+                    onPressed: _isProcessing || (!stripeConfigured && !kDebugMode)
+                        ? null
+                        : _processPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,

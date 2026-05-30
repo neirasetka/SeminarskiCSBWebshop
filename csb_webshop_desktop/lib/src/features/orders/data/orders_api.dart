@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/paged_result.dart';
@@ -265,17 +264,6 @@ class OrdersApi {
     final http.Response response = await _apiClient.delete('$_ordersPath/Active');
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to cancel cart: ${response.statusCode}');
-  }
-
-  Future<Map<String, dynamic>> confirmMockCheckout() async {
-    if (!kDebugMode) {
-      throw Exception('Mock checkout is only available in debug mode.');
-    }
-    final http.Response response = await _apiClient.post('http://localhost:4242/checkout/confirm');
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return json.decode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('Failed to confirm mock checkout: ${response.statusCode}');
   }
 
   Future<Map<String, dynamic>> confirmCheckoutSession({
