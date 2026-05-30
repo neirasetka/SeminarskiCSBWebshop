@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
@@ -11,6 +12,9 @@ namespace CBSWebshopSeminarski.Services.Services
         private readonly string _exchangeName;
         private readonly string _queueName;
         private readonly string _routingKey;
+        private readonly string _deadLetterExchange;
+        private readonly string _deadLetterQueueName;
+        private readonly string _deadLetterRoutingKey;
         private readonly object _lock = new();
         private IConnection? _connection;
         private IModel? _channel;
@@ -22,6 +26,9 @@ namespace CBSWebshopSeminarski.Services.Services
             _exchangeName = _configuration["RabbitMQ:Exchange"] ?? "EmailExchange";
             _queueName = _configuration["RabbitMQ:QueueName"] ?? "EmailQueue";
             _routingKey = _configuration["RabbitMQ:RoutingKey"] ?? "email_queue";
+            _deadLetterExchange = _configuration["RabbitMQ:DeadLetterExchange"] ?? "EmailDeadLetterExchange";
+            _deadLetterQueueName = _configuration["RabbitMQ:DeadLetterQueueName"] ?? "EmailDeadLetterQueue";
+            _deadLetterRoutingKey = _configuration["RabbitMQ:DeadLetterRoutingKey"] ?? "email_dead_letter";
         }
 
         private void EnsureConnection()
@@ -60,9 +67,24 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-            _channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true);
-            _channel.QueueDeclare(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-            _channel.QueueBind(_queueName, _exchangeName, _routingKey, null);
+            DeclareEmailTopology(_channel);
+        }
+
+        private void DeclareEmailTopology(IModel channel)
+        {
+            channel.ExchangeDeclare(_deadLetterExchange, ExchangeType.Direct, durable: true);
+            channel.QueueDeclare(_deadLetterQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            channel.QueueBind(_deadLetterQueueName, _deadLetterExchange, _deadLetterRoutingKey, null);
+
+            var queueArgs = new Dictionary<string, object>
+            {
+                { "x-dead-letter-exchange", _deadLetterExchange },
+                { "x-dead-letter-routing-key", _deadLetterRoutingKey }
+            };
+
+            channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true);
+            channel.QueueDeclare(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: queueArgs);
+            channel.QueueBind(_queueName, _exchangeName, _routingKey, null);
         }
 
         public void Publish(string sender, string recipient, string subject, string content)
