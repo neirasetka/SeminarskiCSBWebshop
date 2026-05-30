@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../utils/date_formatter.dart';
+
 /// Maps common Bosnian/Croatian/Serbian letters to ASCII so built-in PDF fonts
 /// (Helvetica / WinAnsi) render reliably without bundling a TTF.
 String foldPdfText(String input) {
@@ -54,7 +56,7 @@ abstract final class ReportsPdfExporter {
         .map((List<String> row) => List<dynamic>.from(row.map(foldPdfText)))
         .toList();
 
-    final String generated = _formatGeneratedTimestamp();
+    final String generated = DateFormatter.formatDateTime(DateTime.now());
 
     doc.addPage(
       pw.MultiPage(
@@ -97,11 +99,5 @@ abstract final class ReportsPdfExporter {
     );
 
     return doc.save();
-  }
-
-  static String _formatGeneratedTimestamp() {
-    final DateTime n = DateTime.now();
-    String two(int v) => v.toString().padLeft(2, '0');
-    return '${two(n.day)}.${two(n.month)}.${n.year} ${two(n.hour)}:${two(n.minute)}';
   }
 }

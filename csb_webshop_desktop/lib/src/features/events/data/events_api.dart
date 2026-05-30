@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../utils/date_formatter.dart';
 import '../../giveaways/data/giveaways_api.dart'
     show GiveawayRegistrationConflictException, giveawayApiMessageFromJsonBody;
 import '../domain/event.dart';
@@ -101,7 +102,7 @@ EventModel _giveawayToEvent(Map<String, dynamic> json) {
   final String? startDateRaw = (json['startDate'] ?? json['StartDate']) as String?;
   final DateTime startDate = startDateRaw != null ? DateTime.parse(startDateRaw) : DateTime.now();
   final String description = endDateRaw != null
-      ? 'Prijava je otvorena do ${DateTime.parse(endDateRaw).toLocal()}'
+      ? 'Prijava je otvorena do ${DateFormatter.formatDateTime(DateTime.parse(endDateRaw))}'
       : 'Giveaway događaj';
   return EventModel(
     id: id,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
 import '../../../core/form_validators.dart';
+import '../../../utils/date_formatter.dart';
 import '../application/giveaways_provider.dart';
 import '../data/giveaways_api.dart';
 import '../domain/giveaway.dart';
@@ -291,7 +292,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Završava: ${_formatDate(giveaway.endDate)}',
+            'Završava: ${DateFormatter.formatDate(giveaway.endDate)}',
             style: textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withValues(alpha: 0.6),
             ),
@@ -575,7 +576,4 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}.${date.month}.${date.year}.';
-  }
 }

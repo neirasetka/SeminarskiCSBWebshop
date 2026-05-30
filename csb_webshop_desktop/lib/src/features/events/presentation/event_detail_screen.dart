@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../../utils/date_formatter.dart';
 import '../../giveaways/data/giveaways_api.dart' show GiveawayRegistrationConflictException;
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
@@ -96,7 +97,7 @@ class _EventBody extends ConsumerWidget {
           children: <Widget>[
             const Icon(Icons.schedule),
             const SizedBox(width: 8),
-            Text('Početak: ${event.startDateTime.toLocal()}'),
+            Text('Početak: ${DateFormatter.formatDateTime(event.startDateTime)}'),
           ],
         ),
         const SizedBox(height: 12),

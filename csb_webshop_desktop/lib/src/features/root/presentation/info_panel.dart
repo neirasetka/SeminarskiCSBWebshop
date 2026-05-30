@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../utils/date_formatter.dart';
 import '../../announcements/application/announcements_provider.dart';
 import '../../announcements/domain/announcement.dart';
 import '../../giveaways/application/giveaways_provider.dart';
@@ -304,22 +305,6 @@ class _AnnouncementTile extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
-    final Duration diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) {
-      if (diff.inHours == 0) {
-        return 'Upravo sada';
-      }
-      return 'Prije ${diff.inHours} ${diff.inHours == 1 ? 'sat' : 'sati'}';
-    } else if (diff.inDays == 1) {
-      return 'Jučer';
-    } else if (diff.inDays < 7) {
-      return 'Prije ${diff.inDays} dana';
-    } else {
-      return '${date.day}.${date.month}.${date.year}';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -380,7 +365,7 @@ class _AnnouncementTile extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          _formatDate(announcement.publishedAt),
+                          DateFormatter.formatDateTime(announcement.publishedAt),
                           style: textTheme.labelSmall?.copyWith(
                             color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                             fontSize: 10,

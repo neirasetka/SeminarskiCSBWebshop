@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/date_formatter.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 import 'announcement_detail_screen.dart';
@@ -31,7 +32,7 @@ class AnnouncementsListScreen extends ConsumerWidget {
               return ListTile(
                 leading: _TypeBadge(type: a.type),
                 title: Text(a.title),
-                subtitle: Text(_formatDate(a.publishedAt)),
+                subtitle: Text(DateFormatter.formatDateTime(a.publishedAt)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.of(context).push(
@@ -64,11 +65,6 @@ class AnnouncementsListScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    final DateTime local = dt.toLocal();
-    return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 }
 

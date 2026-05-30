@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/date_formatter.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
@@ -64,7 +65,7 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _formatDate(a.publishedAt),
+                      DateFormatter.formatDateTime(a.publishedAt),
                       textAlign: TextAlign.right,
                       style: const TextStyle(color: Colors.grey),
                     ),
@@ -114,11 +115,6 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    final DateTime local = dt.toLocal();
-    return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 }
 
