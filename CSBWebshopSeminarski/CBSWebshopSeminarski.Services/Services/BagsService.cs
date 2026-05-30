@@ -122,10 +122,10 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (reviews != null)
                     _context.Reviews.RemoveRange(reviews);
 
-                var orders = await _context.OrderItems.Where(i => i.OrderID == ID).ToListAsync();
-                if (orders != null)
-                    _context.OrderItems.RemoveRange(orders);
-                var rates = await _context.Rates.Where(i => i.UserID == ID).ToListAsync();
+                var orderItems = await _context.OrderItems.Where(i => i.BagID == ID).ToListAsync();
+                if (orderItems != null)
+                    _context.OrderItems.RemoveRange(orderItems);
+                var rates = await _context.Rates.Where(i => i.BagID == ID).ToListAsync();
                 if (rates != null)
                     _context.Rates.RemoveRange(rates);
                 await _context.SaveChangesAsync();
@@ -137,12 +137,12 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             return false;
         }
-        public async Task<float> GetAverage(int BagID)
+        public async Task<decimal> GetAverage(int BagID)
         {
             var list = await _context.Rates.Where(i => i.BagID == BagID).ToListAsync();
-            if (list.Count() != 0)
+            if (list.Count != 0)
             {
-                return (float)list.Average(i => i.Rating);
+                return (decimal)list.Average(i => i.Rating);
             }
             return 0;
         }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -30,11 +31,24 @@ namespace CSBWebshopSeminarski.Controllers
             return await _service.GetById(ID);
         }
 
+        private int GetCurrentUserId()
+        {
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out var id) ? id : 0;
+        }
+
         [HttpPost]
         [Authorize]
-        public async Task<Review> Insert(ReviewUpsertRequest request)
+        public async Task<ActionResult<Review>> Insert(ReviewUpsertRequest request)
         {
-            return await _service.Insert(request);
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId <= 0)
+            {
+                return Unauthorized();
+            }
+
+            request.UserID = currentUserId;
+            return Ok(await _service.Insert(request));
         }
 
         [HttpPut("{ID}")]
@@ -47,6 +61,8 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 return Forbid();
             }
+
+            request.UserID = existing.UserID;
             var updated = await _service.Update(ID, request);
             return Ok(updated);
         }

@@ -17,7 +17,6 @@ namespace CSBWebshopSeminarski.Controllers
             _service = service;
         }
 
-        /// <summary>Pregled svih narudžbi (samo admin).</summary>
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public override async Task<List<Order>> Get([FromQuery] OrderSearchRequest search)
@@ -25,7 +24,6 @@ namespace CSBWebshopSeminarski.Controllers
             return await _service.Get(search);
         }
 
-        /// <summary>Puna narudžba sa stavkama; admin ili vlasnik narudžbe.</summary>
         [HttpGet("{ID:int}")]
         [Authorize]
         public override async Task<Order> GetById(int ID)
@@ -50,21 +48,42 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<Order> Create([FromBody] OrderUpsertRequest request)
         {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                throw new UnauthorizedAccessException();
+            }
+            request.UserID = currentUserId;
+            request.Price = 0;
             return await _service.Insert(request);
         }
 
         [HttpGet("GetByOrderNumber")]
         [Authorize(Roles = "Buyer, Admin")]
-        public Order GetByOrderNumber([FromQuery] string name)
+        public async Task<ActionResult<Order>> GetByOrderNumber([FromQuery] string name)
         {
-            return _service.GetByOrderNumber(name);
+            var order = _service.GetByOrderNumber(name);
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != order.UserID)
+                {
+                    return Forbid();
+                }
+            }
+            return Ok(order);
         }
 
         [HttpGet("Active")]
         [Authorize]
-        public async Task<ActionResult<Order?>> GetActive([FromQuery] int userId)
+        public async Task<ActionResult<Order?>> GetActive()
         {
-            var order = await _service.GetActiveCartByUser(userId);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                return Unauthorized();
+            }
+            var order = await _service.GetActiveCartByUser(currentUserId);
             if (order == null)
             {
                 return NoContent();
@@ -72,18 +91,23 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(order);
         }
 
-        [HttpGet("ByUser")]
+        [HttpGet("My")]
         [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult<List<Order>>> GetMyOrders()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId))
+            {
+                return Unauthorized();
+            }
+            var result = await _service.GetOrdersForUserAsync(currentUserId);
+            return Ok(result);
+        }
+
+        [HttpGet("ByUser")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<Order>>> GetByUser([FromQuery] int userId)
         {
-            if (!User.IsInRole("Admin"))
-            {
-                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != userId)
-                {
-                    return Forbid();
-                }
-            }
             var result = await _service.GetOrdersForUserAsync(userId);
             return Ok(result);
         }
@@ -91,38 +115,26 @@ namespace CSBWebshopSeminarski.Controllers
         public class UpdatePaymentStatusRequest
         {
             public PaymentStatus Status { get; set; }
-
-            /// <summary>Optional: email for payment confirmation (same as entered during checkout).</summary>
             public string? ReceiptEmail { get; set; }
         }
 
         [HttpDelete("Active")]
         [Authorize(Roles = "Buyer")]
-        public async Task<ActionResult> CancelActiveCart([FromQuery] int userId)
+        public async Task<ActionResult> CancelActiveCart()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != userId)
+            if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                return Forbid();
+                return Unauthorized();
             }
-            var ok = await _service.CancelActiveCartAsync(userId);
-            if (!ok) return NoContent();
+            await _service.CancelActiveCartAsync(currentUserId);
             return NoContent();
         }
 
         [HttpPatch("{orderId:int}/payment-status")]
-        [Authorize(Roles = "Buyer, Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)
         {
-            if (!User.IsInRole("Admin"))
-            {
-                var order = await _service.GetById(orderId);
-                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!int.TryParse(userIdClaim, out var currentUserId) || order.UserID != currentUserId)
-                {
-                    return Forbid();
-                }
-            }
             var ok = await _service.SetPaymentStatusAsync(orderId, request.Status, request.ReceiptEmail);
             if (!ok) return NotFound();
             return NoContent();

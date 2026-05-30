@@ -5,12 +5,16 @@ using System.Text.Json;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
-    public class RabbitMqMailPublisher
+    public class RabbitMqMailPublisher : IDisposable
     {
         private readonly IConfiguration _configuration;
         private readonly string _exchangeName;
         private readonly string _queueName;
         private readonly string _routingKey;
+        private readonly object _lock = new();
+        private IConnection? _connection;
+        private IModel? _channel;
+        private bool _disposed;
 
         public RabbitMqMailPublisher(IConfiguration configuration)
         {
@@ -20,8 +24,14 @@ namespace CBSWebshopSeminarski.Services.Services
             _routingKey = _configuration["RabbitMQ:RoutingKey"] ?? "email_queue";
         }
 
-        public void Publish(string sender, string recipient, string subject, string content)
+        private void EnsureConnection()
         {
+            if (_connection != null && _connection.IsOpen && _channel != null && _channel.IsOpen)
+                return;
+
+            _channel?.Dispose();
+            _connection?.Dispose();
+
             var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST")
                 ?? _configuration["RabbitMQ:HostName"]
                 ?? "localhost";
@@ -42,35 +52,53 @@ namespace CBSWebshopSeminarski.Services.Services
                 HostName = host,
                 Port = port,
                 UserName = userName,
-                Password = password
+                Password = password,
+                AutomaticRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
             };
             factory.ClientProvidedName = "CSB Mail Producer";
 
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
-            channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true);
-            channel.QueueDeclare(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-            channel.QueueBind(_queueName, _exchangeName, _routingKey, null);
+            _connection = factory.CreateConnection();
+            _channel = _connection.CreateModel();
+            _channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true);
+            _channel.QueueDeclare(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            _channel.QueueBind(_queueName, _exchangeName, _routingKey, null);
+        }
 
-            var payload = new MailQueueMessage
+        public void Publish(string sender, string recipient, string subject, string content)
+        {
+            lock (_lock)
             {
-                Sender = sender,
-                Recipient = recipient,
-                Subject = subject,
-                Content = content
-            };
+                EnsureConnection();
 
-            var message = JsonSerializer.Serialize(payload);
-            var body = Encoding.UTF8.GetBytes(message);
-            var props = channel.CreateBasicProperties();
-            props.ContentType = "application/json";
-            props.DeliveryMode = 2;
+                var payload = new MailQueueMessage
+                {
+                    Sender = sender,
+                    Recipient = recipient,
+                    Subject = subject,
+                    Content = content
+                };
 
-            channel.BasicPublish(
-                exchange: _exchangeName,
-                routingKey: _routingKey,
-                basicProperties: props,
-                body: body);
+                var message = JsonSerializer.Serialize(payload);
+                var body = Encoding.UTF8.GetBytes(message);
+                var props = _channel!.CreateBasicProperties();
+                props.ContentType = "application/json";
+                props.DeliveryMode = 2;
+
+                _channel.BasicPublish(
+                    exchange: _exchangeName,
+                    routingKey: _routingKey,
+                    basicProperties: props,
+                    body: body);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _channel?.Dispose();
+            _connection?.Dispose();
         }
 
         private class MailQueueMessage

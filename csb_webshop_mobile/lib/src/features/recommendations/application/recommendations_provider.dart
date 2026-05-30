@@ -1,20 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../bags/domain/bag.dart';
-import '../../belts/domain/belt.dart';
 import '../data/recommendations_api.dart';
+import '../domain/recommended_product.dart';
 
 final Provider<RecommendationsApi> recommendationsApiProvider =
     Provider<RecommendationsApi>((Ref ref) => RecommendationsApi());
 
-/// Kombinirane preporuke s API-ja (na serveru, prema omiljenim tipovima i ocjenama).
+/// Kombinirane preporuke s API-ja (content-based + popular fallback).
 class Recommendations {
   const Recommendations({required this.bags, required this.belts});
 
-  final List<Bag> bags;
-  final List<Belt> belts;
+  final List<RecommendedProduct> bags;
+  final List<RecommendedProduct> belts;
 
   bool get isEmpty => bags.isEmpty && belts.isEmpty;
+
+  bool get isFullyPersonalized =>
+      bags.every((RecommendedProduct p) => p.isPersonalized) &&
+      belts.every((RecommendedProduct p) => p.isPersonalized);
 }
 
 class RecommendationsNotifier extends AutoDisposeAsyncNotifier<Recommendations> {
@@ -25,8 +28,8 @@ class RecommendationsNotifier extends AutoDisposeAsyncNotifier<Recommendations> 
       api.getRecommendedBelts(take: 8),
     ]);
     return Recommendations(
-      bags: results[0] as List<Bag>,
-      belts: results[1] as List<Belt>,
+      bags: results[0] as List<RecommendedProduct>,
+      belts: results[1] as List<RecommendedProduct>,
     );
   }
 

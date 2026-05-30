@@ -9,7 +9,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int UserID { get; set; }
         public Users User { get; set; } = null!;
         public DateTime TransactionDate { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string OrderNumber { get; set; } = null!;
         public string Username { get; set; } = null!;
         public int OrderID { get; set; }

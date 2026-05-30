@@ -6,7 +6,7 @@ namespace CBSWebshopSeminarski.Model.Models
         public int UserID { get; set; }
         public int OrderID { get; set; }
         public DateTime PurchaseDate { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string UserName { get; set; } = null!;
         public string OrderNumber { get; set; } = null!;
         public virtual User User { get; set; } = null!;

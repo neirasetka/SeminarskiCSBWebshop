@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_controller.dart';
-import '../../bags/domain/bag.dart';
-import '../../belts/domain/belt.dart';
 import '../../favorites/application/favorites_provider.dart';
 import '../data/recommendations_api.dart';
+import '../domain/recommended_product.dart';
 
 /// Provider for the recommendations API.
 final Provider<RecommendationsApi> recommendationsApiProvider =
@@ -17,11 +16,15 @@ class Recommendations {
     required this.belts,
   });
 
-  final List<Bag> bags;
-  final List<Belt> belts;
+  final List<RecommendedProduct> bags;
+  final List<RecommendedProduct> belts;
 
   bool get isEmpty => bags.isEmpty && belts.isEmpty;
   bool get isNotEmpty => !isEmpty;
+
+  bool get hasPersonalizedItems =>
+      bags.any((RecommendedProduct p) => p.isPersonalized) ||
+      belts.any((RecommendedProduct p) => p.isPersonalized);
 }
 
 /// Provider for fetching personalized recommendations.
@@ -31,50 +34,44 @@ class RecommendationsNotifier extends AsyncNotifier<Recommendations> {
   Future<Recommendations> build() async {
     final api = ref.read(recommendationsApiProvider);
 
-    // Watch auth state - recommendations depend on user being logged in
     final authState = ref.watch(authControllerProvider);
     final userId = authState.value?.userId;
 
     if (userId == null || userId <= 0) {
-      // User not logged in - no recommendations
-      return const Recommendations(bags: <Bag>[], belts: <Belt>[]);
+      return const Recommendations(bags: <RecommendedProduct>[], belts: <RecommendedProduct>[]);
     }
 
-    // Watch favorites - when favorites change, recommendations should update
     ref.watch(favoritesProvider);
     ref.watch(beltFavoritesProvider);
 
-    // Fetch recommendations in parallel
     final results = await Future.wait(<Future<Object>>[
       api.getRecommendedBags(take: 6),
       api.getRecommendedBelts(take: 6),
     ]);
 
     return Recommendations(
-      bags: results[0] as List<Bag>,
-      belts: results[1] as List<Belt>,
+      bags: results[0] as List<RecommendedProduct>,
+      belts: results[1] as List<RecommendedProduct>,
     );
   }
 
-  /// Manually refresh recommendations.
   Future<void> refresh() async {
     state = const AsyncLoading<Recommendations>();
     state = await AsyncValue.guard(() => build());
   }
 }
 
-/// Main provider for recommendations.
 final AsyncNotifierProvider<RecommendationsNotifier, Recommendations> recommendationsProvider =
     AsyncNotifierProvider<RecommendationsNotifier, Recommendations>(RecommendationsNotifier.new);
 
-/// Provider for recommended bags only.
-final FutureProvider<List<Bag>> recommendedBagsProvider = FutureProvider<List<Bag>>((Ref ref) async {
+final FutureProvider<List<RecommendedProduct>> recommendedBagsProvider =
+    FutureProvider<List<RecommendedProduct>>((Ref ref) async {
   final recommendations = await ref.watch(recommendationsProvider.future);
   return recommendations.bags;
 });
 
-/// Provider for recommended belts only.
-final FutureProvider<List<Belt>> recommendedBeltsProvider = FutureProvider<List<Belt>>((Ref ref) async {
+final FutureProvider<List<RecommendedProduct>> recommendedBeltsProvider =
+    FutureProvider<List<RecommendedProduct>>((Ref ref) async {
   final recommendations = await ref.watch(recommendationsProvider.future);
   return recommendations.belts;
 });

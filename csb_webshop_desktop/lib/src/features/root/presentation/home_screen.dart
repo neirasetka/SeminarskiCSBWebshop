@@ -7,10 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
-import '../../bags/domain/bag.dart';
-import '../../belts/domain/belt.dart';
-import '../../favorites/application/favorites_provider.dart';
 import '../../recommendations/application/recommendations_provider.dart';
+import '../../recommendations/domain/recommended_product.dart';
 import 'info_panel.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -88,7 +86,7 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
                 // For You – ispod torbice, samo za prijavljene kupce (ne admine)
                 if (isLoggedIn && !isAdmin) ...<Widget>[
-                  const SizedBox(height: 280, child: _BuyerForYouSection()),
+                  const SizedBox(height: 320, child: _BuyerForYouSection()),
                   const SizedBox(height: 24),
                 ],
                 // Info panel
@@ -112,11 +110,6 @@ class _BuyerForYouSection extends ConsumerWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final AsyncValue<Recommendations> recommendationsAsync = ref.watch(recommendationsProvider);
-    final AsyncValue<Set<int>> bagFavoritesAsync = ref.watch(favoritesProvider);
-    final AsyncValue<Set<int>> beltFavoritesAsync = ref.watch(beltFavoritesProvider);
-
-    final bool hasAnyFavorites = (bagFavoritesAsync.valueOrNull?.isNotEmpty ?? false) ||
-        (beltFavoritesAsync.valueOrNull?.isNotEmpty ?? false);
 
     return Card(
       elevation: 2,
@@ -149,7 +142,7 @@ class _BuyerForYouSection extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Proizvodi preporučeni za vas',
+              'Content-based preporuke (favoriti, ocjene, kupnje) s objašnjenjem',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -192,47 +185,25 @@ class _BuyerForYouSection extends ConsumerWidget {
                 ),
                 data: (Recommendations recommendations) {
                   if (recommendations.isEmpty) {
-                    final String title;
-                    final String subtitle;
-                    if (hasAnyFavorites) {
-                      title = 'Preporuke još nisu dostupne';
-                      subtitle =
-                          'Još uvijek pripremamo preporuke. Provjerite uskoro!';
-                    } else {
-                      title = 'Preporuke još nisu dostupne';
-                      subtitle =
-                          'Dodaj neke torbice ili kaiševe u favorite\npa ćete dobiti personalizirane preporuke!';
-                    }
                     return Center(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Icon(
-                              hasAnyFavorites ? Icons.hourglass_empty : Icons.favorite_border,
-                              size: 64,
-                              color: colorScheme.outline,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.inventory_2_outlined, size: 64, color: colorScheme.outline),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Trenutno nema preporuka',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              title,
-                              style: textTheme.titleMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
-                              child: Text(
-                                subtitle,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.outline,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Katalog je prazan ili su svi proizvodi već favoriti/kupljeni.',
+                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -262,7 +233,22 @@ class _RecommendationsGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Recommended Bags Section
+          if (!recommendations.hasPersonalizedItems)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.trending_up, size: 18, color: colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Popularni proizvodi — dodajte favorite za personalizaciju.',
+                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (recommendations.bags.isNotEmpty) ...<Widget>[
             Row(
               children: <Widget>[
@@ -278,18 +264,16 @@ class _RecommendationsGrid extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 180,
+              height: 220,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: recommendations.bags.length,
                 separatorBuilder: (BuildContext context, int index) => const SizedBox(width: 12),
                 itemBuilder: (BuildContext context, int index) {
-                  final Bag bag = recommendations.bags[index];
+                  final RecommendedProduct product = recommendations.bags[index];
                   return _ProductCard(
-                    name: bag.name,
-                    price: bag.price,
-                    imageUrl: bag.displayImageUrl,
-                    onTap: () => context.go('/torbice/${bag.id}'),
+                    product: product,
+                    onTap: () => context.go('/torbice/${product.productId}'),
                   );
                 },
               ),
@@ -312,18 +296,16 @@ class _RecommendationsGrid extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 180,
+              height: 220,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: recommendations.belts.length,
                 separatorBuilder: (BuildContext context, int index) => const SizedBox(width: 12),
                 itemBuilder: (BuildContext context, int index) {
-                  final Belt belt = recommendations.belts[index];
+                  final RecommendedProduct product = recommendations.belts[index];
                   return _ProductCard(
-                    name: belt.name,
-                    price: belt.price,
-                    imageUrl: belt.displayImageUrl,
-                    onTap: () => context.go('/kaisevi/${belt.id}'),
+                    product: product,
+                    onTap: () => context.go('/kaisevi/${product.productId}'),
                   );
                 },
               ),
@@ -338,16 +320,14 @@ class _RecommendationsGrid extends StatelessWidget {
 /// Individual product card in the recommendations grid.
 class _ProductCard extends StatelessWidget {
   const _ProductCard({
-    required this.name,
-    required this.price,
-    this.imageUrl,
+    required this.product,
     required this.onTap,
   });
 
-  final String name;
-  final double price;
-  final String? imageUrl;
+  final RecommendedProduct product;
   final VoidCallback onTap;
+
+  String? get imageUrl => product.displayImageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +337,7 @@ class _ProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 140,
+        width: 180,
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
@@ -367,17 +347,15 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            // Product Image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: Container(
-                height: 100,
+                height: 90,
                 width: double.infinity,
                 color: colorScheme.surfaceContainerLow,
                 child: _buildImage(colorScheme),
               ),
             ),
-            // Product Info – flexible so it doesn't overflow in fixed-height lists
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(10),
@@ -386,7 +364,7 @@ class _ProductCard extends StatelessWidget {
                   children: <Widget>[
                     Flexible(
                       child: Text(
-                        name,
+                        product.productName,
                         style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -396,12 +374,24 @@ class _ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${price.toStringAsFixed(2)} KM',
+                      '${product.price.toStringAsFixed(2)} KM · ${product.score.toStringAsFixed(1)}',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (product.reason.isNotEmpty)
+                      Flexible(
+                        child: Text(
+                          product.reason,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                   ],
                 ),
               ),

@@ -15,4 +15,15 @@ BEGIN
         CONSTRAINT [DF_Orders_PaymentConfirmationEmailSent] DEFAULT (0);
 END
 ";
+
+    public const string EnsureStripePaymentRefColumnsSql = @"
+IF OBJECT_ID(N'dbo.Orders', N'U') IS NULL
+    RETURN;
+
+IF COL_LENGTH(N'dbo.Orders', N'StripePaymentIntentId') IS NULL
+    ALTER TABLE [dbo].[Orders] ADD [StripePaymentIntentId] NVARCHAR(255) NULL;
+
+IF COL_LENGTH(N'dbo.Orders', N'StripeCheckoutSessionId') IS NULL
+    ALTER TABLE [dbo].[Orders] ADD [StripeCheckoutSessionId] NVARCHAR(255) NULL;
+";
 }

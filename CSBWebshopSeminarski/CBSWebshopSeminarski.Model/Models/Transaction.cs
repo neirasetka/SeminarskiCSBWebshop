@@ -14,7 +14,7 @@ namespace CBSWebshopSeminarski.Model.Models
         public string OrderNumber { get; set; } = null!;
         public DateTime TransactionDate { get; set; }
         public string TransactionDateString { get; set; } = null!;
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string UserName { get; set; } = null!;
     }
 }

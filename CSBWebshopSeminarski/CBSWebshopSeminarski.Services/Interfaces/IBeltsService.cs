@@ -5,7 +5,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
 {
     public interface IBeltsService
     {
-        Task<float> GetAverage(int ID);
+        Task<decimal> GetAverage(int ID);
         Task<List<Belt>> Get(BeltSearchRequest search);
         Task<Belt> GetById(int ID);
         Task<Belt> Insert(BeltUpsertRequest request);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../../utils/date_formatter.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
@@ -78,7 +79,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                   final Giveaway g = items[index];
                   return ListTile(
                     title: Text(g.title),
-                    subtitle: Text('${g.startDate.toLocal()} — ${g.endDate.toLocal()}'),
+                    subtitle: Text('${DateFormatter.formatDateTime(g.startDate)} — ${DateFormatter.formatDateTime(g.endDate)}'),
                     trailing: Chip(
                       label: Text(g.isClosed ? 'Zatvoren' : (g.isActiveNow ? 'Aktivan' : 'Planiran')),
                       backgroundColor: g.isClosed
@@ -149,7 +150,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
           children: <Widget>[
             Text(g.title, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
-            Text('Od: ${g.startDate.toLocal()} — Do: ${g.endDate.toLocal()}'),
+            Text('Od: ${DateFormatter.formatDateTime(g.startDate)} — Do: ${DateFormatter.formatDateTime(g.endDate)}'),
             const SizedBox(height: 12),
             Row(children: <Widget>[
               const Text('Status: '),
@@ -199,7 +200,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       .map((GiveawayParticipant p) => ListTile(
                             title: Text(p.name?.isNotEmpty == true ? p.name! : '(bez imena)'),
                             subtitle: Text(p.emailOrMasked),
-                            trailing: Text(p.entryDate.toLocal().toString()),
+                            trailing: Text(DateFormatter.formatDateTime(p.entryDate)),
                           ))
                       .toList(),
                 ),
@@ -254,7 +255,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                         });
                       }
                     },
-                    child: Text('Početak: ${start.toString().split('.').first}'),
+                    child: Text('Početak: ${DateFormatter.formatDateTime(start)}'),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
@@ -304,7 +305,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                         });
                       }
                     },
-                    child: Text('Kraj: ${end.toString().split('.').first}'),
+                    child: Text('Kraj: ${DateFormatter.formatDateTime(end)}'),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
@@ -655,7 +656,7 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
                       );
                       if (picked != null) setState(() => _start = picked);
                     },
-                    child: Text('Start: ${_start.toLocal().toString().split(' ').first}'),
+                    child: Text('Start: ${DateFormatter.formatDate(_start)}'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -670,7 +671,7 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
                       );
                       if (picked != null) setState(() => _end = picked);
                     },
-                    child: Text('Kraj: ${_end.toLocal().toString().split(' ').first}'),
+                    child: Text('Kraj: ${DateFormatter.formatDate(_end)}'),
                   ),
                 ),
               ]),

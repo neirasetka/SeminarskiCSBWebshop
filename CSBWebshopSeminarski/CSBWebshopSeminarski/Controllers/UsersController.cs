@@ -38,9 +38,9 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpPost("Register")]
         [AllowAnonymous]
-        public async Task<User> Register(UserUpsertRequest request)
+        public async Task<User> Register(RegisterRequest request)
         {
-            return await _service.Insert(request);
+            return await _service.Register(request);
         }
 
         public class TokenResponse
@@ -50,10 +50,6 @@ namespace CSBWebshopSeminarski.Controllers
             public User User { get; set; } = null!;
         }
 
-        /// <summary>
-        /// Prijavljeni korisnik ažurira vlastiti profil (ime, prezime, email, korisničko ime, telefon, slika).
-        /// Za razliku od PUT api/Users/{id}, ne zahtijeva ulogu Admin.
-        /// </summary>
         [HttpPut("profile")]
         [Authorize]
         public async Task<ActionResult<User>> UpdateMyProfile([FromBody] UserProfileUpdateRequest request)
@@ -94,46 +90,52 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(response);
         }
 
-        [HttpGet("{ID}/LikedBags")]
-        [Authorize]
-        public async Task<List<Bag>> GetLikedBags(int ID, [FromQuery] BagSearchRequest request)
+        private int GetCurrentUserId()
         {
-            return await _service.GetLikedBags(ID, request);
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out var id) ? id : 0;
         }
 
-        [HttpPost("{ID}/LikedBags/{BagID}")]
+        [HttpGet("me/LikedBags")]
         [Authorize]
-        public async Task<Bag> InsertLikedBags(int ID, int BagID)
+        public async Task<List<Bag>> GetMyLikedBags([FromQuery] BagSearchRequest request)
         {
-            return await _service.InsertLikedBags(ID, BagID);
+            return await _service.GetLikedBags(GetCurrentUserId(), request);
         }
 
-        [HttpDelete("{ID}/LikedBags/{BagID}")]
+        [HttpPost("me/LikedBags/{BagID}")]
         [Authorize]
-        public async Task<Bag> DeleteLikedBags(int ID, int BagID)
+        public async Task<Bag> InsertMyLikedBags(int BagID)
         {
-            return await _service.DeleteLikedBags(ID, BagID);
+            return await _service.InsertLikedBags(GetCurrentUserId(), BagID);
         }
 
-        [HttpGet("{ID}/LikedBelts")]
+        [HttpDelete("me/LikedBags/{BagID}")]
         [Authorize]
-        public async Task<List<Belt>> GetLikedBelts(int ID, [FromQuery] BeltSearchRequest request)
+        public async Task<Bag> DeleteMyLikedBags(int BagID)
         {
-            return await _service.GetLikedBelts(ID, request);
+            return await _service.DeleteLikedBags(GetCurrentUserId(), BagID);
         }
 
-        [HttpPost("{ID}/LikedBelts/{BeltID}")]
+        [HttpGet("me/LikedBelts")]
         [Authorize]
-        public async Task<Belt> InsertLikedBelts(int ID, int BeltID)
+        public async Task<List<Belt>> GetMyLikedBelts([FromQuery] BeltSearchRequest request)
         {
-            return await _service.InsertLikedBelts(ID, BeltID);
+            return await _service.GetLikedBelts(GetCurrentUserId(), request);
         }
 
-        [HttpDelete("{ID}/LikedBelts/{BeltID}")]
+        [HttpPost("me/LikedBelts/{BeltID}")]
         [Authorize]
-        public async Task<Belt> DeleteLikedBelts(int ID, int BeltID)
+        public async Task<Belt> InsertMyLikedBelts(int BeltID)
         {
-            return await _service.DeleteLikedBelts(ID, BeltID);
+            return await _service.InsertLikedBelts(GetCurrentUserId(), BeltID);
+        }
+
+        [HttpDelete("me/LikedBelts/{BeltID}")]
+        [Authorize]
+        public async Task<Belt> DeleteMyLikedBelts(int BeltID)
+        {
+            return await _service.DeleteLikedBelts(GetCurrentUserId(), BeltID);
         }
     }
 }

@@ -86,10 +86,12 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = _context.Set<Reviews>().Find(ID);
             if (entity == null)
                 throw new ArgumentException($"Review with ID {ID} not found.");
+            var ownerUserId = entity.UserID;
             _context.Set<Reviews>().Attach(entity);
             _context.Set<Reviews>().Update(entity);
 
             _mapper.Map(request, entity);
+            entity.UserID = ownerUserId;
 
             await _context.SaveChangesAsync();
 

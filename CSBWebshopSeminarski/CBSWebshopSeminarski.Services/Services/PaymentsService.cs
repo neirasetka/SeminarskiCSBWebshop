@@ -36,9 +36,24 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
+            var orderAlreadyPaid = await _db.Purchases.AnyAsync(p => p.OrderID == orderId);
+            if (orderAlreadyPaid)
+            {
+                _logger.LogWarning("Payment succeeded event for order {OrderId} but a purchase already exists. Skipping.", orderId);
+                return;
+            }
+
             var order = await _db.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderID == orderId);
             if (order == null)
             {
+                return;
+            }
+
+            if (order.PaymentStatus == PaymentStatus.Paid)
+            {
+                _logger.LogWarning(
+                    "Payment succeeded event for order {OrderId} but payment status is already Paid. Skipping purchase creation.",
+                    orderId);
                 return;
             }
 
@@ -141,6 +156,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (order != null)
                 {
                     order.PaymentStatus = PaymentStatus.Failed;
+                    order.StripePaymentIntentId = null;
+                    order.StripeCheckoutSessionId = null;
                     await _db.SaveChangesAsync();
                 }
             }

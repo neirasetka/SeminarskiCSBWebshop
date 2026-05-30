@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
@@ -14,8 +15,8 @@ class OrdersApi {
   static const String _orderItemsPath = '/api/OrderItems';
   static const String _paymentsPath = '/api/Payments';
 
-  Future<Map<String, dynamic>?> getActiveCart({required int userId}) async {
-    final http.Response response = await _apiClient.get('$_ordersPath/Active?userId=$userId');
+  Future<Map<String, dynamic>?> getActiveCart() async {
+    final http.Response response = await _apiClient.get('$_ordersPath/Active');
     if (response.statusCode == 204) return null;
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
@@ -24,13 +25,13 @@ class OrdersApi {
     final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
     throw ApiException(
       statusCode: response.statusCode,
-      message: 'GET /Orders/Active (userId=$userId) nije uspio$extra',
+      message: 'GET /Orders/Active nije uspio$extra',
       rawBody: response.body.isNotEmpty ? response.body : null,
     );
   }
 
-  Future<List<Map<String, dynamic>>> getOrdersByUser({required int userId}) async {
-    final http.Response response = await _apiClient.get('$_ordersPath/ByUser?userId=$userId');
+  Future<List<Map<String, dynamic>>> getMyOrders() async {
+    final http.Response response = await _apiClient.get('$_ordersPath/My');
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
       return jsonList.cast<Map<String, dynamic>>();
@@ -39,7 +40,6 @@ class OrdersApi {
   }
 
   Future<Map<String, dynamic>> createOrder({
-    required int userId,
     required String orderNumber,
     required DateTime date,
     double price = 0,
@@ -48,7 +48,6 @@ class OrdersApi {
       'OrderNumber': orderNumber,
       'Date': date.toUtc().toIso8601String(),
       'Price': price,
-      'UserID': userId,
       'items': <Map<String, dynamic>>[],
     };
     final http.Response response = await _apiClient.post('$_ordersPath/Create', body: json.encode(body));
@@ -59,7 +58,7 @@ class OrdersApi {
     final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
     throw ApiException(
       statusCode: response.statusCode,
-      message: 'POST /Orders/Create (userId=$userId) nije uspio$extra',
+      message: 'POST /Orders/Create nije uspio$extra',
       rawBody: response.body.isNotEmpty ? response.body : null,
     );
   }
@@ -99,14 +98,10 @@ class OrdersApi {
 
   Future<Map<String, dynamic>> createPaymentIntent({
     required int orderId,
-    required int amountInCents,
-    String currency = 'eur',
     String? receiptEmail,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
       'OrderID': orderId,
-      'AmountInCents': amountInCents,
-      'Currency': currency,
       if (receiptEmail != null) 'ReceiptEmail': receiptEmail,
     };
     final http.Response response = await _apiClient.post('$_paymentsPath/create-payment-intent', body: json.encode(body));
@@ -119,14 +114,10 @@ class OrdersApi {
   Future<Map<String, dynamic>> createCheckoutSession({
     required int orderId,
     String? receiptEmail,
-    String? successUrl,
-    String? cancelUrl,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
       'OrderID': orderId,
       if (receiptEmail != null) 'ReceiptEmail': receiptEmail,
-      if (successUrl != null) 'SuccessUrl': successUrl,
-      if (cancelUrl != null) 'CancelUrl': cancelUrl,
     };
     final http.Response response = await _apiClient.post(
       '$_paymentsPath/create-checkout-session',
@@ -190,18 +181,22 @@ class OrdersApi {
     );
   }
 
-  Future<void> updatePaymentStatus({
-    required int orderId,
-    required String status,
-    String? receiptEmail,
+  Future<Map<String, dynamic>> confirmPaymentIntent({
+    required String paymentIntentId,
+    int? orderId,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
-      'status': status,
-      if (receiptEmail != null && receiptEmail.trim().isNotEmpty) 'receiptEmail': receiptEmail.trim(),
+      'paymentIntentId': paymentIntentId,
+      if (orderId != null) 'orderId': orderId,
     };
-    final http.Response response = await _apiClient.patch('$_ordersPath/$orderId/payment-status', body: json.encode(body));
-    if (response.statusCode >= 200 && response.statusCode < 300) return;
-    throw Exception('Failed to update payment status: ${response.statusCode}');
+    final http.Response response = await _apiClient.post(
+      '$_paymentsPath/confirm-payment-intent',
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to confirm payment intent: ${response.statusCode}');
   }
 
   static String _parseErrorResponse(http.Response response) {
@@ -239,14 +234,16 @@ class OrdersApi {
     return ' (prazan odgovor, HTTP ${response.statusCode})';
   }
 
-  Future<void> cancelActiveCart({required int userId}) async {
-    final http.Response response = await _apiClient.delete('$_ordersPath/Active?userId=$userId');
+  Future<void> cancelActiveCart() async {
+    final http.Response response = await _apiClient.delete('$_ordersPath/Active');
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     throw Exception('Failed to cancel cart: ${response.statusCode}');
   }
 
   Future<Map<String, dynamic>> confirmMockCheckout() async {
-    // Calls the mock node server running on localhost:4242
+    if (!kDebugMode) {
+      throw Exception('Mock checkout is only available in debug mode.');
+    }
     final http.Response response = await _apiClient.post('http://localhost:4242/checkout/confirm');
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;

@@ -120,12 +120,12 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             return false;
         }
-        public async Task<float> GetAverage(int BeltID)
+        public async Task<decimal> GetAverage(int BeltID)
         {
             var list = await _context.Rates.Where(i => i.BeltID == BeltID).ToListAsync();
-            if (list.Count() != 0)
+            if (list.Count != 0)
             {
-                return (float)list.Average(i => i.Rating);
+                return (decimal)list.Average(i => i.Rating);
             }
             return 0;
         }

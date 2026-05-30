@@ -107,7 +107,7 @@ builder.Services.AddTransient<IReviewsService, ReviewsService>();
 builder.Services.AddTransient<ICRUDService<Purchase, PurchaseSearchRequest, PurchaseUpsertRequest, PurchaseUpsertRequest>, PurchasesService>();
 builder.Services.AddTransient<IOrderService, OrdersService>();
 
-builder.Services.AddTransient<RabbitMqMailPublisher>();
+builder.Services.AddSingleton<RabbitMqMailPublisher>();
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
@@ -305,6 +305,12 @@ using (var scope = app.Services.CreateScope())
 
         await context.Database.ExecuteSqlRawAsync(
             OrdersSchemaCompatibility.EnsurePaymentConfirmationEmailSentColumnSql);
+
+        await context.Database.ExecuteSqlRawAsync(
+            OrdersSchemaCompatibility.EnsureStripePaymentRefColumnsSql);
+
+        await context.Database.ExecuteSqlRawAsync(
+            PurchasesSchemaCompatibility.EnsureUniquePurchaseOrderIdIndexSql);
 
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");

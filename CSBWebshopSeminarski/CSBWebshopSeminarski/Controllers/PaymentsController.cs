@@ -16,16 +16,22 @@ namespace CSBWebshopSeminarski.Controllers
     {
         private readonly CocoSunBagsWebshopDbContext _db;
         private readonly IPaymentsService _paymentsService;
+        private readonly IConfiguration _configuration;
 
-        public PaymentsController(CocoSunBagsWebshopDbContext db, IPaymentsService paymentsService)
+        public PaymentsController(CocoSunBagsWebshopDbContext db, IPaymentsService paymentsService, IConfiguration configuration)
         {
             _db = db;
             _paymentsService = paymentsService;
+            _configuration = configuration;
         }
 
         public class StripeConfigResponse
         {
             public string PublishableKey { get; set; } = string.Empty;
+            /// <summary>ISO 4217 code used for Stripe charges (default: bam).</summary>
+            public string Currency { get; set; } = "bam";
+            /// <summary>Display label shown in UI and emails (default: KM).</summary>
+            public string CurrencyDisplay { get; set; } = "KM";
         }
 
         public class ConfirmCheckoutSessionRequest
@@ -33,6 +39,67 @@ namespace CSBWebshopSeminarski.Controllers
             public string SessionId { get; set; } = string.Empty;
             public int? OrderId { get; set; }
         }
+
+        public class ConfirmPaymentIntentRequest
+        {
+            public string PaymentIntentId { get; set; } = string.Empty;
+            public int? OrderId { get; set; }
+        }
+
+        private static readonly string[] DefaultAllowedRedirectHosts =
+        {
+            "localhost", "127.0.0.1", "cocosunbags.local", "checkout.csb.local"
+        };
+
+        private bool IsRedirectUrlAllowed(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+
+            var configuredHosts = _configuration.GetSection("Stripe:AllowedRedirectHosts").Get<string[]>();
+            var allowedHosts = configuredHosts is { Length: > 0 } ? configuredHosts : DefaultAllowedRedirectHosts;
+
+            return allowedHosts.Any(h =>
+                       string.Equals(uri.Host, h, StringComparison.OrdinalIgnoreCase))
+                   || uri.Host.EndsWith(".cocosunbags.local", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetSuccessRedirectPrefix(string successUrlTemplate)
+        {
+            var withoutPlaceholder = successUrlTemplate
+                .Replace("{CHECKOUT_SESSION_ID}", string.Empty, StringComparison.Ordinal)
+                .TrimEnd('?', '&', '=');
+            return withoutPlaceholder.TrimEnd('/');
+        }
+
+        private (string successUrl, string cancelUrl, string successPrefix) ResolveCheckoutRedirectUrls(HttpRequest httpRequest)
+        {
+            var configuredSuccess = _configuration["Stripe:CheckoutSuccessUrl"]?.Trim();
+            var configuredCancel = _configuration["Stripe:CheckoutCancelUrl"]?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(configuredSuccess)
+                && !string.IsNullOrWhiteSpace(configuredCancel)
+                && IsRedirectUrlAllowed(configuredSuccess)
+                && IsRedirectUrlAllowed(configuredCancel))
+            {
+                var successUrl = configuredSuccess.Contains("{CHECKOUT_SESSION_ID}", StringComparison.Ordinal)
+                    ? configuredSuccess
+                    : $"{configuredSuccess}{(configuredSuccess.Contains('?') ? "&" : "?")}session_id={{CHECKOUT_SESSION_ID}}";
+                return (successUrl, configuredCancel, GetSuccessRedirectPrefix(successUrl));
+            }
+
+            var baseUrl = $"{httpRequest.Scheme}://{httpRequest.Host.Value}";
+            var fallbackSuccess = $"{baseUrl}/checkout-success?session_id={{CHECKOUT_SESSION_ID}}";
+            var fallbackCancel = $"{baseUrl}/checkout-cancel";
+            return (fallbackSuccess, fallbackCancel, GetSuccessRedirectPrefix(fallbackSuccess));
+        }
+
+        private const string DefaultPaymentCurrency = "bam";
+        private const long MinimumAmountInMinorUnits = 50; // 0.50 KM (Stripe minimum for BAM)
+
+        private string GetPaymentCurrency() =>
+            !string.IsNullOrWhiteSpace(_configuration["Stripe:Currency"])
+                ? _configuration["Stripe:Currency"]!.Trim().ToLowerInvariant()
+                : DefaultPaymentCurrency;
 
         private static Dictionary<string, string> GetCheckoutMetadata(int orderId, string orderNumber, int userId, string? receiptEmail)
         {
@@ -49,14 +116,125 @@ namespace CSBWebshopSeminarski.Controllers
             return metadata;
         }
 
-        /// <summary>
-        /// Create Stripe PaymentIntent for a given Order.
-        /// </summary>
-        /// <remarks>
-        /// Returns a client_secret used by the client to complete the payment.
-        /// </remarks>
-        /// <response code="200">Returns client secret and intent id</response>
-        /// <response code="404">Order not found</response>
+        private async Task<(long amountInCents, string? error)> CalculateOrderTotal(int orderId)
+        {
+            var orderItems = await _db.OrderItems
+                .Where(oi => oi.OrderID == orderId)
+                .Include(oi => oi.Bag)
+                .Include(oi => oi.Belt)
+                .ToListAsync();
+
+            if (!orderItems.Any())
+                return (0, "Order has no items.");
+
+            decimal total = 0m;
+            foreach (var item in orderItems)
+            {
+                decimal unitPrice = 0m;
+                if (item.Bag != null)
+                    unitPrice = (decimal)item.Bag.Price;
+                else if (item.Belt != null)
+                    unitPrice = (decimal)item.Belt.Price;
+                else if (item.Price.HasValue)
+                    unitPrice = (decimal)item.Price.Value;
+
+                var qty = item.Quantity ?? 1;
+                var discount = item.Discount ?? 0m;
+                var lineTotal = unitPrice * qty * (1 - discount / 100m);
+                total += lineTotal;
+            }
+
+            var cents = (long)Math.Round(total * 100m);
+            if (cents < MinimumAmountInMinorUnits)
+                return (0, "Order total is too small for payment (minimum 0.50 KM).");
+            return (cents, null);
+        }
+
+        private async Task<string?> ValidateOrderForPayment(CSBWebshopSeminarski.Core.Entities.Orders order)
+        {
+            if (order.PaymentStatus != CSBWebshopSeminarski.Core.Entities.PaymentStatus.Pending)
+                return $"Order payment status is {order.PaymentStatus}, expected Pending.";
+
+            if (order.ShippingStatus == CSBWebshopSeminarski.Core.Entities.ShippingStatus.Cancelled)
+                return "Order has been cancelled.";
+
+            var hasItems = await _db.OrderItems.AnyAsync(oi => oi.OrderID == order.OrderID);
+            if (!hasItems)
+                return "Order has no items.";
+
+            var alreadyPaid = await _db.Purchases.AnyAsync(p => p.OrderID == order.OrderID);
+            if (alreadyPaid)
+                return "Order has already been paid.";
+
+            return null;
+        }
+
+        private static readonly HashSet<string> ActivePaymentIntentStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "requires_payment_method",
+            "requires_confirmation",
+            "requires_action",
+            "processing",
+            "requires_capture"
+        };
+
+        private sealed record ExistingStripePaymentCheck(
+            string? Error,
+            PaymentIntent? ActivePaymentIntent,
+            Session? ActiveCheckoutSession);
+
+        private async Task ClearStaleStripeReferenceAsync(CSBWebshopSeminarski.Core.Entities.Orders order, bool paymentIntent, bool checkoutSession)
+        {
+            if (paymentIntent)
+                order.StripePaymentIntentId = null;
+            if (checkoutSession)
+                order.StripeCheckoutSessionId = null;
+            await _db.SaveChangesAsync();
+        }
+
+        private async Task<ExistingStripePaymentCheck> GetExistingStripePaymentAsync(CSBWebshopSeminarski.Core.Entities.Orders order)
+        {
+            PaymentIntent? activePaymentIntent = null;
+            Session? activeCheckoutSession = null;
+
+            if (!string.IsNullOrWhiteSpace(order.StripePaymentIntentId))
+            {
+                try
+                {
+                    var paymentIntent = await new PaymentIntentService().GetAsync(order.StripePaymentIntentId);
+                    if (string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+                        return new ExistingStripePaymentCheck("Order has already been paid.", null, null);
+
+                    if (ActivePaymentIntentStatuses.Contains(paymentIntent.Status))
+                        activePaymentIntent = paymentIntent;
+                }
+                catch (StripeException)
+                {
+                    await ClearStaleStripeReferenceAsync(order, paymentIntent: true, checkoutSession: false);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(order.StripeCheckoutSessionId))
+            {
+                try
+                {
+                    var checkoutSession = await new SessionService().GetAsync(order.StripeCheckoutSessionId);
+                    if (string.Equals(checkoutSession.Status, "complete", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(checkoutSession.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
+                        return new ExistingStripePaymentCheck("Order has already been paid.", null, null);
+
+                    if (string.Equals(checkoutSession.Status, "open", StringComparison.OrdinalIgnoreCase))
+                        activeCheckoutSession = checkoutSession;
+                }
+                catch (StripeException)
+                {
+                    await ClearStaleStripeReferenceAsync(order, paymentIntent: false, checkoutSession: true);
+                }
+            }
+
+            return new ExistingStripePaymentCheck(null, activePaymentIntent, activeCheckoutSession);
+        }
+
         [ProducesResponseType(typeof(CreatePaymentIntentResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost("create-payment-intent")]
@@ -78,8 +256,34 @@ namespace CSBWebshopSeminarski.Controllers
                 }
             }
 
-            var amount = request.AmountInCents > 0 ? request.AmountInCents : (long)(order.Price * 100);
-            var currency = string.IsNullOrWhiteSpace(request.Currency) ? "eur" : request.Currency!;
+            var validationError = await ValidateOrderForPayment(order);
+            if (validationError != null) return BadRequest(validationError);
+
+            var (amountInCents, calcError) = await CalculateOrderTotal(order.OrderID);
+            if (calcError != null) return BadRequest(calcError);
+
+            var currency = GetPaymentCurrency();
+            var existingPayment = await GetExistingStripePaymentAsync(order);
+            if (existingPayment.Error != null) return BadRequest(existingPayment.Error);
+
+            if (existingPayment.ActiveCheckoutSession != null)
+                return BadRequest("An active checkout session is already in progress for this order.");
+
+            if (existingPayment.ActivePaymentIntent != null)
+            {
+                var activeIntent = existingPayment.ActivePaymentIntent;
+                if (activeIntent.Amount != amountInCents
+                    || !string.Equals(activeIntent.Currency, currency, StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest("Active payment amount does not match the current order total.");
+                }
+
+                return Ok(new CreatePaymentIntentResponse
+                {
+                    ClientSecret = activeIntent.ClientSecret,
+                    PaymentIntentId = activeIntent.Id
+                });
+            }
 
             var metadata = new Dictionary<string, string>
             {
@@ -95,7 +299,7 @@ namespace CSBWebshopSeminarski.Controllers
             var paymentIntentService = new PaymentIntentService();
             var createOptions = new PaymentIntentCreateOptions
             {
-                Amount = amount,
+                Amount = amountInCents,
                 Currency = currency,
                 Metadata = metadata,
                 ReceiptEmail = request.ReceiptEmail,
@@ -105,7 +309,12 @@ namespace CSBWebshopSeminarski.Controllers
                 }
             };
 
-            var intent = await paymentIntentService.CreateAsync(createOptions);
+            var intent = await paymentIntentService.CreateAsync(
+                createOptions,
+                new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-pi" });
+
+            order.StripePaymentIntentId = intent.Id;
+            await _db.SaveChangesAsync();
 
             return Ok(new CreatePaymentIntentResponse
             {
@@ -114,30 +323,21 @@ namespace CSBWebshopSeminarski.Controllers
             });
         }
 
-        /// <summary>
-        /// Returns Stripe publishable key used by this API instance.
-        /// Used by clients to detect pk/sk account mismatch early.
-        /// </summary>
         [HttpGet("stripe-config")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(StripeConfigResponse), StatusCodes.Status200OK)]
         public ActionResult<StripeConfigResponse> GetStripeConfig()
         {
-            var publishableKey = HttpContext.RequestServices
-                .GetRequiredService<IConfiguration>()["Stripe:PublishableKey"] ?? string.Empty;
+            var publishableKey = _configuration["Stripe:PublishableKey"] ?? string.Empty;
 
             return Ok(new StripeConfigResponse
             {
-                PublishableKey = publishableKey
+                PublishableKey = publishableKey,
+                Currency = GetPaymentCurrency(),
+                CurrencyDisplay = _configuration["Stripe:CurrencyDisplay"]?.Trim() is { Length: > 0 } d ? d : "KM"
             });
         }
 
-        /// <summary>
-        /// Create Stripe Checkout Session for Hosted Checkout (desktop/web browser flow).
-        /// </summary>
-        /// <remarks>
-        /// Returns a URL to open in the browser. Used when Payment Sheet is not available (e.g. Windows desktop).
-        /// </remarks>
         [ProducesResponseType(typeof(CreateCheckoutSessionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost("create-checkout-session")]
@@ -159,19 +359,35 @@ namespace CSBWebshopSeminarski.Controllers
                 }
             }
 
-            var amount = (long)(order.Price * 100);
-            if (amount < 50)
-            {
-                amount = 50;
-            }
+            var validationError = await ValidateOrderForPayment(order);
+            if (validationError != null) return BadRequest(validationError);
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host.Value}";
-            var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
-                ? $"{baseUrl}/checkout-success?session_id={{CHECKOUT_SESSION_ID}}"
-                : request.SuccessUrl;
-            var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
-                ? $"{baseUrl}/checkout-cancel"
-                : request.CancelUrl;
+            var (amountInCents, calcError) = await CalculateOrderTotal(order.OrderID);
+            if (calcError != null) return BadRequest(calcError);
+
+            var (successUrl, cancelUrl, successPrefix) = ResolveCheckoutRedirectUrls(Request);
+
+            var currency = GetPaymentCurrency();
+            var existingPayment = await GetExistingStripePaymentAsync(order);
+            if (existingPayment.Error != null) return BadRequest(existingPayment.Error);
+
+            if (existingPayment.ActivePaymentIntent != null)
+                return BadRequest("An active payment intent is already in progress for this order.");
+
+            if (existingPayment.ActiveCheckoutSession != null)
+            {
+                var activeSession = existingPayment.ActiveCheckoutSession;
+                if (activeSession.AmountTotal.HasValue && activeSession.AmountTotal.Value != amountInCents)
+                    return BadRequest("Active checkout amount does not match the current order total.");
+
+                return Ok(new CreateCheckoutSessionResponse
+                {
+                    Url = activeSession.Url ?? string.Empty,
+                    SessionId = activeSession.Id,
+                    SuccessRedirectUrl = successPrefix,
+                    CancelRedirectUrl = cancelUrl
+                });
+            }
 
             var sessionService = new SessionService();
             var createOptions = new SessionCreateOptions
@@ -185,8 +401,8 @@ namespace CSBWebshopSeminarski.Controllers
                     {
                         PriceData = new SessionLineItemPriceDataOptions
                         {
-                            Currency = "eur",
-                            UnitAmount = amount,
+                            Currency = currency,
+                            UnitAmount = amountInCents,
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
                                 Name = $"Narudžba #{order.OrderNumber}",
@@ -207,10 +423,14 @@ namespace CSBWebshopSeminarski.Controllers
                 createOptions.CustomerEmail = request.ReceiptEmail;
             }
 
-            var session = await sessionService.CreateAsync(createOptions);
+            var session = await sessionService.CreateAsync(
+                createOptions,
+                new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-cs" });
 
-            // Kada checkout sesija krene, narudžba više nije aktivna korpa.
-            // Ovo sprečava ponovno korištenje iste pending narudžbe pri narednoj kupovini.
+            order.StripeCheckoutSessionId = session.Id;
+            if (!string.IsNullOrWhiteSpace(session.PaymentIntentId))
+                order.StripePaymentIntentId = session.PaymentIntentId;
+
             if (order.ShippingStatus == CSBWebshopSeminarski.Core.Entities.ShippingStatus.Pending)
             {
                 order.ShippingStatus = CSBWebshopSeminarski.Core.Entities.ShippingStatus.Processing;
@@ -221,14 +441,12 @@ namespace CSBWebshopSeminarski.Controllers
             return Ok(new CreateCheckoutSessionResponse
             {
                 Url = session.Url ?? string.Empty,
-                SessionId = session.Id
+                SessionId = session.Id,
+                SuccessRedirectUrl = successPrefix,
+                CancelRedirectUrl = cancelUrl
             });
         }
 
-        /// <summary>
-        /// Fallback confirmation path when webhook delivery is delayed/unavailable.
-        /// Checks Stripe Checkout Session and updates order payment status if paid.
-        /// </summary>
         [HttpPost("confirm-checkout-session")]
         [Authorize(Roles = "Buyer, Admin")]
         public async Task<ActionResult<object>> ConfirmCheckoutSession([FromBody] ConfirmCheckoutSessionRequest request)
@@ -313,6 +531,75 @@ namespace CSBWebshopSeminarski.Controllers
 
             var isPaid = string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase)
                          || string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase);
+
+            if (isPaid)
+            {
+                await _paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, metadata);
+                return Ok(new { paid = true, orderId = order.OrderID, paymentIntentId = paymentIntent.Id });
+            }
+
+            return Ok(new { paid = false, orderId = order.OrderID, status = paymentIntent.Status });
+        }
+
+        [HttpPost("confirm-payment-intent")]
+        [Authorize(Roles = "Buyer, Admin")]
+        public async Task<ActionResult<object>> ConfirmPaymentIntent([FromBody] ConfirmPaymentIntentRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.PaymentIntentId))
+            {
+                return BadRequest("PaymentIntentId is required.");
+            }
+
+            var paymentIntentService = new PaymentIntentService();
+            PaymentIntent paymentIntent;
+            try
+            {
+                paymentIntent = await paymentIntentService.GetAsync(request.PaymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                return BadRequest($"Stripe payment intent lookup failed: {ex.Message}");
+            }
+
+            if (paymentIntent == null)
+            {
+                return NotFound("Payment intent not found.");
+            }
+
+            var metadata = paymentIntent.Metadata != null
+                ? new Dictionary<string, string>(paymentIntent.Metadata)
+                : new Dictionary<string, string>();
+            if (!metadata.TryGetValue("order_id", out var metadataOrderId))
+            {
+                return Ok(new { paid = false, reason = "order_id_missing_in_metadata" });
+            }
+
+            if (!int.TryParse(metadataOrderId, out var orderIdFromMetadata))
+            {
+                return Ok(new { paid = false, reason = "invalid_order_id_metadata" });
+            }
+
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderIdFromMetadata);
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || order.UserID != currentUserId)
+                {
+                    return Forbid();
+                }
+            }
+
+            if (request.OrderId.HasValue && request.OrderId.Value != order.OrderID)
+            {
+                return BadRequest("Payment intent does not belong to provided order.");
+            }
+
+            var isPaid = string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase);
 
             if (isPaid)
             {

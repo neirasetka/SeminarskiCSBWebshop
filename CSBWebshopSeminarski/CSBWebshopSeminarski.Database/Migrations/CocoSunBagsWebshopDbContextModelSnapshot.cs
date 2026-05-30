@@ -103,8 +103,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("StateMachine")
                         .HasColumnType("nvarchar(max)");
@@ -165,8 +165,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("UserID")
                         .HasColumnType("int");
@@ -361,8 +361,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Property<int>("OrderID")
                         .HasColumnType("int");
 
-                    b.Property<float?>("Price")
-                        .HasColumnType("real");
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("Quantity")
                         .HasColumnType("int");
@@ -408,8 +408,14 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Property<bool>("PaymentConfirmationEmailSent")
                         .HasColumnType("bit");
 
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
+                    b.Property<string>("StripeCheckoutSessionId")
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ShippingStatus")
                         .HasColumnType("int");
@@ -542,8 +548,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("datetime2");
@@ -561,7 +567,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.HasKey("PurchaseID");
 
-                    b.HasIndex("OrderID");
+                    b.HasIndex("OrderID")
+                        .IsUnique();
 
                     b.HasIndex("UserID");
 
@@ -731,8 +738,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");

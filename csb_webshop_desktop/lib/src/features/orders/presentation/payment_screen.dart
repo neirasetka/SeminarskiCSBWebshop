@@ -113,7 +113,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
       // Start checkout using the cart provider
       final Map<String, String> checkoutResult =
           await ref.read(cartProvider.notifier).startCheckout(
-            currency: 'eur',
             email: _emailController.text.trim(),
           );
 

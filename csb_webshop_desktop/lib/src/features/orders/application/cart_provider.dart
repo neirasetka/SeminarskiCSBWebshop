@@ -43,38 +43,6 @@ Future<T> _cartStep<T>(String stepLabelHr, Future<T> Function() action) async {
   }
 }
 
-String? _extractPaymentStatus(Map<String, dynamic> orderData) {
-  final List<Object?> candidates = <Object?>[
-    orderData['PaymentStatus'],
-    orderData['paymentStatus'],
-    orderData['PaymentStatusName'],
-    orderData['paymentStatusName'],
-    orderData['Status'],
-    orderData['status'],
-    orderData['PaymentStatusId'],
-    orderData['paymentStatusId'],
-  ];
-
-  for (final Object? candidate in candidates) {
-    if (candidate == null) continue;
-    final String value = candidate.toString().trim();
-    if (value.isNotEmpty) return value;
-  }
-  return null;
-}
-
-bool _isPaidPaymentStatus(String? rawStatus) {
-  if (rawStatus == null) return false;
-  final String normalized = rawStatus.trim().toLowerCase();
-  return normalized == '1' ||
-      normalized == 'paid' ||
-      normalized == 'succeeded' ||
-      normalized == 'success' ||
-      normalized == 'completed' ||
-      normalized == 'complete' ||
-      normalized == 'settled';
-}
-
 Future<Webview> _openHostedCheckoutInApp(String url) async {
   if (kIsWeb) {
     throw Exception('In-app checkout nije podržan na web platformi.');
@@ -109,8 +77,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<OrderModel?> _loadActiveCart() async {
-    final int userId = (await _profileApi.getMe()).id;
-    final map = await _api.getActiveCart(userId: userId);
+    final map = await _api.getActiveCart();
     if (map == null) return null;
     return OrderModel.fromJson(map);
   }
@@ -154,14 +121,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     if (order == null) {
       order = await _cartStep(
-        '3) Kreiranje prazne narudžbe (GET /Users/me + POST /Orders/Create)',
+        '3) Kreiranje prazne narudžbe (POST /Orders/Create)',
         () async {
-          final int userId = (await _profileApi.getMe()).id;
-          if (userId < 1) {
-            throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-          }
           final Map<String, dynamic> created = await _api.createOrder(
-            userId: userId,
             orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
             date: DateTime.now(),
             price: 0,
@@ -195,10 +157,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   /// Briše aktivnu korpu na serveru dok je token još valjan (pri odjavi).
   Future<void> discardActiveCartOnLogout() async {
     try {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId >= 1) {
-        await _api.cancelActiveCart(userId: userId);
-      }
+      await _api.cancelActiveCart();
     } catch (_) {
       // Mreža / istek tokena — ne blokiraj odjavu.
     }
@@ -211,8 +170,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       state = const AsyncValue.data(null);
       return;
     }
-    final int userId = (await _profileApi.getMe()).id;
-    await _api.cancelActiveCart(userId: userId);
+    await _api.cancelActiveCart();
     await refresh();
   }
 
@@ -229,14 +187,9 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     if (order == null) {
       order = await _cartStep(
-        '3) Kreiranje prazne narudžbe (GET /Users/me + POST /Orders/Create)',
+        '3) Kreiranje prazne narudžbe (POST /Orders/Create)',
         () async {
-          final int userId = (await _profileApi.getMe()).id;
-          if (userId < 1) {
-            throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-          }
           final Map<String, dynamic> created = await _api.createOrder(
-            userId: userId,
             orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
             date: DateTime.now(),
             price: 0,
@@ -262,7 +215,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     );
   }
 
-  Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
+  Future<Map<String, String>> startCheckout({String? email}) async {
     final OrderModel? order = state.value ?? await _loadActiveCart();
     if (order == null) {
       throw Exception('Nema korpe za plaćanje');
@@ -279,11 +232,8 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       return _startHostedCheckout(order: order, receiptEmail: receiptEmail);
     }
 
-    final int amountInCents = (order.amount * 100).round();
     final Map<String, dynamic> resp = await _api.createPaymentIntent(
       orderId: order.id,
-      amountInCents: amountInCents,
-      currency: currency,
       receiptEmail: receiptEmail,
     );
     final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
@@ -294,7 +244,18 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       ),
     );
     await Stripe.instance.presentPaymentSheet();
-    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
+    final String paymentIntentId =
+        (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString();
+    if (paymentIntentId.isEmpty) {
+      throw Exception('API nije vratio PaymentIntentId.');
+    }
+    final Map<String, dynamic> confirmResult = await _api.confirmPaymentIntent(
+      paymentIntentId: paymentIntentId,
+      orderId: order.id,
+    );
+    if (confirmResult['paid'] != true) {
+      throw Exception('Plaćanje nije potvrđeno na serveru.');
+    }
     await refresh();
     return <String, String>{
       'orderId': order.id.toString(),
@@ -307,18 +268,21 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     required OrderModel order,
     String? receiptEmail,
   }) async {
-    const String successUrl = 'https://checkout.csb.local/success';
-    const String cancelUrl = 'https://checkout.csb.local/cancel';
-
     final Map<String, dynamic> resp = await _api.createCheckoutSession(
       orderId: order.id,
       receiptEmail: receiptEmail,
-      successUrl: successUrl,
-      cancelUrl: cancelUrl,
     );
     final String url = (resp['Url'] ?? resp['url'] ?? '').toString();
     if (url.isEmpty) {
       throw Exception('Nije moguće kreirati checkout sesiju');
+    }
+
+    final String successUrl =
+        (resp['SuccessRedirectUrl'] ?? resp['successRedirectUrl'] ?? '').toString();
+    final String cancelUrl =
+        (resp['CancelRedirectUrl'] ?? resp['cancelRedirectUrl'] ?? '').toString();
+    if (successUrl.isEmpty || cancelUrl.isEmpty) {
+      throw Exception('Server nije vratio redirect URL-ove za checkout.');
     }
 
     final Webview checkoutWebview = await _openHostedCheckoutInApp(url);
@@ -362,24 +326,17 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     checkoutWebview.close();
     final String sessionId = resp['SessionId']?.toString() ?? '';
 
-    if (sessionId.isNotEmpty) {
-      try {
-        await _api.confirmCheckoutSession(
-          sessionId: sessionId,
-          orderId: order.id,
-        );
-      } catch (_) {
-        // If confirm endpoint is unavailable, fallback to direct paid status update.
-      }
+    if (sessionId.isEmpty) {
+      throw Exception('Nedostaje sessionId za potvrdu plaćanja.');
     }
 
-    // Always call payment-status after successful checkout redirect.
-    // Backend method is idempotent and can send confirmation email if not sent yet.
-    await _api.updatePaymentStatus(
+    final Map<String, dynamic> confirmResult = await _api.confirmCheckoutSession(
+      sessionId: sessionId,
       orderId: order.id,
-      status: 'Paid',
-      receiptEmail: receiptEmail,
     );
+    if (confirmResult['paid'] != true) {
+      throw Exception('Plaćanje nije potvrđeno na serveru.');
+    }
 
     await refresh();
     return <String, String>{

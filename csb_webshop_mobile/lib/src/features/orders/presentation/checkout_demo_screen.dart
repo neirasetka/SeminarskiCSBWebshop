@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../profile/data/profile_api.dart';
-import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
@@ -23,24 +21,18 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     final OrdersApi ordersApi = ref.read(ordersApiProvider);
-    final ProfileApi profileApi = ref.read(profileApiProvider);
 
     try {
-      final int userId = (await profileApi.getMe()).id;
       const double priceBAM = 120.0;
       final Map<String, dynamic> created = await ordersApi.createOrder(
-        userId: userId,
         orderNumber: 'DEMO-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
         price: priceBAM,
       );
       final OrderModel order = OrderModel.fromJson(created);
 
-      // Create PaymentIntent for this order (use EUR for broad Stripe test compatibility)
       final Map<String, dynamic> paymentIntent = await ordersApi.createPaymentIntent(
         orderId: order.id,
-        amountInCents: (priceBAM * 100).round(),
-        currency: 'eur',
       );
       final String clientSecret = (paymentIntent['ClientSecret'] ?? paymentIntent['clientSecret'] ?? '').toString();
 
@@ -52,7 +44,18 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
       );
       await Stripe.instance.presentPaymentSheet();
 
-      await ordersApi.updatePaymentStatus(orderId: order.id, status: 'Paid');
+      final String paymentIntentId =
+          (paymentIntent['PaymentIntentId'] ?? paymentIntent['paymentIntentId'] ?? '').toString();
+      if (paymentIntentId.isEmpty) {
+        throw Exception('API nije vratio PaymentIntentId.');
+      }
+      final Map<String, dynamic> confirmResult = await ordersApi.confirmPaymentIntent(
+        paymentIntentId: paymentIntentId,
+        orderId: order.id,
+      );
+      if (confirmResult['paid'] != true) {
+        throw Exception('Plaćanje nije potvrđeno na serveru.');
+      }
 
       if (mounted) {
         ref.read(cartProvider.notifier).resetCartAfterPayment();

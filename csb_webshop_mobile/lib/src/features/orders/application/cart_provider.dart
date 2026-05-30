@@ -20,8 +20,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<OrderModel?> _loadActiveCart() async {
-    final int userId = (await _profileApi.getMe()).id;
-    final map = await _api.getActiveCart(userId: userId);
+    final map = await _api.getActiveCart();
     if (map == null) return null;
     return OrderModel.fromJson(map);
   }
@@ -41,12 +40,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       order = await _loadActiveCart();
     }
     if (order == null) {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId < 1) {
-        throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-      }
       final created = await _api.createOrder(
-        userId: userId,
         orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
         price: 0,
@@ -65,10 +59,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   /// Briše aktivnu korpu na serveru dok je token još valjan (pri odjavi).
   Future<void> discardActiveCartOnLogout() async {
     try {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId >= 1) {
-        await _api.cancelActiveCart(userId: userId);
-      }
+      await _api.cancelActiveCart();
     } catch (_) {
       // Mreža / istek tokena — ne blokiraj odjavu.
     }
@@ -81,8 +72,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       state = const AsyncValue.data(null);
       return;
     }
-    final int userId = (await _profileApi.getMe()).id;
-    await _api.cancelActiveCart(userId: userId);
+    await _api.cancelActiveCart();
     await refresh();
   }
 
@@ -95,12 +85,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       order = await _loadActiveCart();
     }
     if (order == null) {
-      final int userId = (await _profileApi.getMe()).id;
-      if (userId < 1) {
-        throw Exception('Neispravan korisnički profil. Prijavite se ponovno.');
-      }
       final created = await _api.createOrder(
-        userId: userId,
         orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
         price: 0,
@@ -111,7 +96,7 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     await refresh();
   }
 
-  Future<Map<String, String>> startCheckout({String currency = 'eur', String? email}) async {
+  Future<Map<String, String>> startCheckout({String? email}) async {
     final String backendPk = await _api.getStripePublishableKey();
     final String appPk = EnvironmentConfig.stripePublishableKey.trim();
     final String effectivePk = backendPk.isNotEmpty ? backendPk : appPk;
@@ -137,20 +122,11 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
         receiptEmail = (await _profileApi.getMe()).email;
       }
     } catch (_) {}
-    final int amountInCents = (order.amount * 100).round();
-    // Stripe minimum za EUR je npr. 0,50 EUR (50); inače API/SDK može odbiti.
-    if (currency.toLowerCase() == 'eur' && amountInCents > 0 && amountInCents < 50) {
-      throw Exception(
-        'Iznos je premali za Stripe u EUR (${amountInCents}c). Povećaj korpu ili promijeni valutu na backendu.',
-      );
-    }
     if (kDebugMode) {
-      debugPrint('[checkout] orderId=${order.id} amountCents=$amountInCents currency=$currency');
+      debugPrint('[checkout] orderId=${order.id}');
     }
     final Map<String, dynamic> resp = await _api.createPaymentIntent(
       orderId: order.id,
-      amountInCents: amountInCents,
-      currency: currency,
       receiptEmail: receiptEmail,
     );
     final String clientSecret = (resp['ClientSecret'] ?? resp['clientSecret'] ?? '').toString();
@@ -172,11 +148,20 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
     await Stripe.instance.presentPaymentSheet();
     if (kDebugMode) {
-      debugPrint('[checkout] presentPaymentSheet OK, ažuriram status na serveru...');
+      debugPrint('[checkout] presentPaymentSheet OK, potvrđujem plaćanje na serveru...');
     }
-    // Mark as paid
-    await _api.updatePaymentStatus(orderId: order.id, status: 'Paid', receiptEmail: receiptEmail);
-    // Refresh cart (should be empty/none if you move order out of Pending). For now reload state.
+    final String paymentIntentId =
+        (resp['PaymentIntentId'] ?? resp['paymentIntentId'] ?? '').toString();
+    if (paymentIntentId.isEmpty) {
+      throw Exception('API nije vratio PaymentIntentId.');
+    }
+    final Map<String, dynamic> confirmResult = await _api.confirmPaymentIntent(
+      paymentIntentId: paymentIntentId,
+      orderId: order.id,
+    );
+    if (confirmResult['paid'] != true) {
+      throw Exception('Plaćanje nije potvrđeno na serveru.');
+    }
     await refresh();
     return <String, String>{
       'clientSecret': clientSecret,

@@ -117,7 +117,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     ProductId = oi.BagID ?? oi.BeltID ?? 0,
                     ProductName = oi.Bag != null ? (oi.Bag.BagName ?? "") : (oi.Belt != null ? oi.Belt.BeltName ?? "" : ""),
                     Quantity = oi.Quantity ?? 0,
-                    LineRevenue = (decimal)(oi.Price ?? 0f) * (decimal)(oi.Quantity ?? 0)
+                    LineRevenue = (oi.Price ?? 0m) * (oi.Quantity ?? 0)
                 })
                 .GroupBy(x => new { x.ProductType, x.ProductId, x.ProductName })
                 .Select(g => new TopProductVM

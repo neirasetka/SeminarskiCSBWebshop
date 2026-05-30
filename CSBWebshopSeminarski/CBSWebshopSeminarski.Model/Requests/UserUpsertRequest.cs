@@ -16,7 +16,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = null!;
         
-        /// <summary>Optional. No format validation to avoid blocking registration when empty or informal input.</summary>
+        [RegularExpression(@"^[\+]?[\d\s\-\(\)]{6,20}$", ErrorMessage = "Please enter a valid phone number.")]
         public string Phone { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Username is required.")]

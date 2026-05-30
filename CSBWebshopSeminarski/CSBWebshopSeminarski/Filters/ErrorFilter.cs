@@ -1,10 +1,7 @@
-using System.Collections.Generic;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CSBWebshopSeminarski.Exceptions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Hosting;
-using System.Net;
 
 namespace CSBWebshopSeminarski.Filters
 {
@@ -12,38 +9,23 @@ namespace CSBWebshopSeminarski.Filters
     {
         public override void OnException(ExceptionContext context)
         {
-            var env = context.HttpContext.RequestServices.GetService<IWebHostEnvironment>();
-            var isDev = env?.IsDevelopment() ?? false;
-            string message;
+            var (statusCode, message) = context.Exception switch
+            {
+                NotFoundException ex => (StatusCodes.Status404NotFound, ex.Message),
+                ValidationException ex => (StatusCodes.Status400BadRequest, ex.Message),
+                ForbiddenException ex => (StatusCodes.Status403Forbidden, ex.Message),
+                ConflictException ex => (StatusCodes.Status409Conflict, ex.Message),
+                BusinessException ex => (StatusCodes.Status400BadRequest, ex.Message),
+                KeyNotFoundException ex => (StatusCodes.Status404NotFound, ex.Message),
+                UnauthorizedAccessException ex => (StatusCodes.Status403Forbidden, ex.Message),
+                UserException ex => (StatusCodes.Status400BadRequest, ex.Message),
+                InvalidOperationException ex => (StatusCodes.Status409Conflict, ex.Message),
+                ArgumentException ex => (StatusCodes.Status400BadRequest, ex.Message),
+                _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
+            };
 
-            if (context.Exception is KeyNotFoundException)
-            {
-                message = context.Exception.Message;
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
-            }
-            else if (context.Exception is UnauthorizedAccessException)
-            {
-                message = string.IsNullOrWhiteSpace(context.Exception.Message)
-                    ? "Pristup odbijen."
-                    : context.Exception.Message;
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-            }
-            else if (context.Exception is UserException || context.Exception is InvalidOperationException)
-            {
-                message = context.Exception.Message;
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            }
-            else
-            {
-                message = isDev
-                    ? $"{context.Exception.GetType().Name}: {context.Exception.Message}"
-                    : "Error on the server";
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
-
-            // Return simple object instead of ModelState to avoid rawValue/attemptedValue noise
-            var result = new Dictionary<string, string> { ["error"] = message };
-            context.Result = new JsonResult(result);
+            context.Result = new ObjectResult(new { error = message }) { StatusCode = statusCode };
+            context.ExceptionHandled = true;
         }
     }
 }

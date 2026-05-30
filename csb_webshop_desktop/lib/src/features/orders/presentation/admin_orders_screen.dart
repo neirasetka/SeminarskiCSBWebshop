@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../utils/date_formatter.dart';
+import '../../../widgets/status_badge.dart';
 import '../application/admin_orders_provider.dart';
 import '../domain/order_models.dart';
 
@@ -56,10 +58,15 @@ class AdminOrdersScreen extends ConsumerWidget {
                   : 'Korisnik #${o.userId}';
               return ListTile(
                 title: Text(o.orderNumber),
-                subtitle: Text(
-                  '$buyer · ${o.date.toLocal()} · plaćanje: ${o.paymentStatus ?? '—'} · isporuka: ${o.shippingStatus ?? '—'}',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                subtitle: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  children: <Widget>[
+                    Text('$buyer · ${DateFormatter.formatDateTime(o.date)} ·'),
+                    if (o.paymentStatus != null) StatusBadge(status: o.paymentStatus!) else const Text('—'),
+                    const Text('·'),
+                    if (o.shippingStatus != null) StatusBadge(status: o.shippingStatus!) else const Text('—'),
+                  ],
                 ),
                 trailing: Text('${o.amount.toStringAsFixed(2)} KM'),
                 onTap: () => context.push('/admin/narudzbe/${o.id}'),

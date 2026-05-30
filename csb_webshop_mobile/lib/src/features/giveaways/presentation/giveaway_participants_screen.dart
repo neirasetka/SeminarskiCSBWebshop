@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/date_formatter.dart';
 import '../application/giveaways_provider.dart';
 import '../domain/participant.dart';
 
@@ -105,7 +106,7 @@ class _GiveawayParticipantsScreenState extends ConsumerState<GiveawayParticipant
                       ),
                       subtitle: Text(p.emailOrMasked),
                       trailing: Text(
-                        _formatDate(p.entryDate),
+                        DateFormatter.formatDate(p.entryDate),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     );
@@ -133,8 +134,4 @@ class _GiveawayParticipantsScreenState extends ConsumerState<GiveawayParticipant
     );
   }
 
-  static String _formatDate(DateTime date) {
-    final DateTime local = date.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}.${local.month.toString().padLeft(2, '0')}.${local.year}.';
-  }
 }

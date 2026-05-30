@@ -13,7 +13,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int OrderID { get; set; }
         public string OrderNumber { get; set; } = null!;
         public DateTime Date { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public int UserID { get; set; }
         public Users User { get; set; } = null!;
         public ICollection<OrderItems> OrderItems { get; set; } = null!;
@@ -25,6 +25,12 @@ namespace CSBWebshopSeminarski.Core.Entities
         /// Set when a payment confirmation email was sent successfully (idempotency for webhook + client PATCH).
         /// </summary>
         public bool PaymentConfirmationEmailSent { get; set; }
+
+        /// <summary>Last Stripe PaymentIntent created for this order (used to block duplicate active payments).</summary>
+        public string? StripePaymentIntentId { get; set; }
+
+        /// <summary>Last Stripe Checkout Session created for this order (used to block duplicate active payments).</summary>
+        public string? StripeCheckoutSessionId { get; set; }
  
         // Shipping/tracking
         public string? TrackingNumber { get; set; }

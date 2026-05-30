@@ -5,7 +5,7 @@ namespace CBSWebshopSeminarski.Model.Models
         public int BagID { get; set; }
         public string BagName { get; set; } = "Name";
         public string Code { get; set; } = "Code";
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string Description { get; set; } = "Description";
         public byte[] Image { get; set; } = null!;
         public int BagTypeID { get; set; }

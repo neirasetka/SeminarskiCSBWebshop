@@ -41,10 +41,8 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
     final ProfileApi profileApi = ref.read(profileApiProvider);
 
     try {
-      final int userId = (await profileApi.getMe()).id;
       const double priceBAM = 120.0;
       final Map<String, dynamic> created = await ordersApi.createOrder(
-        userId: userId,
         orderNumber: 'DEMO-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
         price: priceBAM,
@@ -62,8 +60,6 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
       } else {
         final Map<String, dynamic> paymentIntent = await ordersApi.createPaymentIntent(
           orderId: order.id,
-          amountInCents: (priceBAM * 100).round(),
-          currency: 'eur',
         );
         final String clientSecret =
             (paymentIntent['ClientSecret'] ?? paymentIntent['clientSecret'] ?? '').toString();
@@ -75,7 +71,18 @@ class _CheckoutDemoScreenState extends ConsumerState<CheckoutDemoScreen> {
           ),
         );
         await Stripe.instance.presentPaymentSheet();
-        await ordersApi.updatePaymentStatus(orderId: order.id, status: 'Paid');
+        final String paymentIntentId =
+            (paymentIntent['PaymentIntentId'] ?? paymentIntent['paymentIntentId'] ?? '').toString();
+        if (paymentIntentId.isEmpty) {
+          throw Exception('API nije vratio PaymentIntentId.');
+        }
+        final Map<String, dynamic> confirmResult = await ordersApi.confirmPaymentIntent(
+          paymentIntentId: paymentIntentId,
+          orderId: order.id,
+        );
+        if (confirmResult['paid'] != true) {
+          throw Exception('Plaćanje nije potvrđeno na serveru.');
+        }
       }
 
       if (mounted) {

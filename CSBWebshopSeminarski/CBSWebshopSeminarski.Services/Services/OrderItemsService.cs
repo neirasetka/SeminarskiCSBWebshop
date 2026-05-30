@@ -139,18 +139,29 @@ namespace CBSWebshopSeminarski.Services.Services
 
         private async Task RecalculateOrderTotal(int orderId)
         {
-            var order = await _context.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderID == orderId);
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderID == orderId);
+
             if (order == null) return;
+
             decimal total = 0m;
+
             foreach (var item in order.OrderItems)
             {
-                var price = (decimal)(item.Price ?? 0f);
+                var price = item.Price ?? 0m;
                 var qty = item.Quantity ?? 1;
+
                 var line = price * qty;
-                if (item.Discount.HasValue) line -= item.Discount.Value;
+
+                if (item.Discount.HasValue)
+                    line -= item.Discount.Value;
+
                 total += line;
             }
-            order.Price = (float)total;
+
+            order.Price = total;
+
             await _context.SaveChangesAsync();
         }
     }

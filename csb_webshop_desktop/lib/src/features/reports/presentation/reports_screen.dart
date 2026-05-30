@@ -6,6 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 
 import '../application/bag_stock_provider.dart';
 import '../application/belt_stock_provider.dart';
@@ -43,68 +44,13 @@ class ReportsScreen extends ConsumerStatefulWidget {
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   ReportPdfExportKind _selectedExport = ReportPdfExportKind.bagStock;
   bool _exportingPdf = false;
+  bool _printingPdf = false;
 
   Future<void> _exportToPdf() async {
     if (_exportingPdf) return;
     setState(() => _exportingPdf = true);
     try {
-      late final String title;
-      late final List<String> headers;
-      late final List<List<String>> rows;
-
-      switch (_selectedExport) {
-        case ReportPdfExportKind.bagStock:
-          final List<BagStockEntry> list = await ref.read(bagStockProvider.future);
-          if (list.isEmpty) {
-            _showSnack('Nema podataka za dostupnost torbi.');
-            return;
-          }
-          title = _selectedExport.label;
-          headers = <String>['Naziv', 'Količina na stanju'];
-          rows = list.map((BagStockEntry e) => <String>[e.label, e.count.toString()]).toList();
-        case ReportPdfExportKind.topBags:
-          final List<TopSellingBagEntry> list = await ref.read(topSellingBagsWithQuantitiesProvider.future);
-          if (list.isEmpty) {
-            _showSnack('Nema podataka o prodaji torbi.');
-            return;
-          }
-          title = _selectedExport.label;
-          headers = <String>['Torba', 'Prodano kom.'];
-          rows = list.map((TopSellingBagEntry e) => <String>[e.bagName, e.quantitySold.toString()]).toList();
-        case ReportPdfExportKind.beltStock:
-          final List<BeltStockEntry> list = await ref.read(beltStockProvider.future);
-          if (list.isEmpty) {
-            _showSnack('Nema podataka za dostupnost kaiseva.');
-            return;
-          }
-          title = _selectedExport.label;
-          headers = <String>['Naziv', 'Količina na stanju'];
-          rows = list.map((BeltStockEntry e) => <String>[e.label, e.count.toString()]).toList();
-        case ReportPdfExportKind.topBelts:
-          final List<TopSellingBeltEntry> list = await ref.read(topSellingBeltsWithQuantitiesProvider.future);
-          if (list.isEmpty) {
-            _showSnack('Nema podataka o prodaji kaiseva.');
-            return;
-          }
-          title = _selectedExport.label;
-          headers = <String>['Kaiš', 'Prodano kom.'];
-          rows = list.map((TopSellingBeltEntry e) => <String>[e.beltName, e.quantitySold.toString()]).toList();
-        case ReportPdfExportKind.orderStatus:
-          final List<OrderStatusCountEntry> list = await ref.read(orderStatusCountsProvider.future);
-          if (list.isEmpty) {
-            _showSnack('Nema podataka o statusu narudžbi.');
-            return;
-          }
-          title = _selectedExport.label;
-          headers = <String>['Status', 'Broj narudžbi'];
-          rows = list.map((OrderStatusCountEntry e) => <String>[e.statusName, e.count.toString()]).toList();
-      }
-
-      final Uint8List bytes = await ReportsPdfExporter.buildTableReport(
-        title: title,
-        columnHeaders: headers,
-        bodyRows: rows,
-      );
+      final Uint8List bytes = await _generateSelectedReportBytes();
 
       if (!mounted) return;
       final String? path = await FilePicker.platform.saveFile(
@@ -125,6 +71,67 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       }
     } finally {
       if (mounted) setState(() => _exportingPdf = false);
+    }
+  }
+
+  Future<Uint8List> _generateSelectedReportBytes() async {
+    late final String title;
+    late final List<String> headers;
+    late final List<List<String>> rows;
+
+    switch (_selectedExport) {
+      case ReportPdfExportKind.bagStock:
+        final List<BagStockEntry> list = await ref.read(bagStockProvider.future);
+        if (list.isEmpty) throw Exception('Nema podataka za dostupnost torbi.');
+        title = _selectedExport.label;
+        headers = <String>['Naziv', 'Količina na stanju'];
+        rows = list.map((BagStockEntry e) => <String>[e.label, e.count.toString()]).toList();
+      case ReportPdfExportKind.topBags:
+        final List<TopSellingBagEntry> list = await ref.read(topSellingBagsWithQuantitiesProvider.future);
+        if (list.isEmpty) throw Exception('Nema podataka o prodaji torbi.');
+        title = _selectedExport.label;
+        headers = <String>['Torba', 'Prodano kom.'];
+        rows = list.map((TopSellingBagEntry e) => <String>[e.bagName, e.quantitySold.toString()]).toList();
+      case ReportPdfExportKind.beltStock:
+        final List<BeltStockEntry> list = await ref.read(beltStockProvider.future);
+        if (list.isEmpty) throw Exception('Nema podataka za dostupnost kaiseva.');
+        title = _selectedExport.label;
+        headers = <String>['Naziv', 'Količina na stanju'];
+        rows = list.map((BeltStockEntry e) => <String>[e.label, e.count.toString()]).toList();
+      case ReportPdfExportKind.topBelts:
+        final List<TopSellingBeltEntry> list = await ref.read(topSellingBeltsWithQuantitiesProvider.future);
+        if (list.isEmpty) throw Exception('Nema podataka o prodaji kaiseva.');
+        title = _selectedExport.label;
+        headers = <String>['Kaiš', 'Prodano kom.'];
+        rows = list.map((TopSellingBeltEntry e) => <String>[e.beltName, e.quantitySold.toString()]).toList();
+      case ReportPdfExportKind.orderStatus:
+        final List<OrderStatusCountEntry> list = await ref.read(orderStatusCountsProvider.future);
+        if (list.isEmpty) throw Exception('Nema podataka o statusu narudžbi.');
+        title = _selectedExport.label;
+        headers = <String>['Status', 'Broj narudžbi'];
+        rows = list.map((OrderStatusCountEntry e) => <String>[e.statusName, e.count.toString()]).toList();
+    }
+
+    return ReportsPdfExporter.buildTableReport(
+      title: title,
+      columnHeaders: headers,
+      bodyRows: rows,
+    );
+  }
+
+  Future<void> _printPdf() async {
+    if (_printingPdf) return;
+    setState(() => _printingPdf = true);
+    try {
+      final Uint8List bytes = await _generateSelectedReportBytes();
+      if (!mounted) return;
+      await Printing.layoutPdf(onLayout: (_) async => bytes);
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Greška pri ispisu: $e', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _printingPdf = false);
     }
   }
 
@@ -152,10 +159,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           _PdfExportToolbar(
             selected: _selectedExport,
             exporting: _exportingPdf,
+            printing: _printingPdf,
             onKindChanged: (ReportPdfExportKind? v) {
               if (v != null) setState(() => _selectedExport = v);
             },
             onExportPdf: _exportToPdf,
+            onPrintPdf: _printPdf,
           ),
           const SizedBox(height: 8),
           const _SectionTitle('Dostupnost torbi'),
@@ -182,14 +191,18 @@ class _PdfExportToolbar extends StatelessWidget {
   const _PdfExportToolbar({
     required this.selected,
     required this.exporting,
+    required this.printing,
     required this.onKindChanged,
     required this.onExportPdf,
+    required this.onPrintPdf,
   });
 
   final ReportPdfExportKind selected;
   final bool exporting;
+  final bool printing;
   final ValueChanged<ReportPdfExportKind?> onKindChanged;
   final VoidCallback onExportPdf;
+  final VoidCallback onPrintPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +251,18 @@ class _PdfExportToolbar extends StatelessWidget {
                     )
                   : const Icon(Icons.picture_as_pdf_outlined),
               label: const Text('Spremi PDF'),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: printing ? null : onPrintPdf,
+              icon: printing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.print),
+              label: const Text('Ispis'),
             ),
           ],
         ),

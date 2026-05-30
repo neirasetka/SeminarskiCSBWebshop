@@ -105,27 +105,23 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<bool> Delete(int ID)
         {
-            var orders = await _context.Orders.Where(c => c.OrderID == ID).FirstOrDefaultAsync();
+            var order = await _context.Orders.Where(c => c.OrderID == ID).FirstOrDefaultAsync();
 
-            if (orders != null)
-            {
-                await _context.SaveChangesAsync();
+            if (order == null) return false;
 
-                _context.Orders.Remove(orders);
-                await _context.SaveChangesAsync();
-
-                return true;
-            }
-            return false;
+            order.ShippingStatus = ShippingStatusEntity.Cancelled;
+            order.LastStatusUpdate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public Order GetByOrderNumber(string orderNumber)
         {
-            var entity = _context.Orders.Where(n => n.OrderNumber.Contains(orderNumber)).FirstOrDefault();
+            var entity = _context.Orders.Where(n => n.OrderNumber == orderNumber).FirstOrDefault();
 
             if (entity == null)
             {
-                throw new Exception("Order not found");
+                throw new KeyNotFoundException("Order not found");
             }
             return _mapper.Map<Order>(entity);
         }
@@ -162,6 +158,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
             if (order == null) return false;
+            StateMachines.OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, status);
             order.PaymentStatus = status;
             await _context.SaveChangesAsync();
             if (status == PaymentStatus.Paid)
@@ -179,9 +176,10 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.OrderID == order.OrderID);
             if (entity == null) return false;
-            _context.OrderItems.RemoveRange(entity.OrderItems);
-            await _context.SaveChangesAsync();
-            _context.Orders.Remove(entity);
+
+            entity.ShippingStatus = ShippingStatusEntity.Cancelled;
+            entity.PaymentStatus = PaymentStatus.Failed;
+            entity.LastStatusUpdate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }

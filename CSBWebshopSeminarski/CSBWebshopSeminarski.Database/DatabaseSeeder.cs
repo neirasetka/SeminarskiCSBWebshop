@@ -167,7 +167,7 @@ namespace CSBWebshopSeminarski.Database
                 BagTypeID = bagTypeId,
                 Description = "Spacious everyday tote bag.",
                 Code = "BAG-001",
-                Price = 129.99f,
+                Price = 129.99m,
                 Image = TryLoadImageBytes("bag1", logger),
                 UserID = ownerUserId
             };
@@ -191,7 +191,7 @@ namespace CSBWebshopSeminarski.Database
                 BeltTypeID = beltTypeId ?? 0,
                 Description = "Genuine leather belt with metal buckle.",
                 Code = "BELT-001",
-                Price = 49.99f,
+                Price = 49.99m,
                 Image = TryLoadImageBytes("belt1", logger),
                 UserID = ownerUserId
             };

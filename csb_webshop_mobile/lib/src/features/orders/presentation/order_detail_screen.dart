@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../utils/date_formatter.dart';
+import '../../../widgets/status_badge.dart';
 import '../domain/order_models.dart';
 import 'shipping_status_timeline.dart';
 
@@ -16,9 +19,9 @@ class OrderDetailScreen extends StatelessWidget {
         children: <Widget>[
           _sectionHeader('Pregled'),
           _kv('Broj narudžbe', order.orderNumber),
-          _kv('Datum', order.date.toLocal().toString()),
-          _kv('Status plaćanja', order.paymentStatus ?? 'N/A'),
-          _kv('Status isporuke', order.shippingStatus ?? 'N/A'),
+          _kv('Datum', DateFormatter.formatDateTime(order.date)),
+          _kvWidget('Status plaćanja', order.paymentStatus != null ? StatusBadge(status: order.paymentStatus!) : const Text('N/A')),
+          _kvWidget('Status isporuke', order.shippingStatus != null ? StatusBadge(status: order.shippingStatus!) : const Text('N/A')),
           const SizedBox(height: 8),
           const Divider(),
           _sectionHeader('Praćenje dostave'),
@@ -52,6 +55,18 @@ class OrderDetailScreen extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: Text(k, style: const TextStyle(color: Colors.grey)),
       subtitle: Text(v),
+    );
+  }
+
+  Widget _kvWidget(String k, Widget child) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(k, style: const TextStyle(color: Colors.grey)),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Align(alignment: Alignment.centerLeft, child: child),
+      ),
     );
   }
 

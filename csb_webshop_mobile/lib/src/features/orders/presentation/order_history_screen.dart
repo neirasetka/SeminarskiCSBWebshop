@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/date_formatter.dart';
+import '../../../widgets/status_badge.dart';
 import '../application/order_history_provider.dart';
 import '../domain/order_models.dart';
 import 'order_detail_screen.dart';
@@ -23,7 +25,15 @@ class OrderHistoryScreen extends ConsumerWidget {
               final o = orders[index];
               return ListTile(
                 title: Text(o.orderNumber),
-                subtitle: Text('${o.date.toLocal()} · ${o.paymentStatus ?? 'N/A'}'),
+                subtitle: Row(
+                  children: <Widget>[
+                    Text('${DateFormatter.formatDateTime(o.date)} · '),
+                    if (o.paymentStatus != null)
+                      StatusBadge(status: o.paymentStatus!)
+                    else
+                      const Text('N/A'),
+                  ],
+                ),
                 trailing: Text('${o.amount.toStringAsFixed(2)} KM'),
                 onTap: () {
                   Navigator.of(context).push(

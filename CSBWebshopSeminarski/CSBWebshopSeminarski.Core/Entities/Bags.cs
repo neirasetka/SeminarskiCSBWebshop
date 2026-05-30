@@ -17,7 +17,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int? BagTypeID { get; set; }
         public string Description { get; set; } = null!;
         public string Code { get; set; } = null!;
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public byte[] Image { get; set; } = null!;
         public string? StateMachine { get; set; }
         public int? UserID { get; set; }

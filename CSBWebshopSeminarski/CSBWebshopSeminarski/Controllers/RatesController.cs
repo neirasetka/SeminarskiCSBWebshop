@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -19,16 +20,30 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Rate>> Get([FromQuery] RateSearchRequest search)
+        public async Task<ActionResult<List<Rate>>> Get([FromQuery] RateSearchRequest search)
         {
-            return await _service.Get(search);
+            if (search.UserID != 0)
+            {
+                var denied = DenyUnlessCanAccessUserRates(search.UserID);
+                if (denied != null) return denied;
+            }
+            else if (search.BagID == 0 && search.BeltID == 0 && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            return Ok(await _service.Get(search));
         }
 
         [HttpGet("by-user/{userId}")]
-        public async Task<List<Rate>> GetByUser(int userId)
+        [Authorize]
+        public async Task<ActionResult<List<Rate>>> GetByUser(int userId)
         {
+            var denied = DenyUnlessCanAccessUserRates(userId);
+            if (denied != null) return denied;
+
             var search = new RateSearchRequest { UserID = userId };
-            return await _service.Get(search);
+            return Ok(await _service.Get(search));
         }
 
         [HttpGet("{ID}")]
@@ -37,11 +52,45 @@ namespace CSBWebshopSeminarski.Controllers
             return await _service.GetById(ID);
         }
 
+        private int GetCurrentUserId()
+        {
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out var id) ? id : 0;
+        }
+
+        /// <summary>
+        /// User-specific rate lists require auth; non-admins may only access their own UserID.
+        /// </summary>
+        private ActionResult? DenyUnlessCanAccessUserRates(int userId)
+        {
+            if (userId <= 0)
+                return BadRequest();
+
+            if (!(User.Identity?.IsAuthenticated ?? false))
+                return Unauthorized();
+
+            if (!User.IsInRole("Admin"))
+            {
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId != userId)
+                    return Forbid();
+            }
+
+            return null;
+        }
+
         [HttpPost]
         [Authorize]
-        public async Task<Rate> Insert(RateUpsertRequest request)
+        public async Task<ActionResult<Rate>> Insert(RateUpsertRequest request)
         {
-            return await _service.Insert(request);
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId <= 0)
+            {
+                return Unauthorized();
+            }
+
+            request.UserID = currentUserId;
+            return Ok(await _service.Insert(request));
         }
 
         [HttpPut("{ID}")]
@@ -54,6 +103,8 @@ namespace CSBWebshopSeminarski.Controllers
             {
                 return Forbid();
             }
+
+            request.UserID = existing.UserID;
             var updated = await _service.Update(ID, request);
             return Ok(updated);
         }

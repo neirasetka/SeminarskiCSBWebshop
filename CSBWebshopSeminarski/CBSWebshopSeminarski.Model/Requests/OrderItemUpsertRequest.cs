@@ -20,7 +20,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         /// </summary>
         [Required(ErrorMessage = "Price is required.")]
         [Range(0, 100_000_000, ErrorMessage = "Price must be zero or greater.")]
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         
         [Range(0, 100, ErrorMessage = "Discount must be between 0 and 100.")]
         public decimal? Discount { get; set; }

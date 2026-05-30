@@ -18,7 +18,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("GetRecommendedBags")]
-        public Task<List<Bag>> GetRecommendedBags([FromQuery] int? take)
+        public Task<List<RecommendedProductDto>> GetRecommendedBags([FromQuery] int? take)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
@@ -27,7 +27,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("GetRecommendedBelts")]
-        public Task<List<Belt>> GetRecommendedBelts([FromQuery] int? take)
+        public Task<List<RecommendedProductDto>> GetRecommendedBelts([FromQuery] int? take)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userId = int.TryParse(userIdClaim, out var id) ? id : 0;

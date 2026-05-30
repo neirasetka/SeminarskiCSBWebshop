@@ -4,8 +4,7 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class RateUpsertRequest
     {
-        [Required(ErrorMessage = "User ID is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]
+        /// <summary>Set by server from JWT; ignored if sent by client.</summary>
         public int UserID { get; set; }
         
         public int BagID { get; set; }

@@ -57,7 +57,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("{ID}/GetAverage")]
-        public async Task<float> GetAverageRating(int ID)
+        public async Task<decimal> GetAverageRating(int ID)
         {
             return await _service.GetAverage(ID);
         }

@@ -8,7 +8,7 @@ namespace CBSWebshopSeminarski.Model.ViewModels
         public int UserID { get; set; }
         public int OrderID { get; set; }
         public DateTime PurchaseDate { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string UserName { get; set; } = null!;
         public string BagName { get; set; } = null!;
         public string BeltName { get; set; } = null!;

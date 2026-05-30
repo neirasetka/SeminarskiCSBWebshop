@@ -32,6 +32,8 @@ namespace CSBWebshopSeminarski.Database
         public DbSet<NewsItem> News { get; set; }
         public DbSet<OutfitIdeas> OutfitIdeas { get; set; }
         public DbSet<OutfitIdeaImages> OutfitIdeaImages { get; set; }
+        public DbSet<Notifications> Notifications { get; set; }
+        public DbSet<PasswordResetTokens> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -177,6 +179,95 @@ namespace CSBWebshopSeminarski.Database
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // Reviews: nullable BagID/BeltID with check constraint
+            modelBuilder.Entity<Reviews>(entity =>
+            {
+                entity.Property(r => r.BagID).IsRequired(false);
+                entity.Property(r => r.BeltID).IsRequired(false);
+
+                entity.HasOne(r => r.Bag)
+                    .WithMany(b => b.Reviews)
+                    .HasForeignKey(r => r.BagID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Belt)
+                    .WithMany(b => b.Reviews)
+                    .HasForeignKey(r => r.BeltID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.ToTable(t => t.HasCheckConstraint("CK_Reviews_OneProduct",
+                    "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)"));
+            });
+
+            // Rates: nullable BagID/BeltID with check constraint
+            modelBuilder.Entity<Rates>(entity =>
+            {
+                entity.Property(r => r.BagID).IsRequired(false);
+                entity.Property(r => r.BeltID).IsRequired(false);
+
+                entity.HasOne(r => r.Bag)
+                    .WithMany(b => b.Rate)
+                    .HasForeignKey(r => r.BagID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Belt)
+                    .WithMany(b => b.Rates)
+                    .HasForeignKey(r => r.BeltID)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.ToTable(t => t.HasCheckConstraint("CK_Rates_OneProduct",
+                    "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)"));
+            });
+
+            // Favorites: check constraint and unique indexes (Stavka 18)
+            modelBuilder.Entity<Favorites>(entity =>
+            {
+                entity.HasIndex(f => new { f.UserID, f.BagID })
+                    .IsUnique()
+                    .HasFilter("BagID IS NOT NULL")
+                    .HasDatabaseName("IX_Favorites_UserID_BagID");
+
+                entity.HasIndex(f => new { f.UserID, f.BeltID })
+                    .IsUnique()
+                    .HasFilter("BeltID IS NOT NULL")
+                    .HasDatabaseName("IX_Favorites_UserID_BeltID");
+
+                entity.ToTable(t => t.HasCheckConstraint("CK_Favorites_OneProduct",
+                    "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)"));
+            });
+
+            // Users: unique indexes (Stavka 19)
+            modelBuilder.Entity<Users>(entity =>
+            {
+                entity.HasIndex(u => u.UserName).IsUnique().HasDatabaseName("IX_Users_UserName");
+                entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
+            });
+
+            // Orders: unique index on OrderNumber
+            modelBuilder.Entity<Orders>(entity =>
+            {
+                entity.HasIndex(o => o.OrderNumber).IsUnique().HasDatabaseName("IX_Orders_OrderNumber");
+            });
+
+            // Purchases: one purchase per order; unique StripeId
+            modelBuilder.Entity<Purchases>(entity =>
+            {
+                entity.HasIndex(p => p.StripeId).IsUnique().HasDatabaseName("IX_Purchases_StripeId");
+                entity.HasIndex(p => p.OrderID).IsUnique().HasDatabaseName("IX_Purchases_OrderID");
+            });
+
+            // Decimal precision for money fields
+            modelBuilder.Entity<Orders>().Property(o => o.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Bags>().Property(b => b.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Belts>().Property(b => b.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Purchases>().Property(p => p.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Transactions>().Property(t => t.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<OrderItems>().Property(oi => oi.Price).HasColumnType("decimal(18,2)");
         }
     }
 }

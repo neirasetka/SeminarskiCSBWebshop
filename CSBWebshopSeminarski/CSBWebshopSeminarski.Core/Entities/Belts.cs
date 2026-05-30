@@ -17,7 +17,7 @@ namespace CSBWebshopSeminarski.Core.Entities
         public int BeltTypeID { get; set; }
         public string Description { get; set; } = null!;
         public string Code { get; set; } = null!;
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public byte[] Image { get; set; } = null!;
         public int UserID { get; set; }
         public Users User { get; set; } = null!;
