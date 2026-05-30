@@ -292,6 +292,17 @@ namespace CSBWebshopSeminarski.Database
                     .HasForeignKey(n => n.UserID)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<PasswordResetTokens>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Token).HasMaxLength(128).IsRequired();
+                entity.HasIndex(t => t.Token).IsUnique().HasDatabaseName("IX_PasswordResetTokens_Token");
+                entity.HasOne(t => t.User)
+                    .WithMany()
+                    .HasForeignKey(t => t.UserID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

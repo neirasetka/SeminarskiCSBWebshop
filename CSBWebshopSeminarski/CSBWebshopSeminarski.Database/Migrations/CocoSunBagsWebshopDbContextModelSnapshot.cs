@@ -563,6 +563,42 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.ToTable("Participants");
                 });
 
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.PasswordResetTokens", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PasswordResetTokens_Token");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("PasswordResetTokens");
+                });
+
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Purchases", b =>
                 {
                     b.Property<int>("PurchaseID")
@@ -1110,6 +1146,17 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Giveaway");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.PasswordResetTokens", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Purchases", b =>
