@@ -2,7 +2,6 @@ using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
-using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -18,21 +17,21 @@ namespace CSBWebshopSeminarski.Controllers
         private readonly NotificationsService _notificationService;
         private readonly ITemplateRenderer _templateRenderer;
         private readonly AnnouncementAuditService _auditService;
+        private readonly INewsService _newsService;
         private readonly ILogger<AnnouncementsController> _logger;
-        private readonly CocoSunBagsWebshopDbContext _db;
 
         public AnnouncementsController(
             NotificationsService notificationService,
             ITemplateRenderer templateRenderer,
             AnnouncementAuditService auditService,
-            ILogger<AnnouncementsController> logger,
-            CocoSunBagsWebshopDbContext db)
+            INewsService newsService,
+            ILogger<AnnouncementsController> logger)
         {
             _notificationService = notificationService;
             _templateRenderer = templateRenderer;
             _auditService = auditService;
+            _newsService = newsService;
             _logger = logger;
-            _db = db;
         }
 
         [HttpPost("giveaway")]
@@ -53,7 +52,7 @@ namespace CSBWebshopSeminarski.Controllers
                 _logger.LogError(ex, "Failed to send giveaway announcement");
             }
 
-            await _auditService.SaveAsync(new CSBWebshopSeminarski.Core.Entities.AnnouncementAudit
+            await _auditService.SaveAsync(new AnnouncementAudit
             {
                 SentAtUtc = DateTime.UtcNow,
                 InitiatedBy = User?.Identity?.Name,
@@ -65,12 +64,10 @@ namespace CSBWebshopSeminarski.Controllers
                 ErrorMessage = error
             });
 
-            await PersistNewsAsync(subject, body, request, AnnouncementSegment.GiveawaySubscribers);
-            return Ok(new
-            {
-                sent,
-                emailWarning = error
-            });
+            await _newsService.CreateFromAnnouncementAsync(
+                subject, body, request, AnnouncementSegment.GiveawaySubscribers, User?.Identity?.Name);
+
+            return Ok(new { sent, emailWarning = error });
         }
 
         [HttpPost("new-collection")]
@@ -94,7 +91,7 @@ namespace CSBWebshopSeminarski.Controllers
                 _logger.LogError(ex, "Failed to send new collection announcement");
             }
 
-            await _auditService.SaveAsync(new CSBWebshopSeminarski.Core.Entities.AnnouncementAudit
+            await _auditService.SaveAsync(new AnnouncementAudit
             {
                 SentAtUtc = DateTime.UtcNow,
                 InitiatedBy = User?.Identity?.Name,
@@ -106,30 +103,10 @@ namespace CSBWebshopSeminarski.Controllers
                 ErrorMessage = error
             });
 
-            await PersistNewsAsync(subject, body, request, AnnouncementSegment.NewCollectionSubscribers);
-            return Ok(new
-            {
-                sent,
-                emailWarning = error
-            });
-        }
+            await _newsService.CreateFromAnnouncementAsync(
+                subject, body, request, AnnouncementSegment.NewCollectionSubscribers, User?.Identity?.Name);
 
-        private async Task PersistNewsAsync(string subject, string body, AnnouncementRequest request, AnnouncementSegment segment)
-        {
-            var item = new NewsItem
-            {
-                PublishedAtUtc = DateTime.UtcNow,
-                Title = subject,
-                Body = body,
-                Segment = segment.ToString(),
-                LaunchDate = request.LaunchDate,
-                ProductName = request.ProductName,
-                Price = request.Price,
-                Color = request.Color,
-                CreatedBy = User?.Identity?.Name
-            };
-            _db.News.Add(item);
-            await _db.SaveChangesAsync();
+            return Ok(new { sent, emailWarning = error });
         }
     }
 }

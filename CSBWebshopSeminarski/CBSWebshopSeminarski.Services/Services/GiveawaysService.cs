@@ -1,3 +1,5 @@
+using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Core.Exceptions;
 using CSBWebshopSeminarski.Database;
@@ -7,17 +9,7 @@ using System.Security.Cryptography;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
-    public class AnnounceWinnerResult
-    {
-        public bool Success { get; set; }
-        public string? WinnerName { get; set; }
-        public string? WinnerEmail { get; set; }
-        public int SubscribersNotified { get; set; }
-        public int? NewsItemId { get; set; }
-        public string? ErrorMessage { get; set; }
-    }
-
-    public class GiveawaysService
+    public class GiveawaysService : IGiveawaysService
     {
         private readonly CocoSunBagsWebshopDbContext _context;
         private readonly RabbitMqMailPublisher _mailPublisher;
@@ -27,6 +19,79 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mailPublisher = mailPublisher;
         }
+
+        public Task<IReadOnlyList<GiveawayDto>> GetAllAsync(string? status)
+        {
+            var now = DateTime.UtcNow;
+            var query = _context.Giveaways.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                switch (status.Trim().ToLowerInvariant())
+                {
+                    case "active":
+                        query = query.Where(g => !g.IsClosed && g.StartDate <= now && g.EndDate >= now);
+                        break;
+                    case "closed":
+                        query = query.Where(g => g.IsClosed || g.EndDate < now);
+                        break;
+                    case "all":
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid status. Use one of: active, closed, all");
+                }
+            }
+
+            var dto = query
+                .OrderByDescending(g => g.StartDate)
+                .Select(g => new GiveawayDto
+                {
+                    Id = g.Id,
+                    Title = g.Title,
+                    StartDate = g.StartDate,
+                    EndDate = g.EndDate,
+                    IsClosed = g.IsClosed,
+                    WinnerParticipantId = g.WinnerParticipantId
+                })
+                .ToList();
+
+            return Task.FromResult<IReadOnlyList<GiveawayDto>>(dto);
+        }
+
+        public async Task<GiveawayDto?> GetByIdAsync(int id)
+        {
+            var giveaway = await _context.Giveaways.FindAsync(id);
+            if (giveaway == null)
+                return null;
+
+            return MapToDto(giveaway);
+        }
+
+        public async Task<IReadOnlyList<ParticipantDto>> GetParticipantsAsync(int giveawayId)
+        {
+            return await _context.Participants
+                .Where(p => p.GiveawayId == giveawayId)
+                .Select(p => new ParticipantDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Email = p.Email,
+                    EntryDate = p.EntryDate,
+                    GiveawayId = p.GiveawayId
+                })
+                .ToListAsync();
+        }
+
+        private static GiveawayDto MapToDto(Giveaways g) =>
+            new()
+            {
+                Id = g.Id,
+                Title = g.Title,
+                StartDate = g.StartDate,
+                EndDate = g.EndDate,
+                IsClosed = g.IsClosed,
+                WinnerParticipantId = g.WinnerParticipantId
+            };
 
         public async Task<Giveaways> CreateGiveawayAsync(string title, DateTime startDate, DateTime endDate)
         {
@@ -166,6 +231,21 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             return Task.CompletedTask;
+        }
+
+        public async Task<Participants> NotifyWinnerForGiveawayAsync(int giveawayId)
+        {
+            var giveaway = await _context.Giveaways.FindAsync(giveawayId)
+                ?? throw new KeyNotFoundException("Winner not found for this giveaway");
+
+            if (!giveaway.WinnerParticipantId.HasValue)
+                throw new KeyNotFoundException("Winner not found for this giveaway");
+
+            var winner = await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value)
+                ?? throw new KeyNotFoundException("Winner not found");
+
+            await NotifyWinnerAsync(winner);
+            return winner;
         }
 
         public async Task<Participants?> DrawAndPersistWinnerAsync(int giveawayId)

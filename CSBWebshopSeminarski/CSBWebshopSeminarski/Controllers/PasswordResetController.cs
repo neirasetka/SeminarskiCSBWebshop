@@ -1,10 +1,6 @@
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Services.Services;
-using CSBWebshopSeminarski.Core.Entities;
-using CSBWebshopSeminarski.Database;
+using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -12,79 +8,36 @@ namespace CSBWebshopSeminarski.Controllers
     [ApiController]
     public class PasswordResetController : ControllerBase
     {
-        private readonly CocoSunBagsWebshopDbContext _db;
-        private readonly RabbitMqMailPublisher _mailPublisher;
+        private readonly IPasswordResetService _passwordResetService;
 
-        public PasswordResetController(CocoSunBagsWebshopDbContext db, RabbitMqMailPublisher mailPublisher)
+        public PasswordResetController(IPasswordResetService passwordResetService)
         {
-            _db = db;
-            _mailPublisher = mailPublisher;
+            _passwordResetService = passwordResetService;
         }
 
         [HttpPost("request")]
         public async Task<ActionResult> RequestReset([FromBody] RequestPasswordResetRequest request)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null)
-            {
-                return Ok(new { message = "Ako email postoji, link za reset je poslan." });
-            }
-
-            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-            var entity = new PasswordResetTokens
-            {
-                UserID = user.UserID,
-                Token = token,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(30),
-                Used = false
-            };
-            _db.PasswordResetTokens.Add(entity);
-            await _db.SaveChangesAsync();
-
-            try
-            {
-                _mailPublisher.Publish(
-                    sender: "no-reply@cocosunbags.local",
-                    recipient: user.Email,
-                    subject: "Reset lozinke - CocoSunBags",
-                    content: $"Poštovani/a {user.Name},\n\n" +
-                             $"Vaš kod za reset lozinke je: {token}\n\n" +
-                             "Kod vrijedi 30 minuta.\n\n" +
-                             "Ako niste zatražili reset, ignorirajte ovu poruku.\n\n" +
-                             "CocoSunBags tim");
-            }
-            catch
-            {
-            }
-
+            await _passwordResetService.RequestResetAsync(request);
             return Ok(new { message = "Ako email postoji, link za reset je poslan." });
         }
 
         [HttpPost("reset")]
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            if (request.NewPassword != request.ConfirmPassword)
+            try
             {
-                return BadRequest("Lozinke se ne podudaraju.");
+                await _passwordResetService.ResetPasswordAsync(request);
+                return Ok(new { message = "Lozinka je uspješno promijenjena." });
             }
-
-            var tokenEntity = await _db.PasswordResetTokens
-                .Include(t => t.User)
-                .FirstOrDefaultAsync(t => t.Token == request.Token && !t.Used && t.ExpiresAt > DateTime.UtcNow);
-
-            if (tokenEntity == null)
+            catch (ArgumentException ex)
             {
-                return BadRequest("Token je nevažeći ili je istekao.");
+                return BadRequest(ex.Message);
             }
-
-            var user = tokenEntity.User;
-            user.PasswordSalt = UsersService.GenerateSalt();
-            user.PasswordHash = UsersService.GenerateHash(user.PasswordSalt, request.NewPassword);
-
-            tokenEntity.Used = true;
-            await _db.SaveChangesAsync();
-
-            return Ok(new { message = "Lozinka je uspješno promijenjena." });
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

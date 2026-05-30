@@ -112,7 +112,9 @@ builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, Or
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
-builder.Services.AddTransient<GiveawaysService>();
+builder.Services.AddTransient<IGiveawaysService, GiveawaysService>();
+builder.Services.AddTransient<INewsService, NewsService>();
+builder.Services.AddTransient<INewsletterService, NewsletterService>();
 builder.Services.AddTransient<NotificationsService>();
 builder.Services.AddTransient<IInAppNotificationService, InAppNotificationService>();
 builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.ITemplateRenderer, CBSWebshopSeminarski.Services.Services.TemplateRenderer>();
@@ -123,7 +125,8 @@ builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddHostedService<ShippingStatusRefreshWorker>();
 
 // Payments
-builder.Services.AddTransient<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService, CBSWebshopSeminarski.Services.Services.PaymentsService>();
+builder.Services.AddTransient<IPaymentsService, PaymentsService>();
+builder.Services.AddTransient<IStripeWebhookService, StripeWebhookService>();
 
 // Email service registration
 builder.Services.AddSingleton(provider =>
@@ -135,6 +138,7 @@ builder.Services.AddSingleton(provider =>
     )
 );
 
+builder.Services.AddTransient<IPasswordResetService, PasswordResetService>();
 builder.Services.AddTransient<ILookbookService, LookbookService>();
 builder.Services.AddTransient<IOutfitIdeasService, OutfitIdeasService>();
 
@@ -192,71 +196,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-
-var stripeWebhookSecret = builder.Configuration["Stripe:WebhookSecret"] ?? string.Empty;
-app.MapPost("/api/webhooks/stripe", async (HttpRequest request, IServiceProvider sp, ILoggerFactory loggerFactory) =>
-{
-    var logger = loggerFactory.CreateLogger("StripeWebhook");
-    var json = await new StreamReader(request.Body).ReadToEndAsync();
-    try
-    {
-        var signatureHeader = request.Headers["Stripe-Signature"].ToString();
-        var stripeEvent = EventUtility.ConstructEvent(json, signatureHeader, stripeWebhookSecret);
-
-        if (stripeEvent.Type == "payment_intent.succeeded")
-        {
-            var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
-            var meta = paymentIntent.Metadata != null
-                ? new Dictionary<string, string>(paymentIntent.Metadata)
-                : new Dictionary<string, string>();
-            if (!meta.TryGetValue("receipt_email", out var re) || string.IsNullOrWhiteSpace(re))
-            {
-                if (!string.IsNullOrWhiteSpace(paymentIntent.ReceiptEmail))
-                {
-                    meta["receipt_email"] = paymentIntent.ReceiptEmail;
-                }
-            }
-            var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-            await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, meta);
-        }
-        else if (stripeEvent.Type == "checkout.session.completed")
-        {
-            var session = (Stripe.Checkout.Session)stripeEvent.Data.Object;
-            if (!string.IsNullOrEmpty(session.PaymentIntentId))
-            {
-                var paymentIntentService = new PaymentIntentService();
-                var paymentIntent = await paymentIntentService.GetAsync(session.PaymentIntentId);
-                var meta = paymentIntent.Metadata != null
-                    ? new Dictionary<string, string>(paymentIntent.Metadata)
-                    : new Dictionary<string, string>();
-                if (!meta.TryGetValue("receipt_email", out var re) || string.IsNullOrWhiteSpace(re))
-                {
-                    var fromSession = !string.IsNullOrWhiteSpace(session.CustomerEmail)
-                        ? session.CustomerEmail
-                        : session.CustomerDetails?.Email;
-                    if (!string.IsNullOrWhiteSpace(fromSession))
-                    {
-                        meta["receipt_email"] = fromSession;
-                    }
-                }
-                var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-                await paymentsService.HandlePaymentSucceededAsync(paymentIntent.Id, meta);
-            }
-        }
-        else if (stripeEvent.Type == "payment_intent.payment_failed")
-        {
-            var paymentIntent = (PaymentIntent)stripeEvent.Data.Object;
-            var paymentsService = sp.GetRequiredService<CBSWebshopSeminarski.Services.Interfaces.IPaymentsService>();
-            await paymentsService.HandlePaymentFailedAsync(paymentIntent.Id, paymentIntent.Metadata, paymentIntent.LastPaymentError?.Message ?? string.Empty);
-        }
-        return Results.Ok();
-    }
-    catch (StripeException e)
-    {
-        logger.LogError(e, "Stripe webhook error: {Message}", e.Message);
-        return Results.BadRequest();
-    }
-});
 
 app.MapGet("/checkout-success", () => Results.Content(
     """

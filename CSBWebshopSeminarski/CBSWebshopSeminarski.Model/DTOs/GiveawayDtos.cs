@@ -27,4 +27,14 @@ namespace CBSWebshopSeminarski.Model.DTOs
         public DateTime EntryDate { get; set; }
         public int GiveawayId { get; set; }
     }
+
+    public class AnnounceWinnerResult
+    {
+        public bool Success { get; set; }
+        public string? WinnerName { get; set; }
+        public string? WinnerEmail { get; set; }
+        public int SubscribersNotified { get; set; }
+        public int? NewsItemId { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
 }

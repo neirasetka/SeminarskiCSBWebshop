@@ -1,10 +1,7 @@
-using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Models;
-using CBSWebshopSeminarski.Model.Requests;
-using CSBWebshopSeminarski.Database;
+using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
@@ -14,11 +11,11 @@ namespace CSBWebshopSeminarski.Controllers
     [Authorize]
     public class NotificationsController : ControllerBase
     {
-        private readonly CocoSunBagsWebshopDbContext _db;
+        private readonly IInAppNotificationService _notificationService;
 
-        public NotificationsController(CocoSunBagsWebshopDbContext db)
+        public NotificationsController(IInAppNotificationService notificationService)
         {
-            _db = db;
+            _notificationService = notificationService;
         }
 
         private int GetCurrentUserId()
@@ -31,61 +28,33 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult<PagedResult<Notification>>> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0)
+                return Unauthorized();
 
-            var (normalizedPage, normalizedPageSize) = PaginationHelper.Normalize(new PagedSearchRequest
-            {
-                Page = page,
-                PageSize = pageSize
-            });
-
-            var query = _db.Notifications.Where(n => n.UserID == userId).OrderByDescending(n => n.CreatedAt);
-            var totalCount = await query.CountAsync();
-            var notifications = await query
-                .Skip((normalizedPage - 1) * normalizedPageSize)
-                .Take(normalizedPageSize)
-                .Select(n => new Notification
-                {
-                    NotificationID = n.NotificationID,
-                    UserID = n.UserID,
-                    Type = n.Type,
-                    Title = n.Title,
-                    Message = n.Message,
-                    RelatedEntityID = n.RelatedEntityID,
-                    IsRead = n.IsRead,
-                    CreatedAt = n.CreatedAt
-                })
-                .ToListAsync();
-
-            return Ok(new PagedResult<Notification>
-            {
-                Items = notifications,
-                TotalCount = totalCount,
-                Page = normalizedPage,
-                PageSize = normalizedPageSize
-            });
+            return Ok(await _notificationService.GetForUserAsync(userId, page, pageSize));
         }
 
         [HttpGet("unread-count")]
         public async Task<ActionResult<int>> GetUnreadCount()
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
-            var count = await _db.Notifications.CountAsync(n => n.UserID == userId && !n.IsRead);
-            return Ok(count);
+            if (userId == 0)
+                return Unauthorized();
+
+            return Ok(await _notificationService.GetUnreadCountAsync(userId));
         }
 
         [HttpPatch("{id:int}/read")]
         public async Task<ActionResult> MarkAsRead(int id)
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0)
+                return Unauthorized();
 
-            var notification = await _db.Notifications.FirstOrDefaultAsync(n => n.NotificationID == id && n.UserID == userId);
-            if (notification == null) return NotFound();
+            var updated = await _notificationService.MarkAsReadAsync(userId, id);
+            if (!updated)
+                return NotFound();
 
-            notification.IsRead = true;
-            await _db.SaveChangesAsync();
             return NoContent();
         }
 
@@ -93,16 +62,10 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult> MarkAllAsRead()
         {
             var userId = GetCurrentUserId();
-            if (userId == 0) return Unauthorized();
+            if (userId == 0)
+                return Unauthorized();
 
-            var unread = await _db.Notifications
-                .Where(n => n.UserID == userId && !n.IsRead)
-                .ToListAsync();
-
-            foreach (var n in unread)
-                n.IsRead = true;
-
-            await _db.SaveChangesAsync();
+            await _notificationService.MarkAllAsReadAsync(userId);
             return NoContent();
         }
     }

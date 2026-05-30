@@ -1,7 +1,7 @@
 using CBSWebshopSeminarski.Model.DTOs;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
-using CBSWebshopSeminarski.Services.Services;
+using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,55 +12,27 @@ namespace CSBWebshopSeminarski.Controllers
     [ApiController]
     public class GiveawaysController : ControllerBase
     {
-        private readonly GiveawaysService _giveawaysService;
-        private readonly CSBWebshopSeminarski.Database.CocoSunBagsWebshopDbContext _context;
+        private readonly IGiveawaysService _giveawaysService;
         private readonly ILogger<GiveawaysController> _logger;
 
-        public GiveawaysController(GiveawaysService giveawaysService, CSBWebshopSeminarski.Database.CocoSunBagsWebshopDbContext context, ILogger<GiveawaysController> logger)
+        public GiveawaysController(IGiveawaysService giveawaysService, ILogger<GiveawaysController> logger)
         {
             _giveawaysService = giveawaysService;
-            _context = context;
             _logger = logger;
         }
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetAll([FromQuery] string? status)
+        public async Task<IActionResult> GetAll([FromQuery] string? status)
         {
-            var now = DateTime.UtcNow;
-            var query = _context.Giveaways.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(status))
+            try
             {
-                switch (status.Trim().ToLowerInvariant())
-                {
-                    case "active":
-                        query = query.Where(g => !g.IsClosed && g.StartDate <= now && g.EndDate >= now);
-                        break;
-                    case "closed":
-                        query = query.Where(g => g.IsClosed || g.EndDate < now);
-                        break;
-                    case "all":
-                        break;
-                    default:
-                        return BadRequest("Invalid status. Use one of: active, closed, all");
-                }
+                return Ok(await _giveawaysService.GetAllAsync(status));
             }
-
-            var dto = query
-                .OrderByDescending(g => g.StartDate)
-                .Select(g => new GiveawayDto
-                {
-                    Id = g.Id,
-                    Title = g.Title,
-                    StartDate = g.StartDate,
-                    EndDate = g.EndDate,
-                    IsClosed = g.IsClosed,
-                    WinnerParticipantId = g.WinnerParticipantId
-                })
-                .ToList();
-
-            return Ok(dto);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
@@ -68,34 +40,18 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<IActionResult> Create([FromBody] CreateGiveawayRequest request)
         {
             var created = await _giveawaysService.CreateGiveawayAsync(request.Title, request.StartDate, request.EndDate);
-            var dto = new GiveawayDto
-            {
-                Id = created.Id,
-                Title = created.Title,
-                StartDate = created.StartDate,
-                EndDate = created.EndDate,
-                IsClosed = created.IsClosed,
-                WinnerParticipantId = created.WinnerParticipantId
-            };
-            return Ok(dto);
+            return Ok(MapGiveaway(created));
         }
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> Get(int id)
         {
-            var giveaway = await _context.Giveaways.FindAsync(id);
-            if (giveaway == null) return NotFound();
-            var dto = new GiveawayDto
-            {
-                Id = giveaway.Id,
-                Title = giveaway.Title,
-                StartDate = giveaway.StartDate,
-                EndDate = giveaway.EndDate,
-                IsClosed = giveaway.IsClosed,
-                WinnerParticipantId = giveaway.WinnerParticipantId
-            };
-            return Ok(dto);
+            var giveaway = await _giveawaysService.GetByIdAsync(id);
+            if (giveaway == null)
+                return NotFound();
+
+            return Ok(giveaway);
         }
 
         [HttpPatch("{id:int}/duration")]
@@ -106,16 +62,7 @@ namespace CSBWebshopSeminarski.Controllers
             try
             {
                 var updated = await _giveawaysService.UpdateGiveawayDurationAsync(id, request.StartDate, request.EndDate);
-                var dto = new GiveawayDto
-                {
-                    Id = updated.Id,
-                    Title = updated.Title,
-                    StartDate = updated.StartDate,
-                    EndDate = updated.EndDate,
-                    IsClosed = updated.IsClosed,
-                    WinnerParticipantId = updated.WinnerParticipantId
-                };
-                return Ok(dto);
+                return Ok(MapGiveaway(updated));
             }
             catch (InvalidOperationException ex)
             {
@@ -129,18 +76,9 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("{id:int}/participants")]
         [Authorize(Roles = "Admin")]
-        public IActionResult GetParticipants(int id)
+        public async Task<IActionResult> GetParticipants(int id)
         {
-            var participants = _context.Participants.Where(p => p.GiveawayId == id).ToList();
-            var dto = participants.Select(p => new ParticipantDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Email = p.Email,
-                EntryDate = p.EntryDate,
-                GiveawayId = p.GiveawayId
-            }).ToList();
-            return Ok(dto);
+            return Ok(await _giveawaysService.GetParticipantsAsync(id));
         }
 
         [HttpPost("{id:int}/participants")]
@@ -184,39 +122,50 @@ namespace CSBWebshopSeminarski.Controllers
         {
             _logger.LogInformation("Giveaway draw triggered by {User} for giveaway {GiveawayId} at {UtcNow}", User?.Identity?.Name ?? "unknown", id, DateTime.UtcNow);
             var winner = await _giveawaysService.DrawAndPersistWinnerAsync(id);
-            if (winner == null) return NotFound("No participants or giveaway closed without a winner");
-            var dto = new ParticipantDto
+            if (winner == null)
+                return NotFound("No participants or giveaway closed without a winner");
+
+            return Ok(new ParticipantDto
             {
                 Id = winner.Id,
                 Name = winner.Name,
                 Email = winner.Email,
                 EntryDate = winner.EntryDate,
                 GiveawayId = winner.GiveawayId
-            };
-            return Ok(dto);
+            });
         }
 
-        ///Announces the giveaway winner by posting to info panel and sending emails to winner + subscribers
         [HttpPost("{id:int}/announce-winner")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AnnounceWinner(int id)
         {
             _logger.LogInformation("Giveaway winner announcement triggered by {User} for giveaway {GiveawayId} at {UtcNow}", User?.Identity?.Name ?? "unknown", id, DateTime.UtcNow);
-            
+
             var result = await _giveawaysService.AnnounceWinnerAsync(id, User?.Identity?.Name);
-            
+
             if (!result.Success)
             {
                 return BadRequest(new { error = result.ErrorMessage });
             }
 
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 message = "Winner announced successfully",
                 winnerName = result.WinnerName,
                 subscribersNotified = result.SubscribersNotified,
                 newsItemId = result.NewsItemId
             });
         }
+
+        private static GiveawayDto MapGiveaway(CSBWebshopSeminarski.Core.Entities.Giveaways g) =>
+            new()
+            {
+                Id = g.Id,
+                Title = g.Title,
+                StartDate = g.StartDate,
+                EndDate = g.EndDate,
+                IsClosed = g.IsClosed,
+                WinnerParticipantId = g.WinnerParticipantId
+            };
     }
 }

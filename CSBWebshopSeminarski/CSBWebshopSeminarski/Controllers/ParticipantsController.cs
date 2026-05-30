@@ -1,6 +1,6 @@
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
-using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,14 +10,13 @@ namespace CSBWebshopSeminarski.Controllers
     [ApiController]
     public class ParticipantsController : ControllerBase
     {
-        private readonly CocoSunBagsWebshopDbContext _context;
-        private readonly IParticipantsService _service;
-        private readonly CBSWebshopSeminarski.Services.Services.EmailService _emailService;
-        private readonly CBSWebshopSeminarski.Services.Services.GiveawaysService _giveawaysService;
-        public ParticipantsController(CocoSunBagsWebshopDbContext context, IParticipantsService service, CBSWebshopSeminarski.Services.Services.EmailService emailService, CBSWebshopSeminarski.Services.Services.GiveawaysService giveawaysService)
+        private readonly EmailService _emailService;
+        private readonly IGiveawaysService _giveawaysService;
+
+        public ParticipantsController(
+            EmailService emailService,
+            IGiveawaysService giveawaysService)
         {
-            _context = context;
-            _service = service;
             _emailService = emailService;
             _giveawaysService = giveawaysService;
         }
@@ -26,13 +25,13 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinner([FromBody] Participants winner)
         {
-            if (string.IsNullOrWhiteSpace(winner?.Email)) return BadRequest("Email is required");
+            if (string.IsNullOrWhiteSpace(winner?.Email))
+                return BadRequest("Email is required");
 
             await _emailService.SendEmailAsync(
                 winner.Email,
                 "Congratulations, You Are a Winner!",
-                "You have won the giveaway!"
-            );
+                "You have won the giveaway!");
             return Ok();
         }
 
@@ -40,16 +39,19 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> NotifyWinnerForGiveaway(int giveawayId)
         {
-            var giveaway = await _context.Giveaways.FindAsync(giveawayId);
-            if (giveaway == null || !giveaway.WinnerParticipantId.HasValue) return NotFound("Winner not found for this giveaway");
-            var winner = await _context.Participants.FindAsync(giveaway.WinnerParticipantId.Value);
-            if (winner == null) return NotFound("Winner not found");
-            await _giveawaysService.NotifyWinnerAsync(winner);
-            return Ok(new
+            try
             {
-                message = "Uspješno obaviješten korisnik",
-                winnerEmail = winner.Email
-            });
+                var winner = await _giveawaysService.NotifyWinnerForGiveawayAsync(giveawayId);
+                return Ok(new
+                {
+                    message = "Uspješno obaviješten korisnik",
+                    winnerEmail = winner.Email
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
