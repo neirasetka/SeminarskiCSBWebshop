@@ -192,6 +192,7 @@ _NormalizedStatus _normalizeStatus(String? status) {
   if (<String>{'created', 'new', 'pending', 'zaprimljena', 'primljena'}.contains(s)) return _NormalizedStatus.pending;
   if (<String>{'processing', 'processed', 'inprogress', 'preparing', 'obrada', 'uobradi'}.contains(s)) return _NormalizedStatus.processing;
   if (<String>{'shipped', 'sent', 'poslano', 'otpremljeno'}.contains(s)) return _NormalizedStatus.shipped;
+  if (<String>{'intransit', 'utransportu', 'atcustoms', 'nacarini'}.contains(s)) return _NormalizedStatus.shipped;
   if (<String>{'outfordelivery', 'udostavi', 'ontheroad'}.contains(s)) return _NormalizedStatus.outForDelivery;
   if (<String>{'delivered', 'isporuceno', 'completed', 'zavrseno'}.contains(s)) return _NormalizedStatus.delivered;
   if (<String>{'cancelled', 'canceled', 'otkazano'}.contains(s)) return _NormalizedStatus.cancelled;

@@ -67,13 +67,19 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               final o = orders[index];
               return ListTile(
                 title: Text(o.orderNumber),
-                subtitle: Row(
+                subtitle: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
                   children: <Widget>[
-                    Text('${DateFormatter.formatDateTime(o.date)} · '),
+                    Text('${DateFormatter.formatDateTime(o.date)} ·'),
                     if (o.paymentStatus != null)
                       StatusBadge(status: o.paymentStatus!)
                     else
                       const Text('N/A'),
+                    if (o.shippingStatus != null) ...<Widget>[
+                      const Text('·'),
+                      StatusBadge(status: o.shippingStatus!),
+                    ],
                   ],
                 ),
                 trailing: Text('${o.amount.toStringAsFixed(2)} KM'),
