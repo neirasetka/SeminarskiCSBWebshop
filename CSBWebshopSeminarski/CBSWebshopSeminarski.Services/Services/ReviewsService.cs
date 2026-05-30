@@ -5,6 +5,7 @@ using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
+using BagOrBeltReferenceValidator = CBSWebshopSeminarski.Services.BagOrBeltReferenceValidator;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -26,12 +27,12 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(i => i.UserID == search.UserID);
             }
 
-            if (search.BagID != 0)
+            if (search.BagID.HasValue)
             {
                 query = query.Where(i => i.BagID == search.BagID);
             }
 
-            if (search.BeltID != 0)
+            if (search.BeltID.HasValue)
             {
                 query = query.Where(i => i.BeltID == search.BeltID);
             }
@@ -70,6 +71,11 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public async Task<Review> Insert(ReviewUpsertRequest request)
         {
+            BagOrBeltReferenceValidator.ValidateExactlyOne(request.BagID, request.BeltID, "Review");
+            var (bagId, beltId) = BagOrBeltReferenceValidator.Normalize(request.BagID, request.BeltID);
+            request.BagID = bagId;
+            request.BeltID = beltId;
+
             var entity = _mapper.Map<Reviews>(request);
             if (entity.Date == default)
             {
@@ -83,6 +89,11 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public async Task<Review> Update(int ID, ReviewUpsertRequest request)
         {
+            BagOrBeltReferenceValidator.ValidateExactlyOne(request.BagID, request.BeltID, "Review");
+            var (bagId, beltId) = BagOrBeltReferenceValidator.Normalize(request.BagID, request.BeltID);
+            request.BagID = bagId;
+            request.BeltID = beltId;
+
             var entity = _context.Set<Reviews>().Find(ID);
             if (entity == null)
                 throw new ArgumentException($"Review with ID {ID} not found.");

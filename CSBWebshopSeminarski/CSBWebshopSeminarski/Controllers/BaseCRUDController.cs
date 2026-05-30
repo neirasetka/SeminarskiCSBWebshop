@@ -31,7 +31,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpDelete("{ID:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<bool> Delete(int ID)
+        public virtual async Task<bool> Delete(int ID)
         {
             return await _service.Delete(ID);
         }

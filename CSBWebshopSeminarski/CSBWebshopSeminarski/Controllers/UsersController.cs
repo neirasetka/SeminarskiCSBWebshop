@@ -28,14 +28,6 @@ namespace CSBWebshopSeminarski.Controllers
             return user == null ? Unauthorized() : user;
         }
 
-        [HttpPost("Login")]
-        [AllowAnonymous]
-        public async Task<ActionResult<User>> Login(UserAuthenticationRequest request)
-        {
-            var user = await _service.Authenticate(request);
-            return user == null ? Unauthorized() : user;
-        }
-
         [HttpPost("Register")]
         [AllowAnonymous]
         public async Task<User> Register(RegisterRequest request)

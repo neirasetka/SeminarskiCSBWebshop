@@ -8,8 +8,8 @@ namespace CBSWebshopSeminarski.Model.Requests
         /// <summary>Set by server from JWT; ignored if sent by client.</summary>
         public int UserID { get; set; }
         
-        public int BagID { get; set; }
-        public int BeltID { get; set; }
+        public int? BagID { get; set; }
+        public int? BeltID { get; set; }
         
         [Required(ErrorMessage = "Comment is required.")]
         [MinLength(3, ErrorMessage = "Comment must be at least 3 characters long.")]

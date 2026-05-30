@@ -46,7 +46,6 @@ class AuthApi {
       'UserName': username,
       'Password': password,
       'PasswordConfirmation': passwordConfirmation,
-      'Roles': <int>[2], // Default role: Kupac (Customer)
     };
     final http.Response response = await _apiClient.post(
       _registerPath,

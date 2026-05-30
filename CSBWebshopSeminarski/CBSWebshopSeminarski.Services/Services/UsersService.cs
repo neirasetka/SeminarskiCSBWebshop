@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -71,14 +72,14 @@ namespace CBSWebshopSeminarski.Services.Services
                 await _context.Users.AddAsync(entity);
                 await _context.SaveChangesAsync();
 
-                foreach (var roleID in request.Roles)
+                var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
+                foreach (var roleId in roleIds)
                 {
-                    var roles = new UserRoles()
+                    await _context.UserRoles.AddAsync(new UserRoles
                     {
                         UserID = entity.UserID,
-                        RolesID = roleID
-                    };
-                    await _context.UserRoles.AddAsync(roles);
+                        RolesID = roleId
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -151,26 +152,26 @@ namespace CBSWebshopSeminarski.Services.Services
                 entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
             }
 
-            foreach (var RoleID in request.Roles)
+            foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNames))
             {
                 var userRoles = await _context.UserRoles
-                    .Where(i => i.RolesID == RoleID && i.UserID == ID)
+                    .Where(i => i.RolesID == roleId && i.UserID == ID)
                     .SingleOrDefaultAsync();
 
                 if (userRoles == null)
                 {
-                    var newRole = new UserRoles()
+                    await _context.Set<UserRoles>().AddAsync(new UserRoles
                     {
                         UserID = ID,
-                        RolesID = RoleID
-                    };
-                    await _context.Set<UserRoles>().AddAsync(newRole);
+                        RolesID = roleId
+                    });
                 }
             }
-            foreach (var RolesID in request.RolesDelete)
+
+            foreach (var roleId in await ResolveRoleIdsByNamesAsync(request.RoleNamesDelete))
             {
                 var userRoles = await _context.UserRoles
-                    .Where(i => i.RolesID == RolesID && i.UserID == ID)
+                    .Where(i => i.RolesID == roleId && i.UserID == ID)
                     .SingleOrDefaultAsync();
 
                 if (userRoles != null)
@@ -336,6 +337,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Bag> InsertLikedBags(int ID, int BagID)
         {
+            if (await _context.Favorites.AnyAsync(f => f.UserID == ID && f.BagID == BagID))
+                throw new ConflictException("Ova torba je već u vašim favoritima.");
+
             var entity = new Favorites()
             {
                 UserID = ID,
@@ -384,6 +388,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<Belt> InsertLikedBelts(int ID, int BeltID)
         {
+            if (await _context.Favorites.AnyAsync(f => f.UserID == ID && f.BeltID == BeltID))
+                throw new ConflictException("Ovaj kaiš je već u vašim favoritima.");
+
             var entity = new Favorites()
             {
                 UserID = ID,
@@ -411,6 +418,34 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var belt = await _context.Belts.FindAsync(BeltID);
             return _mapper.Map<Belt>(belt!);
+        }
+
+        private async Task<List<int>> ResolveRoleIdsByNamesAsync(IEnumerable<string> roleNames)
+        {
+            var names = roleNames
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (names.Count == 0)
+                return new List<int>();
+
+            var allRoles = await _context.Roles.AsNoTracking().ToListAsync();
+            var roleIds = new List<int>();
+
+            foreach (var name in names)
+            {
+                var role = allRoles.FirstOrDefault(r =>
+                    string.Equals(r.RoleName, name, StringComparison.OrdinalIgnoreCase));
+
+                if (role == null)
+                    throw new ValidationException($"Uloga '{name}' ne postoji.");
+
+                roleIds.Add(role.RoleID);
+            }
+
+            return roleIds;
         }
     }
 }

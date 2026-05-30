@@ -4,6 +4,7 @@ using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
+using BagOrBeltReferenceValidator = CBSWebshopSeminarski.Services.BagOrBeltReferenceValidator;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -26,12 +27,12 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID);
             }
 
-            if (request.UserID != 0 && request.BagID != 0)
+            if (request.BagID.HasValue)
             {
                 query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID && x.BagID == request.BagID);
             }
 
-            if (request.UserID != 0 && request.BeltID != 0)
+            if (request.BeltID.HasValue)
             {
                 query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID && x.BeltID == request.BeltID);
             }
@@ -39,8 +40,23 @@ namespace CBSWebshopSeminarski.Services.Services
             var list = await query.ToListAsync();
             return _mapper.Map<List<Favorite>>(list);
         }
+        public override async Task<Favorite> Insert(FavoriteUpsertRequest request)
+        {
+            BagOrBeltReferenceValidator.ValidateExactlyOne(request.BagID, request.BeltID, "Favorite");
+            var (bagId, beltId) = BagOrBeltReferenceValidator.Normalize(request.BagID, request.BeltID);
+            request.BagID = bagId;
+            request.BeltID = beltId;
+
+            return await base.Insert(request);
+        }
+
         public override async Task<Favorite> Update(int ID, FavoriteUpsertRequest request)
         {
+            BagOrBeltReferenceValidator.ValidateExactlyOne(request.BagID, request.BeltID, "Favorite");
+            var (bagId, beltId) = BagOrBeltReferenceValidator.Normalize(request.BagID, request.BeltID);
+            request.BagID = bagId;
+            request.BeltID = beltId;
+
             var entity = _context.Set<Favorites>().Find(ID);
             if (entity == null)
                 throw new ArgumentException($"Favorite with ID {ID} not found.");

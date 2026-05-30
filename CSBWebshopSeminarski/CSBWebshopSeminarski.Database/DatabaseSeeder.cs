@@ -327,13 +327,12 @@ namespace CSBWebshopSeminarski.Database
 
         private static async Task EnsureReviewsAsync(CocoSunBagsWebshopDbContext context, ILogger logger, Users buyerUser, Bags bag, Belts belt)
         {
-            if (!await context.Reviews.AnyAsync(r => r.UserID == buyerUser.UserID && r.BagID == (bag.BagID ?? 0)))
+            if (!await context.Reviews.AnyAsync(r => r.UserID == buyerUser.UserID && r.BagID == bag.BagID))
             {
                 await context.Reviews.AddAsync(new Reviews
                 {
                     UserID = buyerUser.UserID,
-                    BagID = bag.BagID ?? 0,
-                    BeltID = belt.BeltID,
+                    BagID = bag.BagID,
                     Date = DateTime.UtcNow.AddDays(-1),
                     Comment = "Great quality and design!",
                     Status = ReviewStatus.Approved
@@ -345,13 +344,12 @@ namespace CSBWebshopSeminarski.Database
 
         private static async Task EnsureRatesAsync(CocoSunBagsWebshopDbContext context, ILogger logger, Users buyerUser, Bags bag, Belts belt)
         {
-            if (!await context.Rates.AnyAsync(r => r.UserID == buyerUser.UserID && r.BagID == (bag.BagID ?? 0)))
+            if (!await context.Rates.AnyAsync(r => r.UserID == buyerUser.UserID && r.BagID == bag.BagID))
             {
                 await context.Rates.AddAsync(new Rates
                 {
                     UserID = buyerUser.UserID,
-                    BagID = bag.BagID ?? 0,
-                    BeltID = belt.BeltID,
+                    BagID = bag.BagID,
                     Rating = 5
                 });
                 await context.SaveChangesAsync();

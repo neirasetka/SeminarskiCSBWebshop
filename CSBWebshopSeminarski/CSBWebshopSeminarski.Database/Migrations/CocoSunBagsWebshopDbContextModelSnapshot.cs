@@ -205,7 +205,20 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Favorites");
+                    b.HasIndex("UserID", "BagID")
+                        .IsUnique()
+                        .HasFilter("[BagID] IS NOT NULL")
+                        .HasDatabaseName("IX_Favorites_UserID_BagID");
+
+                    b.HasIndex("UserID", "BeltID")
+                        .IsUnique()
+                        .HasFilter("[BeltID] IS NOT NULL")
+                        .HasDatabaseName("IX_Favorites_UserID_BeltID");
+
+                    b.ToTable("Favorites", t =>
+                        {
+                            t.HasCheckConstraint("CK_Favorites_OneProduct", "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Giveaways", b =>
@@ -389,6 +402,16 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Property<string>("CarrierCode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CancelledByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
@@ -400,7 +423,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
@@ -427,6 +451,12 @@ namespace CSBWebshopSeminarski.Database.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("OrderID");
+
+                    b.HasIndex("CancelledByUserId");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Orders_OrderNumber");
 
                     b.HasIndex("UserID");
 
@@ -556,7 +586,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.Property<string>("StripeId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("UserID")
                         .HasColumnType("int");
@@ -568,7 +599,12 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasKey("PurchaseID");
 
                     b.HasIndex("OrderID")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_Purchases_OrderID");
+
+                    b.HasIndex("StripeId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Purchases_StripeId");
 
                     b.HasIndex("UserID");
 
@@ -583,10 +619,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RateID"));
 
-                    b.Property<int>("BagID")
+                    b.Property<int?>("BagID")
                         .HasColumnType("int");
 
-                    b.Property<int>("BeltID")
+                    b.Property<int?>("BeltID")
                         .HasColumnType("int");
 
                     b.Property<int>("Rating")
@@ -603,7 +639,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Rates");
+                    b.ToTable("Rates", t =>
+                        {
+                            t.HasCheckConstraint("CK_Rates_OneProduct", "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Reviews", b =>
@@ -614,10 +653,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewID"));
 
-                    b.Property<int>("BagID")
+                    b.Property<int?>("BagID")
                         .HasColumnType("int");
 
-                    b.Property<int>("BeltID")
+                    b.Property<int?>("BeltID")
                         .HasColumnType("int");
 
                     b.Property<string>("Comment")
@@ -641,7 +680,10 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", t =>
+                        {
+                            t.HasCheckConstraint("CK_Reviews_OneProduct", "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Roles", b =>
@@ -793,7 +835,8 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<byte[]>("Image")
                         .IsRequired()
@@ -821,9 +864,18 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.HasKey("UserID");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Email");
+
+                    b.HasIndex("UserName")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_UserName");
 
                     b.ToTable("Users");
                 });
@@ -943,11 +995,18 @@ namespace CSBWebshopSeminarski.Database.Migrations
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Orders", b =>
                 {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "CancelledByUser")
+                        .WithMany()
+                        .HasForeignKey("CancelledByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CancelledByUser");
 
                     b.Navigation("User");
                 });
@@ -1023,14 +1082,12 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Bags", "Bag")
                         .WithMany("Rate")
                         .HasForeignKey("BagID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Belts", "Belt")
                         .WithMany("Rates")
                         .HasForeignKey("BeltID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany("Rates")
@@ -1050,14 +1107,12 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Bags", "Bag")
                         .WithMany("Reviews")
                         .HasForeignKey("BagID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Belts", "Belt")
                         .WithMany("Reviews")
                         .HasForeignKey("BeltID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
                         .WithMany("Reviews")

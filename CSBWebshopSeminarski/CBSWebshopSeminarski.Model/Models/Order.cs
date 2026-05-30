@@ -15,5 +15,8 @@ namespace CBSWebshopSeminarski.Model.Models
         public DateTime? LastStatusUpdate { get; set; }
         public DateTime? EstimatedDeliveryDate { get; set; }
         public string? PaymentStatus { get; set; }
+        public DateTime? CancelledAt { get; set; }
+        public int? CancelledByUserId { get; set; }
+        public string? CancellationReason { get; set; }
     }
 }

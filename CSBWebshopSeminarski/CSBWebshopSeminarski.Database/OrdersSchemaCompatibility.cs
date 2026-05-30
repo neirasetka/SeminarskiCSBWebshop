@@ -26,4 +26,25 @@ IF COL_LENGTH(N'dbo.Orders', N'StripePaymentIntentId') IS NULL
 IF COL_LENGTH(N'dbo.Orders', N'StripeCheckoutSessionId') IS NULL
     ALTER TABLE [dbo].[Orders] ADD [StripeCheckoutSessionId] NVARCHAR(255) NULL;
 ";
+
+    public const string EnsureOrderCancellationColumnsSql = @"
+IF OBJECT_ID(N'dbo.Orders', N'U') IS NULL
+    RETURN;
+
+IF COL_LENGTH(N'dbo.Orders', N'CancelledAt') IS NULL
+    ALTER TABLE [dbo].[Orders] ADD [CancelledAt] DATETIME2 NULL;
+
+IF COL_LENGTH(N'dbo.Orders', N'CancelledByUserId') IS NULL
+    ALTER TABLE [dbo].[Orders] ADD [CancelledByUserId] INT NULL;
+
+IF COL_LENGTH(N'dbo.Orders', N'CancellationReason') IS NULL
+    ALTER TABLE [dbo].[Orders] ADD [CancellationReason] NVARCHAR(500) NULL;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.foreign_keys
+    WHERE name = N'FK_Orders_Users_CancelledByUserId'
+      AND parent_object_id = OBJECT_ID(N'dbo.Orders'))
+    ALTER TABLE [dbo].[Orders] WITH CHECK ADD CONSTRAINT [FK_Orders_Users_CancelledByUserId]
+        FOREIGN KEY ([CancelledByUserId]) REFERENCES [dbo].[Users] ([UserID]) ON DELETE NO ACTION;
+";
 }

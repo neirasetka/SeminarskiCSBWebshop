@@ -310,7 +310,16 @@ using (var scope = app.Services.CreateScope())
             OrdersSchemaCompatibility.EnsureStripePaymentRefColumnsSql);
 
         await context.Database.ExecuteSqlRawAsync(
+            OrdersSchemaCompatibility.EnsureOrderCancellationColumnsSql);
+
+        await context.Database.ExecuteSqlRawAsync(
             PurchasesSchemaCompatibility.EnsureUniquePurchaseOrderIdIndexSql);
+
+        await context.Database.ExecuteSqlRawAsync(
+            ProductBagBeltSchemaCompatibility.EnsureReviewsRatesFavoritesBagOrBeltXorSql);
+
+        await context.Database.ExecuteSqlRawAsync(
+            BusinessIdentifiersSchemaCompatibility.EnsureBusinessIdentifierUniqueIndexesSql);
 
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");

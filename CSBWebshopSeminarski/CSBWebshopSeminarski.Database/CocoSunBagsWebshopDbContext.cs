@@ -244,19 +244,30 @@ namespace CSBWebshopSeminarski.Database
             // Users: unique indexes (Stavka 19)
             modelBuilder.Entity<Users>(entity =>
             {
+                entity.Property(u => u.UserName).HasMaxLength(256);
+                entity.Property(u => u.Email).HasMaxLength(256);
                 entity.HasIndex(u => u.UserName).IsUnique().HasDatabaseName("IX_Users_UserName");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
             });
 
-            // Orders: unique index on OrderNumber
+            // Orders: unique index on OrderNumber; cancellation audit fields
             modelBuilder.Entity<Orders>(entity =>
             {
+                entity.Property(o => o.OrderNumber).HasMaxLength(64);
+                entity.Property(o => o.CancellationReason).HasMaxLength(500);
                 entity.HasIndex(o => o.OrderNumber).IsUnique().HasDatabaseName("IX_Orders_OrderNumber");
+
+                entity.HasOne(o => o.CancelledByUser)
+                    .WithMany()
+                    .HasForeignKey(o => o.CancelledByUserId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Purchases: one purchase per order; unique StripeId
             modelBuilder.Entity<Purchases>(entity =>
             {
+                entity.Property(p => p.StripeId).HasMaxLength(255);
                 entity.HasIndex(p => p.StripeId).IsUnique().HasDatabaseName("IX_Purchases_StripeId");
                 entity.HasIndex(p => p.OrderID).IsUnique().HasDatabaseName("IX_Purchases_OrderID");
             });

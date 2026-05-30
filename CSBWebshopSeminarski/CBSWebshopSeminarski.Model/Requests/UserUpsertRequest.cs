@@ -29,7 +29,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         public string PasswordConfirmation { get; set; } = null!;
         /// <summary>Optional for registration. Service uses empty array when null.</summary>
         public byte[]? Image { get; set; }
-        public List<int> Roles { get; set; } = new List<int>();
-        public List<int> RolesDelete { get; set; } = new List<int>();
+        public List<string> RoleNames { get; set; } = new List<string>();
+        public List<string> RoleNamesDelete { get; set; } = new List<string>();
     }
 }

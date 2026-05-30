@@ -39,5 +39,10 @@ namespace CSBWebshopSeminarski.Core.Entities
         public DateTime? LastStatusUpdate { get; set; }
         public DateTime? EstimatedDeliveryDate { get; set; }
         public ICollection<TrackingEvents> TrackingEvents { get; set; } = null!;
+
+        public DateTime? CancelledAt { get; set; }
+        public int? CancelledByUserId { get; set; }
+        public string? CancellationReason { get; set; }
+        public virtual Users? CancelledByUser { get; set; }
     }
 }

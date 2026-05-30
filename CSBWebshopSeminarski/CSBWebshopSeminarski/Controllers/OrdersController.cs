@@ -118,16 +118,56 @@ namespace CSBWebshopSeminarski.Controllers
             public string? ReceiptEmail { get; set; }
         }
 
+        public class CancelOrderRequest
+        {
+            public string? Reason { get; set; }
+        }
+
+        [HttpDelete("{ID:int}")]
+        [Authorize(Roles = "Admin")]
+        public override async Task<bool> Delete(int ID)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var adminUserId))
+                throw new UnauthorizedAccessException();
+
+            var cancelled = await _service.CancelOrderAsync(ID, adminUserId, "Cancelled by administrator");
+            if (!cancelled)
+                throw new KeyNotFoundException("Narudžba nije pronađena ili je već otkazana.");
+            return true;
+        }
+
+        [HttpPatch("{ID:int}/cancel")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CancelOrder(int ID, [FromBody] CancelOrderRequest? request)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var adminUserId))
+                return Unauthorized();
+
+            var reason = string.IsNullOrWhiteSpace(request?.Reason)
+                ? "Cancelled by administrator"
+                : request!.Reason!.Trim();
+
+            var cancelled = await _service.CancelOrderAsync(ID, adminUserId, reason);
+            if (!cancelled)
+                return NotFound();
+
+            return NoContent();
+        }
+
         [HttpDelete("Active")]
         [Authorize(Roles = "Buyer")]
-        public async Task<ActionResult> CancelActiveCart()
+        public async Task<ActionResult> CancelActiveCart([FromQuery] string? reason = null)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 return Unauthorized();
             }
-            await _service.CancelActiveCartAsync(currentUserId);
+            var cancelled = await _service.CancelActiveCartAsync(currentUserId, reason);
+            if (!cancelled)
+                return NotFound();
             return NoContent();
         }
 

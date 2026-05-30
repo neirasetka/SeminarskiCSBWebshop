@@ -105,14 +105,17 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<bool> Delete(int ID)
         {
-            var order = await _context.Orders.Where(c => c.OrderID == ID).FirstOrDefaultAsync();
+            throw new NotSupportedException(
+                "Orders are not physically deleted. Use CancelOrderAsync or the cancel endpoint.");
+        }
 
-            if (order == null) return false;
+        public async Task<bool> CancelOrderAsync(int orderId, int cancelledByUserId, string? cancellationReason)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null)
+                return false;
 
-            order.ShippingStatus = ShippingStatusEntity.Cancelled;
-            order.LastStatusUpdate = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            return true;
+            return await ApplyCancellationAsync(order, cancelledByUserId, cancellationReason, abandonedCart: false);
         }
 
         public Order GetByOrderNumber(string orderNumber)
@@ -168,18 +171,46 @@ namespace CBSWebshopSeminarski.Services.Services
             return true;
         }
 
-        public async Task<bool> CancelActiveCartAsync(int userId)
+        public async Task<bool> CancelActiveCartAsync(int userId, string? cancellationReason = null)
         {
             var order = await GetActiveCartByUser(userId);
             if (order == null) return false;
             var entity = await _context.Orders
-                .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.OrderID == order.OrderID);
             if (entity == null) return false;
 
-            entity.ShippingStatus = ShippingStatusEntity.Cancelled;
-            entity.PaymentStatus = PaymentStatus.Failed;
-            entity.LastStatusUpdate = DateTime.UtcNow;
+            return await ApplyCancellationAsync(
+                entity,
+                userId,
+                cancellationReason ?? "Buyer cancelled active cart",
+                abandonedCart: true);
+        }
+
+        private async Task<bool> ApplyCancellationAsync(
+            Orders order,
+            int cancelledByUserId,
+            string? cancellationReason,
+            bool abandonedCart)
+        {
+            if (order.ShippingStatus == ShippingStatusEntity.Cancelled)
+                return false;
+
+            StateMachines.OrderStateMachine.ValidateShippingTransition(
+                order.ShippingStatus, ShippingStatusEntity.Cancelled);
+
+            order.ShippingStatus = ShippingStatusEntity.Cancelled;
+            order.CancelledAt = DateTime.UtcNow;
+            order.CancelledByUserId = cancelledByUserId;
+            order.CancellationReason = cancellationReason;
+            order.LastStatusUpdate = DateTime.UtcNow;
+
+            if (!abandonedCart
+                && order.PaymentStatus == PaymentStatus.Pending
+                && StateMachines.OrderStateMachine.CanTransitionPayment(order.PaymentStatus, PaymentStatus.Failed))
+            {
+                order.PaymentStatus = PaymentStatus.Failed;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
