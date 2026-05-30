@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/paged_list_state.dart';
 import '../data/belts_api.dart';
 import '../domain/belt.dart';
 
@@ -7,29 +8,87 @@ final Provider<BeltsApi> beltsApiProvider = Provider<BeltsApi>((Ref ref) {
   return BeltsApi();
 });
 
-class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
-  late final BeltsApi _api;
+class BeltsListNotifier extends AsyncNotifier<PagedListState<Belt>> {
+  static const int _pageSize = 20;
+
+  BeltsApi get _api => ref.read(beltsApiProvider);
 
   int? _beltTypeId;
   String? _query;
+  bool _loadingMore = false;
 
   @override
-  Future<List<Belt>> build() async {
-    _api = ref.read(beltsApiProvider);
+  Future<PagedListState<Belt>> build() async {
     _beltTypeId = null;
     _query = null;
-    return _load();
+    return _loadPage(1);
   }
 
-  Future<List<Belt>> _load() async {
-    return _api.getBelts(beltTypeId: _beltTypeId, query: _query);
+  List<Belt> get items => state.valueOrNull?.items ?? const <Belt>[];
+
+  Future<PagedListState<Belt>> _loadPage(int page) async {
+    final result = await _api.getBelts(
+      beltTypeId: _beltTypeId,
+      query: _query,
+      page: page,
+      pageSize: _pageSize,
+    );
+    return PagedListState<Belt>(
+      items: result.items,
+      totalCount: result.totalCount,
+      page: result.page,
+      pageSize: result.pageSize,
+    );
+  }
+
+  Future<void> loadFullCatalog({int? beltTypeId, String? query}) async {
+    _beltTypeId = beltTypeId;
+    _query = query;
+    state = const AsyncLoading<PagedListState<Belt>>();
+    state = await AsyncValue.guard(() async {
+      final List<Belt> all = await _api.getAllBelts(beltTypeId: beltTypeId, query: query);
+      return PagedListState<Belt>(
+        items: all,
+        totalCount: all.length,
+        page: 1,
+        pageSize: all.length,
+      );
+    });
   }
 
   Future<void> refresh({int? beltTypeId, String? query}) async {
     _beltTypeId = beltTypeId;
     _query = query;
-    state = const AsyncLoading<List<Belt>>();
-    state = await AsyncValue.guard(_load);
+    state = const AsyncLoading<PagedListState<Belt>>();
+    state = await AsyncValue.guard(() => _loadPage(1));
+  }
+
+  Future<void> loadMore() async {
+    final PagedListState<Belt>? current = state.valueOrNull;
+    if (current == null || !current.hasMore || _loadingMore) return;
+
+    _loadingMore = true;
+    state = AsyncData(current.copyWith(isLoadingMore: true));
+    try {
+      final result = await _api.getBelts(
+        beltTypeId: _beltTypeId,
+        query: _query,
+        page: current.page + 1,
+        pageSize: _pageSize,
+      );
+      state = AsyncData(
+        PagedListState<Belt>(
+          items: <Belt>[...current.items, ...result.items],
+          totalCount: result.totalCount,
+          page: result.page,
+          pageSize: result.pageSize,
+        ),
+      );
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    } finally {
+      _loadingMore = false;
+    }
   }
 
   Future<Belt> create({
@@ -84,15 +143,16 @@ class BeltsListNotifier extends AsyncNotifier<List<Belt>> {
   }
 }
 
-final AsyncNotifierProvider<BeltsListNotifier, List<Belt>> beltsListProvider =
-    AsyncNotifierProvider<BeltsListNotifier, List<Belt>>(BeltsListNotifier.new);
+final AsyncNotifierProvider<BeltsListNotifier, PagedListState<Belt>> beltsListProvider =
+    AsyncNotifierProvider<BeltsListNotifier, PagedListState<Belt>>(BeltsListNotifier.new);
 
-/// Provider za detalje jednog kaiša po ID-u.
-/// Korištenjem family providera, fetch se poziva automatski pri prvom watch-u,
-/// što sprječava grešku "Call fetch(id) first".
-final beltDetailProvider =
-    FutureProvider.autoDispose.family<Belt, int>((Ref ref, int id) async {
-  final BeltsApi api = ref.read(beltsApiProvider);
-  return api.getBeltById(id);
-});
+class BeltDetailNotifier extends AutoDisposeFamilyAsyncNotifier<Belt, int> {
+  @override
+  Future<Belt> build(int id) async {
+    final BeltsApi api = ref.read(beltsApiProvider);
+    return api.getBeltById(id);
+  }
+}
 
+final beltDetailProvider = AsyncNotifierProvider.autoDispose
+    .family<BeltDetailNotifier, Belt, int>(BeltDetailNotifier.new);

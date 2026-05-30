@@ -18,27 +18,26 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public override async Task<List<Favorite>> Get(FavoriteSearchRequest request)
+        public override async Task<PagedResult<Favorite>> Get(FavoriteSearchRequest request)
         {
             var query = _context.Favorites.AsQueryable();
 
             if (request.UserID != 0)
             {
-                query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID);
+                query = query.Where(x => x.UserID == request.UserID);
             }
 
             if (request.BagID.HasValue)
             {
-                query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID && x.BagID == request.BagID);
+                query = query.Where(x => x.UserID == request.UserID && x.BagID == request.BagID);
             }
 
             if (request.BeltID.HasValue)
             {
-                query = (IOrderedQueryable<Favorites>)query.Where(x => x.UserID == request.UserID && x.BeltID == request.BeltID);
+                query = query.Where(x => x.UserID == request.UserID && x.BeltID == request.BeltID);
             }
 
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<Favorite>>(list);
+            return await ToPagedResultAsync(query, request);
         }
         public override async Task<Favorite> Insert(FavoriteUpsertRequest request)
         {

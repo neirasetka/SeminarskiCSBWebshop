@@ -1,6 +1,6 @@
 ﻿namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class PurchaseSearchRequest
+    public class PurchaseSearchRequest : PagedSearchRequest
     {
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }

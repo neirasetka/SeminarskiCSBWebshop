@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/belt_type.dart';
 
 class BeltTypesApi {
@@ -13,10 +14,10 @@ class BeltTypesApi {
   static const String _path = '/api/BeltTypes';
 
   Future<List<BeltType>> getBeltTypes() async {
-    final http.Response response = await _apiClient.get(_path);
+    final http.Response response = await _apiClient.get('$_path?Page=1&PageSize=100');
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list.map((dynamic e) => BeltType.fromJson(e as Map<String, dynamic>)).toList();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, BeltType.fromJson).items;
     }
     throw Exception('Failed to load belt types: ${response.statusCode}');
   }
@@ -53,4 +54,3 @@ class BeltTypesApi {
     throw Exception('Failed to delete belt type: ${response.statusCode}');
   }
 }
-

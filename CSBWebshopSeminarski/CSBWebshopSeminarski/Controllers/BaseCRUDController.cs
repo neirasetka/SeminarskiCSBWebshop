@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ namespace CSBWebshopSeminarski.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class BaseCRUDController<T, TSearch, TInsert, TUpdate> : BaseReadController<T, TSearch>
+        where TSearch : PagedSearchRequest
     {
         private readonly ICRUDService<T, TSearch, TInsert, TUpdate> _service;
         public BaseCRUDController(ICRUDService<T, TSearch, TInsert, TUpdate> service) : base(service)

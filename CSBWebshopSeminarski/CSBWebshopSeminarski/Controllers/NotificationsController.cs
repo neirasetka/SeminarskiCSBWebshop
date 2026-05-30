@@ -1,4 +1,6 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,17 +28,22 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Notification>>> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PagedResult<Notification>>> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = GetCurrentUserId();
             if (userId == 0) return Unauthorized();
 
-            pageSize = Math.Clamp(pageSize, 1, 50);
-            var notifications = await _db.Notifications
-                .Where(n => n.UserID == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+            var (normalizedPage, normalizedPageSize) = PaginationHelper.Normalize(new PagedSearchRequest
+            {
+                Page = page,
+                PageSize = pageSize
+            });
+
+            var query = _db.Notifications.Where(n => n.UserID == userId).OrderByDescending(n => n.CreatedAt);
+            var totalCount = await query.CountAsync();
+            var notifications = await query
+                .Skip((normalizedPage - 1) * normalizedPageSize)
+                .Take(normalizedPageSize)
                 .Select(n => new Notification
                 {
                     NotificationID = n.NotificationID,
@@ -50,7 +57,13 @@ namespace CSBWebshopSeminarski.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(notifications);
+            return Ok(new PagedResult<Notification>
+            {
+                Items = notifications,
+                TotalCount = totalCount,
+                Page = normalizedPage,
+                PageSize = normalizedPageSize
+            });
         }
 
         [HttpGet("unread-count")]

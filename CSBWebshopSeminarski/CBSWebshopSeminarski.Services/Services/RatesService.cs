@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -19,8 +20,9 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<List<Rate>> Get(RateSearchRequest search)
+        public async Task<PagedResult<Rate>> Get(RateSearchRequest search)
         {
+            search ??= new RateSearchRequest();
             var query = _context.Rates.AsQueryable();
 
             if (search.UserID != 0)
@@ -43,8 +45,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(i => i.Rating == search.Rating);
             }
 
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<Rate>>(list);
+            return await PagedQueryHelper.ToPagedResultAsync<Rates, Rate>(query, search, _mapper);
         }
 
         public async Task<Rate> GetById(int ID)

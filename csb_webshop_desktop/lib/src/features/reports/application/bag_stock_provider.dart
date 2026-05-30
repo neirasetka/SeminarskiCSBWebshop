@@ -12,7 +12,7 @@ class BagStockEntry {
 
 final FutureProvider<List<BagStockEntry>> bagStockProvider = FutureProvider<List<BagStockEntry>>((Ref ref) async {
   final bagsApi = ref.watch(bagsApiProvider);
-  final List<Bag> bags = await bagsApi.getBags();
+  final List<Bag> bags = await bagsApi.getAllBags();
   final Map<String, int> counts = <String, int>{};
 
   for (final Bag bag in bags) {

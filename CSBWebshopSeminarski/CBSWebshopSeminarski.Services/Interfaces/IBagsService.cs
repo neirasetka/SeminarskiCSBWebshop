@@ -6,7 +6,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
     public interface IBagsService
     {
         Task<decimal> GetAverage(int ID);
-        Task<List<Bag>> Get(BagSearchRequest search);
+        Task<PagedResult<Bag>> Get(BagSearchRequest search);
         Task<Bag> GetById(int ID);
         Task<Bag> Insert(BagUpsertRequest request);
         Task<Bag> Update(int ID, BagUpsertRequest request);

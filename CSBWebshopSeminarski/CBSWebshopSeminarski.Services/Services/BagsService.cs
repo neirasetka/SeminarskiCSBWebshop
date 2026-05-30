@@ -17,7 +17,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public override async Task<List<Bag>> Get(BagSearchRequest request)
+        public override async Task<PagedResult<Bag>> Get(BagSearchRequest request)
         {
             var query = _context.Bags.Include(i => i.User).AsQueryable().OrderBy(c => c.BagName);
 
@@ -35,9 +35,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 query = query.Where(x => x.BagName.Contains(request.BagName)).Include(i => i.User).OrderBy(c => c.BagName);
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Bag>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<Bag> Insert(BagUpsertRequest request)

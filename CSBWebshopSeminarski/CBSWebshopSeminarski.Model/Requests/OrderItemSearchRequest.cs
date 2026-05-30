@@ -1,6 +1,6 @@
 ﻿namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class OrderItemSearchRequest
+    public class OrderItemSearchRequest : PagedSearchRequest
     {
         public int? OrderItemID { get; set; }
         public int? OrderID { get; set; }

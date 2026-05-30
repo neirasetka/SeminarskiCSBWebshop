@@ -5,7 +5,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
 {
     public interface IRatesService
     {
-        Task<List<Rate>> Get(RateSearchRequest search);
+        Task<PagedResult<Rate>> Get(RateSearchRequest search);
         Task<Rate> GetById(int ID);
         Task<Rate> Insert(RateUpsertRequest request);
         Task<Rate> Update(int ID, RateUpsertRequest request);

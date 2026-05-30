@@ -20,7 +20,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Review>> Get([FromQuery] ReviewSearchRequest search)
+        public async Task<PagedResult<Review>> Get([FromQuery] ReviewSearchRequest search)
         {
             return await _service.Get(search);
         }

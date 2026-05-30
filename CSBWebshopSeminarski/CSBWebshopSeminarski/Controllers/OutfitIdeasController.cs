@@ -21,7 +21,7 @@ namespace CSBWebshopSeminarski.Controllers
         /// </summary>
         [HttpGet]
         [AllowAnonymous]
-        public override async Task<List<OutfitIdea>> Get([BindNever] OutfitIdeaSearchRequest search)
+        public override async Task<PagedResult<OutfitIdea>> Get([BindNever] OutfitIdeaSearchRequest search)
         {
             return await GetSearchInternalAsync();
         }
@@ -31,12 +31,12 @@ namespace CSBWebshopSeminarski.Controllers
         /// </summary>
         [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<List<OutfitIdea>> GetSearch()
+        public async Task<PagedResult<OutfitIdea>> GetSearch()
         {
             return await GetSearchInternalAsync();
         }
 
-        private async Task<List<OutfitIdea>> GetSearchInternalAsync()
+        private async Task<PagedResult<OutfitIdea>> GetSearchInternalAsync()
         {
             var searchReq = new OutfitIdeaSearchRequest();
 
@@ -60,15 +60,23 @@ namespace CSBWebshopSeminarski.Controllers
                 searchReq.Title = titleVal;
             }
 
+            if (int.TryParse(Request.Query["page"], out var page) && page > 0)
+            {
+                searchReq.Page = page;
+            }
+
+            if (int.TryParse(Request.Query["pageSize"], out var pageSize) && pageSize > 0)
+            {
+                searchReq.PageSize = pageSize;
+            }
+
             try
             {
                 return await _outfitIdeasService.Get(searchReq);
             }
             catch
             {
-                // In case of any unexpected server-side error, return an empty list instead of 500
-                // so the client can gracefully show "no outfit ideas" instead of an exception.
-                return new List<OutfitIdea>();
+                return new PagedResult<OutfitIdea>();
             }
         }
         private readonly IOutfitIdeasService _outfitIdeasService;

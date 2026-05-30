@@ -1,11 +1,14 @@
 using AutoMapper;
+using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
     public class CRUDService<TModel, TSearch, TDatabase, TInsert, TUpdate> : BaseService<TModel, TSearch, TDatabase>,
-        ICRUDService<TModel, TSearch, TInsert, TUpdate> where TDatabase : class
+        ICRUDService<TModel, TSearch, TInsert, TUpdate>
+        where TDatabase : class
+        where TSearch : PagedSearchRequest
     {
         private new readonly CocoSunBagsWebshopDbContext _context;
         private new readonly IMapper _mapper;

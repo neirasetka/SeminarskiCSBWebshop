@@ -17,7 +17,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Bag>> Get([FromQuery] BagSearchRequest search)
+        public async Task<PagedResult<Bag>> Get([FromQuery] BagSearchRequest search)
         {
             return await _service.Get(search);
         }

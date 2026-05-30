@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/paged_result.dart';
 import '../../../core/api_client.dart';
 
 class OrdersApi {
@@ -23,11 +24,13 @@ class OrdersApi {
     throw Exception('Failed to get active cart: ${response.statusCode}');
   }
 
-  Future<List<Map<String, dynamic>>> getMyOrders() async {
-    final http.Response response = await _apiClient.get('$_ordersPath/My');
+  Future<PagedResult<Map<String, dynamic>>> getMyOrders({int page = 1, int pageSize = 20}) async {
+    final http.Response response = await _apiClient.get(
+      '$_ordersPath/My?Page=$page&PageSize=$pageSize',
+    );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList.cast<Map<String, dynamic>>();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, (Map<String, dynamic> item) => item);
     }
     throw Exception('Failed to load orders: ${response.statusCode}');
   }

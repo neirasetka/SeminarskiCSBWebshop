@@ -12,7 +12,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status, string? receiptEmail = null);
         Task<bool> CancelOrderAsync(int orderId, int cancelledByUserId, string? cancellationReason);
         Task<bool> CancelActiveCartAsync(int userId, string? cancellationReason = null);
-        Task<List<Order>> GetOrdersForUserAsync(int userId);
+        Task<PagedResult<Order>> GetOrdersForUserAsync(int userId, OrderSearchRequest? request = null);
         Task<Order?> GetFullOrderByIdAsync(int orderId);
     }
 }

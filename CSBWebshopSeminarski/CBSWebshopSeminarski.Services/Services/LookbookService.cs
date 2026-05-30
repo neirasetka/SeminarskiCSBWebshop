@@ -19,7 +19,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public override async Task<List<LookbookItem>> Get(LookbookSearchRequest request)
+        public override async Task<PagedResult<LookbookItem>> Get(LookbookSearchRequest request)
         {
             var query = _context.LookbookItems.AsQueryable();
 
@@ -68,8 +68,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             query = query.OrderBy(x => x.SortOrder).ThenByDescending(x => x.CreatedAt);
 
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<LookbookItem>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<LookbookItem> Insert(LookbookUpsertRequest request)

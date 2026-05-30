@@ -14,7 +14,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public override async Task<List<BagType>> Get([FromQuery] BagTypeSearchRequest search)
+        public override async Task<PagedResult<BagType>> Get([FromQuery] BagTypeSearchRequest search)
         {
             return await base.Get(search ?? new BagTypeSearchRequest());
         }

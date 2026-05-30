@@ -18,18 +18,17 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public override async Task<List<OrderItem>> Get(OrderItemSearchRequest request)
+        public override async Task<PagedResult<OrderItem>> Get(OrderItemSearchRequest request)
         {
-            var query = _context.OrderItems.
-           Include(z => z.Belt).Include(c => c.Bag)
-           .AsQueryable();
+            var query = _context.OrderItems
+                .Include(z => z.Belt).Include(c => c.Bag)
+                .AsQueryable();
             if (request?.OrderID != 0)
             {
                 query = query.Where(x => x.OrderID == request!.OrderID);
             }
 
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<OrderItem>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)

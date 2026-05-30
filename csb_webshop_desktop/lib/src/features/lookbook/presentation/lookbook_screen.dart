@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/paged_list_state.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -21,9 +22,34 @@ class LookbookScreen extends ConsumerStatefulWidget {
 }
 
 class _LookbookScreenState extends ConsumerState<LookbookScreen> {
+  final ScrollController _scrollController = ScrollController();
   int? _selectedBagTypeId;
   int? _selectedBeltTypeId;
   _LookbookCategory _selectedCategory = _LookbookCategory.all;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_selectedCategory != _LookbookCategory.belts) {
+        ref.read(bagsListProvider.notifier).loadMore();
+      }
+      if (_selectedCategory != _LookbookCategory.bags) {
+        ref.read(beltsListProvider.notifier).loadMore();
+      }
+    }
+  }
 
   Future<void> _onRefresh() async {
     await Future.wait(<Future<void>>[
@@ -43,8 +69,8 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
-    final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<PagedListState<Belt>> beltsAsync = ref.watch(beltsListProvider);
     final AsyncValue<List<BagType>> bagTypesAsync = ref.watch(bagTypesProvider);
     final AsyncValue<List<BeltType>> beltTypesAsync =
         ref.watch(beltTypesProvider);
@@ -219,8 +245,8 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
 
   Widget _buildGridContent({
     required BuildContext context,
-    required AsyncValue<List<Bag>> bagsAsync,
-    required AsyncValue<List<Belt>> beltsAsync,
+    required AsyncValue<PagedListState<Bag>> bagsAsync,
+    required AsyncValue<PagedListState<Belt>> beltsAsync,
   }) {
     if (bagsAsync.isLoading || beltsAsync.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -246,8 +272,10 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
       );
     }
 
-    final List<Bag> bags = bagsAsync.value ?? <Bag>[];
-    final List<Belt> belts = beltsAsync.value ?? <Belt>[];
+    final List<Bag> bags = bagsAsync.value?.items ?? <Bag>[];
+    final List<Belt> belts = beltsAsync.value?.items ?? <Belt>[];
+    final bool isLoadingMore =
+        (bagsAsync.value?.isLoadingMore ?? false) || (beltsAsync.value?.isLoadingMore ?? false);
     final List<_LookbookItem> items = <_LookbookItem>[
       if (_selectedCategory != _LookbookCategory.belts)
         ...bags.map(_LookbookItem.fromBag),
@@ -260,6 +288,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
     }
 
     return GridView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
@@ -267,8 +296,11 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
         mainAxisSpacing: 12,
         childAspectRatio: 0.7,
       ),
-      itemCount: items.length,
+      itemCount: items.length + (isLoadingMore ? 1 : 0),
       itemBuilder: (BuildContext context, int index) {
+        if (index >= items.length) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final _LookbookItem item = items[index];
         return _LookbookTile(item: item);
       },

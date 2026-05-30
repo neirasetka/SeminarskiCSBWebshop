@@ -14,7 +14,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public override async Task<List<BeltType>> Get([FromQuery] BeltTypeSearchRequest search)
+        public override async Task<PagedResult<BeltType>> Get([FromQuery] BeltTypeSearchRequest search)
         {
             return await base.Get(search ?? new BeltTypeSearchRequest());
         }

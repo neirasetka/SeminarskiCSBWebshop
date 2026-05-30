@@ -2,6 +2,7 @@ using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Exceptions;
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -23,7 +24,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public async override Task<List<User>> Get(UserSearchRequest search)
+        public async override Task<PagedResult<User>> Get(UserSearchRequest search)
         {
             var query = _context.Users.Include(x => x.UserRoles).AsQueryable().OrderBy(c => c.UserName);
 
@@ -31,8 +32,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 query = query.Where(x => x.UserName.ToLower().StartsWith(search.UserName.ToLower())).OrderBy(c => c.UserName);
             }
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<User>>(list);
+
+            return await ToPagedResultAsync(query, search);
         }
 
         public override async Task<User> GetById(int ID)
@@ -318,21 +319,23 @@ namespace CBSWebshopSeminarski.Services.Services
             return _mapper.Map<User>(entity);
         }
 
-        public async Task<List<Bag>> GetLikedBags(int ID, BagSearchRequest request)
+        public async Task<PagedResult<Bag>> GetLikedBags(int ID, BagSearchRequest request)
         {
+            request ??= new BagSearchRequest();
             var query = _context.Favorites
                 .Include(i => i.Bag)
                 .ThenInclude(i => i.User)
                 .Where(i => i.UserID == ID && i.BagID.HasValue)
+                .Select(i => i.Bag!)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(request?.BagName))
+            if (!string.IsNullOrWhiteSpace(request.BagName))
             {
-                query = query.Where(x => x.Bag.BagName.StartsWith(request.BagName));
+                query = query.Where(x => x.BagName.StartsWith(request.BagName));
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Bag>>(list.Select(i => i.Bag!).ToList());
+            query = query.OrderBy(x => x.BagName);
+            return await PagedQueryHelper.ToPagedResultAsync<Bags, Bag>(query, request, _mapper);
         }
 
         public async Task<Bag> InsertLikedBags(int ID, int BagID)
@@ -369,21 +372,23 @@ namespace CBSWebshopSeminarski.Services.Services
             return _mapper.Map<Bag>(bag!);
         }
 
-        public async Task<List<Belt>> GetLikedBelts(int ID, BeltSearchRequest request)
+        public async Task<PagedResult<Belt>> GetLikedBelts(int ID, BeltSearchRequest request)
         {
+            request ??= new BeltSearchRequest();
             var query = _context.Favorites
                 .Include(i => i.Belt)
                 .ThenInclude(i => i.User)
                 .Where(i => i.UserID == ID && i.BeltID.HasValue)
+                .Select(i => i.Belt!)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(request?.BeltName))
+            if (!string.IsNullOrWhiteSpace(request.BeltName))
             {
-                query = query.Where(x => x.Belt.BeltName.StartsWith(request.BeltName));
+                query = query.Where(x => x.BeltName.StartsWith(request.BeltName));
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Belt>>(list.Select(i => i.Belt!).ToList());
+            query = query.OrderBy(x => x.BeltName);
+            return await PagedQueryHelper.ToPagedResultAsync<Belts, Belt>(query, request, _mapper);
         }
 
         public async Task<Belt> InsertLikedBelts(int ID, int BeltID)

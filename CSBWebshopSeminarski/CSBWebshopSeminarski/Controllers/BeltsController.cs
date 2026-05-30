@@ -18,7 +18,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Belt>> Get([FromQuery] BeltSearchRequest? search = null)
+        public async Task<PagedResult<Belt>> Get([FromQuery] BeltSearchRequest? search = null)
         {
             return await _service.Get(search ?? new BeltSearchRequest());
         }

@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/announcement.dart';
 
 class AnnouncementsApi {
@@ -25,8 +26,14 @@ class AnnouncementsApi {
       final String path = query.isEmpty ? _newsPath : '$_newsPath?$query';
       final http.Response response = await _apiClient.get(path);
       _ensureSuccess(response, 'load announcements');
-      final List<dynamic> items = json.decode(response.body) as List<dynamic>;
-      return items.map((dynamic e) => Announcement.fromJson(e as Map<String, dynamic>)).toList();
+      final dynamic decoded = json.decode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return PagedResult.fromJson(decoded, Announcement.fromJson).items;
+      }
+      if (decoded is List<dynamic>) {
+        return decoded.map((dynamic e) => Announcement.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      return <Announcement>[];
     } catch (error, stackTrace) {
       developer.log(
         'Falling back to demo announcements',

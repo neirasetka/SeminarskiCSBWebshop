@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/outfit_idea.dart';
 
 class OutfitIdeasApi {
@@ -9,19 +10,20 @@ class OutfitIdeasApi {
 
   final ApiClient _apiClient;
 
-  Future<List<OutfitIdea>> getAll({int? bagId, int? beltId, int? userId}) async {
-    final List<String> params = <String>[];
+  Future<List<OutfitIdea>> getAll({int? bagId, int? beltId, int? userId, int page = 1, int pageSize = 20}) async {
+    final List<String> params = <String>[
+      'page=$page',
+      'pageSize=$pageSize',
+    ];
     if (bagId != null) params.add('bagID=$bagId');
     if (beltId != null) params.add('beltID=$beltId');
     if (userId != null) params.add('userID=$userId');
-    final String queryString = params.isNotEmpty ? '?${params.join('&')}' : '';
+    final String queryString = '?${params.join('&')}';
 
     final response = await _apiClient.get('/api/OutfitIdeas/search$queryString');
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList
-          .map((dynamic e) => OutfitIdea.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, OutfitIdea.fromJson).items;
     }
 
     throw Exception(_buildError(response, 'Failed to load outfit ideas'));

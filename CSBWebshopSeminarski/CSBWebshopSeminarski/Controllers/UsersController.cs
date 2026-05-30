@@ -90,7 +90,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("me/LikedBags")]
         [Authorize]
-        public async Task<List<Bag>> GetMyLikedBags([FromQuery] BagSearchRequest request)
+        public async Task<PagedResult<Bag>> GetMyLikedBags([FromQuery] BagSearchRequest request)
         {
             return await _service.GetLikedBags(GetCurrentUserId(), request);
         }
@@ -111,7 +111,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("me/LikedBelts")]
         [Authorize]
-        public async Task<List<Belt>> GetMyLikedBelts([FromQuery] BeltSearchRequest request)
+        public async Task<PagedResult<Belt>> GetMyLikedBelts([FromQuery] BeltSearchRequest request)
         {
             return await _service.GetLikedBelts(GetCurrentUserId(), request);
         }

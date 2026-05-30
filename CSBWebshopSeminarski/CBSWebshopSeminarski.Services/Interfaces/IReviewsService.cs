@@ -5,7 +5,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
 {
     public interface IReviewsService
     {
-        Task<List<Review>> Get(ReviewSearchRequest search);
+        Task<PagedResult<Review>> Get(ReviewSearchRequest search);
         Task<Review> GetById(int ID);
         Task<Review> Insert(ReviewUpsertRequest request);
         Task<Review> Update(int ID, ReviewUpsertRequest request);

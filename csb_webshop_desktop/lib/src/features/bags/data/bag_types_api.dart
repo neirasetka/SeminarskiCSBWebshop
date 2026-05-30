@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/bag_type.dart';
 
 class BagTypesApi {
@@ -13,10 +14,10 @@ class BagTypesApi {
   static const String _path = '/api/BagTypes';
 
   Future<List<BagType>> getBagTypes() async {
-    final http.Response response = await _apiClient.get(_path);
+    final http.Response response = await _apiClient.get('$_path?Page=1&PageSize=100');
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list.map((dynamic e) => BagType.fromJson(e as Map<String, dynamic>)).toList();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, BagType.fromJson).items;
     }
     throw Exception('Failed to load bag types: ${response.statusCode}');
   }
@@ -53,4 +54,3 @@ class BagTypesApi {
     throw Exception('Failed to delete bag type: ${response.statusCode}');
   }
 }
-

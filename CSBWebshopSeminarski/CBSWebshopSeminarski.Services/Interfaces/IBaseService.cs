@@ -1,8 +1,11 @@
-﻿namespace CBSWebshopSeminarski.Services.Interfaces
+﻿using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Requests;
+
+namespace CBSWebshopSeminarski.Services.Interfaces
 {
-    public interface IBaseService<T, TSearch>
+    public interface IBaseService<T, TSearch> where TSearch : PagedSearchRequest
     {
-        Task<List<T>> Get(TSearch search);
+        Task<PagedResult<T>> Get(TSearch search);
         Task<T> GetById(int ID);
     }
 }

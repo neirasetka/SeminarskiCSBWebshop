@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/paged_list_state.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -22,13 +23,13 @@ class FavoritesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
-    final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<PagedListState<Belt>> beltsAsync = ref.watch(beltsListProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     Future<void> onRefresh() async {
-      await ref.read(bagsListProvider.notifier).refresh(bagTypeId: null, query: null);
-      await ref.read(beltsListProvider.notifier).refresh(beltTypeId: null, query: null);
+      await ref.read(bagsListProvider.notifier).loadFullCatalog(bagTypeId: null, query: null);
+      await ref.read(beltsListProvider.notifier).loadFullCatalog(beltTypeId: null, query: null);
       await ref.read(favoritesProvider.notifier).refresh();
     }
 
@@ -76,11 +77,13 @@ class FavoritesScreen extends ConsumerWidget {
           return bagsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (Object e, _) => _CatalogError(message: 'Greška pri učitavanju kataloga torbi', error: e, onRetry: onRefresh),
-            data: (List<Bag> allBags) {
+            data: (PagedListState<Bag> pagedBags) {
+              final List<Bag> allBags = pagedBags.items;
               return beltsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (Object e, _) => _CatalogError(message: 'Greška pri učitavanju kataloga kaiševa', error: e, onRetry: onRefresh),
-                data: (List<Belt> allBelts) {
+                data: (PagedListState<Belt> pagedBelts) {
+                  final List<Belt> allBelts = pagedBelts.items;
                   final Map<int, Bag> bagsById = <int, Bag>{for (final Bag b in allBags) b.id: b};
                   final Map<int, Belt> beltsById = <int, Belt>{for (final Belt b in allBelts) b.id: b};
 

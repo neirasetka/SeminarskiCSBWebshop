@@ -16,7 +16,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public override async Task<List<BeltType>> Get(BeltTypeSearchRequest request)
+        public override async Task<PagedResult<BeltType>> Get(BeltTypeSearchRequest request)
         {
             var query = _context.BeltTypes.AsQueryable().OrderBy(c => c.BeltName);
 
@@ -24,9 +24,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 query = query.Where(x => x.BeltName.StartsWith(request.BeltName)).OrderBy(c => c.BeltName);
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<BeltType>>(list);
+            return await ToPagedResultAsync(query, request);
         }
         public override async Task<BeltType> GetById(int ID)
         {

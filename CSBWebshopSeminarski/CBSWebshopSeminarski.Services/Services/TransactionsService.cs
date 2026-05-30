@@ -16,26 +16,24 @@ namespace CBSWebshopSeminarski.Services.Services
         _context = context;
         _mapper = mapper;
     }
-    public override async Task<List<Transaction>> Get(TransactionSearchRequest request)
+    public override async Task<PagedResult<Transaction>> Get(TransactionSearchRequest request)
         {
             var query = _context.Transactions.Include(n => n.Order).AsQueryable().OrderBy(c => c.TransactionDate);
 
             if (request.UserID != 0)
             {
-                query = (IOrderedQueryable<Transactions>)query.Where(i => i.UserID == request.UserID);
+                query = query.Where(i => i.UserID == request.UserID).OrderBy(c => c.TransactionDate);
             }
             if (request.From != null)
             {
-                query = (IOrderedQueryable<Transactions>)query.Where(i => i.TransactionDate >= request.From);
+                query = query.Where(i => i.TransactionDate >= request.From).OrderBy(c => c.TransactionDate);
             }
             if (request.To != null)
             {
-                query = (IOrderedQueryable<Transactions>)query.Where(i => i.TransactionDate <= request.To);
+                query = query.Where(i => i.TransactionDate <= request.To).OrderBy(c => c.TransactionDate);
             }
 
-            var list = await query.ToListAsync();
-
-            return _mapper.Map<List<Transaction>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<Transaction> GetById(int ID)

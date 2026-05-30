@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import 'notification_model.dart';
 
 class NotificationsApi {
@@ -16,10 +17,8 @@ class NotificationsApi {
     final http.Response response =
         await _apiClient.get('$_basePath?page=$page&pageSize=$pageSize');
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList
-          .map((dynamic e) => NotificationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, NotificationModel.fromJson).items;
     }
     throw Exception('Failed to load notifications: ${response.statusCode}');
   }

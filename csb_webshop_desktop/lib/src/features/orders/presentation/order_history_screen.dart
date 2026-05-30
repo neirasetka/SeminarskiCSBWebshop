@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/paged_list_state.dart';
 import '../../../utils/date_formatter.dart';
 import '../../../widgets/status_badge.dart';
 import '../application/order_history_provider.dart';
@@ -15,12 +16,25 @@ class OrderHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(orderHistoryProvider.notifier).refresh();
-    });
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(orderHistoryProvider.notifier).loadMore();
+    }
   }
 
   @override
@@ -36,12 +50,20 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         title: const Text('Moje narudžbe'),
       ),
       body: ordersAsync.when(
-        data: (List<OrderModel> orders) {
+        data: (PagedListState<OrderModel> paged) {
+          final List<OrderModel> orders = paged.items;
           if (orders.isEmpty) return const Center(child: Text('Još uvijek nemate narudžbi.'));
           return ListView.separated(
-            itemCount: orders.length,
+            controller: _scrollController,
+            itemCount: orders.length + (paged.isLoadingMore ? 1 : 0),
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (BuildContext context, int index) {
+              if (index >= orders.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
               final o = orders[index];
               return ListTile(
                 title: Text(o.orderNumber),
@@ -88,4 +110,3 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     );
   }
 }
-

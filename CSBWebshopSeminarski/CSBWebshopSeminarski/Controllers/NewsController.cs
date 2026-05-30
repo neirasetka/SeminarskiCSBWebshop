@@ -1,4 +1,6 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.DTOs;
+using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
@@ -20,10 +22,10 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<NewsItemDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? segment = null)
+        public async Task<ActionResult<PagedResult<NewsItemDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? segment = null)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 1 || pageSize > 100) pageSize = 20;
+            var search = new PagedSearchRequest { Page = page, PageSize = pageSize };
+            var (normalizedPage, normalizedPageSize) = PaginationHelper.Normalize(search);
 
             var query = _context.News.AsNoTracking().OrderByDescending(n => n.PublishedAtUtc).AsQueryable();
             if (!string.IsNullOrWhiteSpace(segment))
@@ -31,9 +33,10 @@ namespace CSBWebshopSeminarski.Controllers
                 query = query.Where(n => n.Segment == segment);
             }
 
+            var totalCount = await query.CountAsync();
             var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((normalizedPage - 1) * normalizedPageSize)
+                .Take(normalizedPageSize)
                 .Select(n => new NewsItemDto
                 {
                     Id = n.Id,
@@ -48,7 +51,13 @@ namespace CSBWebshopSeminarski.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(items);
+            return Ok(new PagedResult<NewsItemDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = normalizedPage,
+                PageSize = normalizedPageSize
+            });
         }
 
         [HttpGet("{id:int}")]

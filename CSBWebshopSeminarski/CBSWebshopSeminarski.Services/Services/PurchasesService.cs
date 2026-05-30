@@ -17,7 +17,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public override async Task<List<Purchase>> Get(PurchaseSearchRequest request)
+        public override async Task<PagedResult<Purchase>> Get(PurchaseSearchRequest request)
         {
             var query = _context.Purchases.AsQueryable();
 
@@ -38,9 +38,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(i => i.OrderID == request.OrderID);
             }
 
-            var list = await query.ToListAsync();
-
-            return _mapper.Map<List<Purchase>>(query);
+            return await ToPagedResultAsync(query, request);
         }
     }
 }

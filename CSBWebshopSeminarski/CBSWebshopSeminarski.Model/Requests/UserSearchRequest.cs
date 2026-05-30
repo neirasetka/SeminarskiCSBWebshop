@@ -1,7 +1,7 @@
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class UserSearchRequest
+    public class UserSearchRequest : PagedSearchRequest
     {
-        public string UserName { get; set; } = null!;
+        public string? UserName { get; set; }
     }
 }

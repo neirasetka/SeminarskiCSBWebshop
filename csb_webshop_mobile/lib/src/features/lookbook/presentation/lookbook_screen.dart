@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/paged_list_state.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag.dart';
@@ -18,6 +19,26 @@ class LookbookScreen extends ConsumerStatefulWidget {
 
 class _LookbookScreenState extends ConsumerState<LookbookScreen> {
   int? _selectedBagTypeId;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(bagsListProvider.notifier).loadMore();
+    }
+  }
 
   Future<void> _onRefresh() async {
     await ref.read(bagsListProvider.notifier).refresh(
@@ -28,7 +49,7 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<List<BagType>> typesAsync = ref.watch(bagTypesProvider);
 
     return Scaffold(
@@ -109,11 +130,13 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
             child: RefreshIndicator(
               onRefresh: _onRefresh,
               child: bagsAsync.when(
-                data: (List<Bag> bags) {
+                data: (PagedListState<Bag> paged) {
+                  final List<Bag> bags = paged.items;
                   if (bags.isEmpty) {
                     return const Center(child: Text('Nema rezultata.'));
                   }
                   return GridView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -121,8 +144,11 @@ class _LookbookScreenState extends ConsumerState<LookbookScreen> {
                       mainAxisSpacing: 12,
                       childAspectRatio: 0.75,
                     ),
-                    itemCount: bags.length,
+                    itemCount: bags.length + (paged.isLoadingMore ? 1 : 0),
                     itemBuilder: (BuildContext context, int index) {
+                      if (index >= bags.length) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
                       final Bag bag = bags[index];
                       return _LookbookTile(bag: bag);
                     },

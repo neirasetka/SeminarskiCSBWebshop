@@ -30,7 +30,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _inAppNotifications = inAppNotifications;
         }
 
-        public override async Task<List<Order>> Get(OrderSearchRequest request)
+        public override async Task<PagedResult<Order>> Get(OrderSearchRequest request)
         {
             var query = _context.Orders
                 .Include(o => o.User)
@@ -41,22 +41,19 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(x => x.OrderNumber.StartsWith(request.OrderNumber));
             }
 
-            var list = await query
-                .OrderByDescending(x => x.Date)
-                .ToListAsync();
-
-            return _mapper.Map<List<Order>>(list);
+            query = query.OrderByDescending(x => x.Date);
+            return await ToPagedResultAsync(query, request);
         }
 
-        public async Task<List<Order>> GetOrdersForUserAsync(int userId)
+        public async Task<PagedResult<Order>> GetOrdersForUserAsync(int userId, OrderSearchRequest? request = null)
         {
-            var list = await _context.Orders
+            request ??= new OrderSearchRequest();
+            var query = _context.Orders
                 .Include(o => o.User)
                 .Where(o => o.UserID == userId)
-                .OrderByDescending(o => o.Date)
-                .ToListAsync();
+                .OrderByDescending(o => o.Date);
 
-            return _mapper.Map<List<Order>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public async Task<Order?> GetFullOrderByIdAsync(int orderId)

@@ -100,7 +100,7 @@ builder.Services.AddTransient<ICRUDService<BeltType, BeltTypeSearchRequest, Belt
 builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddTransient<IBagsService, BagsService>();
 builder.Services.AddTransient<IBeltsService, BeltsService>();
-builder.Services.AddTransient<IBaseService<Role, object>, RolesService>();
+builder.Services.AddTransient<IBaseService<Role, RoleSearchRequest>, RolesService>();
 builder.Services.AddTransient<ICRUDService<Transaction, TransactionSearchRequest, TransactionUpsertRequest, TransactionUpsertRequest>, TransactionsService>();
 builder.Services.AddTransient<ICRUDService<Favorite, FavoriteSearchRequest, FavoriteUpsertRequest, FavoriteUpsertRequest>, FavoritesService>();
 builder.Services.AddTransient<IReviewsService, ReviewsService>();

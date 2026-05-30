@@ -19,7 +19,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public override async Task<List<Order>> Get([FromQuery] OrderSearchRequest search)
+        public override async Task<PagedResult<Order>> Get([FromQuery] OrderSearchRequest search)
         {
             return await _service.Get(search);
         }
@@ -93,22 +93,22 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("My")]
         [Authorize(Roles = "Buyer, Admin")]
-        public async Task<ActionResult<List<Order>>> GetMyOrders()
+        public async Task<ActionResult<PagedResult<Order>>> GetMyOrders([FromQuery] OrderSearchRequest search)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
                 return Unauthorized();
             }
-            var result = await _service.GetOrdersForUserAsync(currentUserId);
+            var result = await _service.GetOrdersForUserAsync(currentUserId, search);
             return Ok(result);
         }
 
         [HttpGet("ByUser")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<Order>>> GetByUser([FromQuery] int userId)
+        public async Task<ActionResult<PagedResult<Order>>> GetByUser([FromQuery] int userId, [FromQuery] OrderSearchRequest search)
         {
-            var result = await _service.GetOrdersForUserAsync(userId);
+            var result = await _service.GetOrdersForUserAsync(userId, search);
             return Ok(result);
         }
 

@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
@@ -25,8 +26,9 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
             _inAppNotifications = inAppNotifications;
         }
-        public async Task<List<Review>> Get(ReviewSearchRequest search)
+        public async Task<PagedResult<Review>> Get(ReviewSearchRequest search)
         {
+            search ??= new ReviewSearchRequest();
             var query = _context.Reviews.AsQueryable();
 
             if (search.UserID != 0)
@@ -60,12 +62,10 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             else
             {
-                // Default to showing only approved reviews when status is not specified
                 query = query.Where(i => i.Status == CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved);
             }
 
-            var list = await query.ToListAsync();
-            return _mapper.Map<List<Review>>(list);
+            return await PagedQueryHelper.ToPagedResultAsync<Reviews, Review>(query, search, _mapper);
         }
         public async Task<Review> GetById(int ID)
         {

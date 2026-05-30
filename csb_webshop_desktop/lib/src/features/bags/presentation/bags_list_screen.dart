@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
+import '../../../core/paged_list_state.dart';
 import '../application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
 import '../../bags/domain/bag_type.dart';
@@ -42,7 +43,10 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
   }
 
   void _onScroll() {
-    // pagination removed for simplicity; no-op
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(bagsListProvider.notifier).loadMore();
+    }
   }
 
   Future<void> _openBagForm(BuildContext context, {Bag? existing}) async {
@@ -65,11 +69,10 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
     final bool isAdmin = isAdminAsync.value ?? false;
-    // no pagination
 
     return Scaffold(
       appBar: AppBar(
@@ -128,15 +131,22 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
             child: RefreshIndicator(
               onRefresh: _onRefresh,
               child: bagsAsync.when(
-                data: (List<Bag> bags) {
+                data: (PagedListState<Bag> paged) {
+                  final List<Bag> bags = paged.items;
                   if (bags.isEmpty) {
                     return const Center(child: Text('Nema rezultata.'));
                   }
                   return ListView.separated(
                     controller: _scrollController,
-                    itemCount: bags.length,
+                    itemCount: bags.length + (paged.isLoadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
+                      if (index >= bags.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
                       final Bag bag = bags[index];
                       final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
                       return ListTile(

@@ -1,3 +1,5 @@
+using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,7 @@ namespace CSBWebshopSeminarski.Controllers
     [Route("api/[controller]")]
     [ApiController]
 
-    public class BaseReadController<T, Tsearch> : ControllerBase
+    public class BaseReadController<T, Tsearch> : ControllerBase where Tsearch : PagedSearchRequest
     {
         private readonly IBaseService<T, Tsearch> _service;
         public BaseReadController(IBaseService<T, Tsearch> service)
@@ -17,7 +19,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet]
         [Authorize]
-        public virtual async Task<List<T>> Get([FromQuery] Tsearch search)
+        public virtual async Task<PagedResult<T>> Get([FromQuery] Tsearch search)
         {
             return await _service.Get(search);
         }

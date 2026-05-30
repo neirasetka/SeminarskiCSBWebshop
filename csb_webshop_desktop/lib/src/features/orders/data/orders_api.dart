@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/paged_result.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_exception.dart';
 
@@ -30,11 +31,13 @@ class OrdersApi {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getMyOrders() async {
-    final http.Response response = await _apiClient.get('$_ordersPath/My');
+  Future<PagedResult<Map<String, dynamic>>> getMyOrders({int page = 1, int pageSize = 20}) async {
+    final http.Response response = await _apiClient.get(
+      '$_ordersPath/My?Page=$page&PageSize=$pageSize',
+    );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList.cast<Map<String, dynamic>>();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, (Map<String, dynamic> item) => item);
     }
     throw Exception('Failed to load orders: ${response.statusCode}');
   }
@@ -140,13 +143,37 @@ class OrdersApi {
 
   /// Sve narudžbe (samo admin token).
   Future<List<Map<String, dynamic>>> listAllOrders({String? orderNumberPrefix}) async {
-    final String q = orderNumberPrefix != null && orderNumberPrefix.trim().isNotEmpty
-        ? '?OrderNumber=${Uri.encodeQueryComponent(orderNumberPrefix.trim())}'
-        : '';
-    final http.Response response = await _apiClient.get('$_ordersPath$q');
+    const int pageSize = 100;
+    final List<Map<String, dynamic>> all = <Map<String, dynamic>>[];
+    var page = 1;
+    while (true) {
+      final PagedResult<Map<String, dynamic>> result = await listOrdersPage(
+        orderNumberPrefix: orderNumberPrefix,
+        page: page,
+        pageSize: pageSize,
+      );
+      all.addAll(result.items);
+      if (!result.hasMore) break;
+      page++;
+    }
+    return all;
+  }
+
+  Future<PagedResult<Map<String, dynamic>>> listOrdersPage({
+    String? orderNumberPrefix,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final Map<String, String> params = <String, String>{
+      'Page': page.toString(),
+      'PageSize': pageSize.toString(),
+      if (orderNumberPrefix != null && orderNumberPrefix.trim().isNotEmpty)
+        'OrderNumber': orderNumberPrefix.trim(),
+    };
+    final http.Response response = await _apiClient.get('$_ordersPath?${Uri(queryParameters: params).query}');
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList.cast<Map<String, dynamic>>();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, (Map<String, dynamic> item) => item);
     }
     final String errorDetail = _parseErrorResponse(response);
     final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);

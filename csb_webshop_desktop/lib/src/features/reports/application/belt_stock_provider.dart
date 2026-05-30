@@ -13,7 +13,7 @@ class BeltStockEntry {
 final FutureProvider<List<BeltStockEntry>> beltStockProvider =
     FutureProvider<List<BeltStockEntry>>((Ref ref) async {
   final beltsApi = ref.watch(beltsApiProvider);
-  final List<Belt> belts = await beltsApi.getBelts();
+  final List<Belt> belts = await beltsApi.getAllBelts();
   final Map<String, int> counts = <String, int>{};
 
   for (final Belt belt in belts) {

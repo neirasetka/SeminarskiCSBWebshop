@@ -20,7 +20,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Rate>>> Get([FromQuery] RateSearchRequest search)
+        public async Task<ActionResult<PagedResult<Rate>>> Get([FromQuery] RateSearchRequest search)
         {
             if (search.UserID != 0)
             {
@@ -37,7 +37,7 @@ namespace CSBWebshopSeminarski.Controllers
 
         [HttpGet("by-user/{userId}")]
         [Authorize]
-        public async Task<ActionResult<List<Rate>>> GetByUser(int userId)
+        public async Task<ActionResult<PagedResult<Rate>>> GetByUser(int userId)
         {
             var denied = DenyUnlessCanAccessUserRates(userId);
             if (denied != null) return denied;

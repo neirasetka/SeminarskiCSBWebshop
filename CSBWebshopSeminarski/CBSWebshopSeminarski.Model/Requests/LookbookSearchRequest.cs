@@ -1,6 +1,6 @@
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class LookbookSearchRequest
+    public class LookbookSearchRequest : PagedSearchRequest
     {
         public int? BagID { get; set; }
         public int? BeltID { get; set; }

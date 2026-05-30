@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
+import '../../../core/paged_list_state.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../belts/application/belts_provider.dart';
 import '../../belts/application/belt_types_provider.dart';
@@ -23,15 +24,30 @@ class KaiseviShopScreen extends ConsumerStatefulWidget {
 }
 
 class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   int? _selectedBeltTypeId;
   String _sortBy = 'name';
   bool _sortAscending = true;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(beltsListProvider.notifier).loadMore();
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -78,7 +94,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<PagedListState<Belt>> beltsAsync = ref.watch(beltsListProvider);
     final AsyncValue<Set<int>> beltFavoritesAsync = ref.watch(beltFavoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -93,6 +109,7 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
             )
           : null,
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: <Widget>[
           // Hero header
           SliverToBoxAdapter(
@@ -117,7 +134,8 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
           ),
           // Products grid
           beltsAsync.when(
-            data: (List<Belt> belts) {
+            data: (PagedListState<Belt> paged) {
+              final List<Belt> belts = paged.items;
               if (belts.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
@@ -149,35 +167,46 @@ class _KaiseviShopScreenState extends ConsumerState<KaiseviShopScreen> {
                 );
               }
               final List<Belt> sortedBelts = _sortBelts(belts);
-              return SliverPadding(
-                padding: const EdgeInsets.all(24),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 320,
-                    mainAxisSpacing: 24,
-                    crossAxisSpacing: 24,
-                    childAspectRatio: 0.72,
+              return SliverMainAxisGroup(
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: const EdgeInsets.all(24),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 320,
+                        mainAxisSpacing: 24,
+                        crossAxisSpacing: 24,
+                        childAspectRatio: 0.72,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          final Belt belt = sortedBelts[index];
+                          final bool isFav = beltFavoritesAsync.value?.contains(belt.id) ?? false;
+                          return _ProductCard(
+                            belt: belt,
+                            isFavorite: isFav,
+                            showFavorite: !isAdmin,
+                            showAddToCart: !isAdmin,
+                            showDelete: isAdmin,
+                            onTap: () => _navigateToDetail(belt),
+                            onToggleFavorite: () =>
+                                ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
+                            onAddToCart: () => _addToCart(belt),
+                            onDelete: isAdmin ? () => _deleteBelt(this.context, ref, belt) : null,
+                          );
+                        },
+                        childCount: sortedBelts.length,
+                      ),
+                    ),
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                      final Belt belt = sortedBelts[index];
-                      final bool isFav = beltFavoritesAsync.value?.contains(belt.id) ?? false;
-                      return _ProductCard(
-                        belt: belt,
-                        isFavorite: isFav,
-                        showFavorite: !isAdmin,
-                        showAddToCart: !isAdmin,
-                        showDelete: isAdmin,
-                        onTap: () => _navigateToDetail(belt),
-                        onToggleFavorite: () =>
-                            ref.read(beltFavoritesProvider.notifier).toggleBelt(belt.id),
-                        onAddToCart: () => _addToCart(belt),
-                        onDelete: isAdmin ? () => _deleteBelt(this.context, ref, belt) : null,
-                      );
-                    },
-                    childCount: sortedBelts.length,
-                  ),
-                ),
+                  if (paged.isLoadingMore)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                ],
               );
             },
             loading: () => const SliverFillRemaining(

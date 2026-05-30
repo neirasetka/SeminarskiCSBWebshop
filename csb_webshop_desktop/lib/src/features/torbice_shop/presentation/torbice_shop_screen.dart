@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
+import '../../../core/paged_list_state.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/application/bag_types_provider.dart';
@@ -24,15 +25,30 @@ class TorbiceShopScreen extends ConsumerStatefulWidget {
 }
 
 class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   int? _selectedBagTypeId;
   String _sortBy = 'name';
   bool _sortAscending = true;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(bagsListProvider.notifier).loadMore();
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -79,7 +95,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Bag>> bagsAsync = ref.watch(bagsListProvider);
+    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
     final AsyncValue<Set<int>> favoritesAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).value ?? false;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -94,6 +110,7 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
             )
           : null,
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: <Widget>[
           // Hero header
           SliverToBoxAdapter(
@@ -117,7 +134,8 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
           ),
           // Products grid
           bagsAsync.when(
-            data: (List<Bag> bags) {
+            data: (PagedListState<Bag> paged) {
+              final List<Bag> bags = paged.items;
               if (bags.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
@@ -149,35 +167,46 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
                 );
               }
               final List<Bag> sortedBags = _sortBags(bags);
-              return SliverPadding(
-                padding: const EdgeInsets.all(24),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 320,
-                    mainAxisSpacing: 24,
-                    crossAxisSpacing: 24,
-                    childAspectRatio: 0.72,
+              return SliverMainAxisGroup(
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: const EdgeInsets.all(24),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 320,
+                        mainAxisSpacing: 24,
+                        crossAxisSpacing: 24,
+                        childAspectRatio: 0.72,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          final Bag bag = sortedBags[index];
+                          final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
+                          return _ProductCard(
+                            bag: bag,
+                            isFavorite: isFav,
+                            showFavorite: !isAdmin,
+                            showAddToCart: !isAdmin,
+                            showDelete: isAdmin,
+                            onTap: () => _navigateToDetail(bag),
+                            onToggleFavorite: () =>
+                                ref.read(favoritesProvider.notifier).toggleBag(bag.id),
+                            onAddToCart: () => _addToCart(bag),
+                            onDelete: isAdmin ? () => _deleteBag(context, ref, bag) : null,
+                          );
+                        },
+                        childCount: sortedBags.length,
+                      ),
+                    ),
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                      final Bag bag = sortedBags[index];
-                      final bool isFav = favoritesAsync.value?.contains(bag.id) ?? false;
-                      return _ProductCard(
-                        bag: bag,
-                        isFavorite: isFav,
-                        showFavorite: !isAdmin,
-                        showAddToCart: !isAdmin,
-                        showDelete: isAdmin,
-                        onTap: () => _navigateToDetail(bag),
-                        onToggleFavorite: () =>
-                            ref.read(favoritesProvider.notifier).toggleBag(bag.id),
-                        onAddToCart: () => _addToCart(bag),
-                        onDelete: isAdmin ? () => _deleteBag(context, ref, bag) : null,
-                      );
-                    },
-                    childCount: sortedBags.length,
-                  ),
-                ),
+                  if (paged.isLoadingMore)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                ],
               );
             },
             loading: () => const SliverFillRemaining(

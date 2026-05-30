@@ -17,7 +17,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public override async Task<List<BagType>> Get(BagTypeSearchRequest request)
+        public override async Task<PagedResult<BagType>> Get(BagTypeSearchRequest request)
         {
             var query = _context.BagTypes.AsQueryable().OrderBy(c => c.BagName);
 
@@ -25,9 +25,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 query = query.Where(x => x.BagName.StartsWith(request.BagName)).OrderBy(c => c.BagName);
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<BagType>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<BagType> GetById(int ID)

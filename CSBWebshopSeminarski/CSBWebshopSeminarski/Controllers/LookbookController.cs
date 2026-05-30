@@ -17,7 +17,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet]
-        public async Task<List<LookbookItem>> Get([FromQuery] LookbookSearchRequest search)
+        public async Task<PagedResult<LookbookItem>> Get([FromQuery] LookbookSearchRequest search)
         {
             return await _service.Get(search);
         }

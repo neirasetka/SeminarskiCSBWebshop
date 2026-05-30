@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/announcement.dart';
 
 class AnnouncementsApi {
@@ -25,10 +26,16 @@ class AnnouncementsApi {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return List<Announcement>.from(_dummyAnnouncements);
       }
-      final List<dynamic> items = json.decode(response.body) as List<dynamic>;
-      return items
-          .map((dynamic e) => Announcement.fromNewsJson(e as Map<String, dynamic>))
-          .toList();
+      final dynamic decoded = json.decode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return PagedResult.fromJson(decoded, Announcement.fromNewsJson).items;
+      }
+      if (decoded is List<dynamic>) {
+        return decoded
+            .map((dynamic e) => Announcement.fromNewsJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return List<Announcement>.from(_dummyAnnouncements);
     } catch (_) {
       return List<Announcement>.from(_dummyAnnouncements);
     }

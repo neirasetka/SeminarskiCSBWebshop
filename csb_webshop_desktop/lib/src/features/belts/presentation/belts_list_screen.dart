@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api_exception.dart';
+import '../../../core/paged_list_state.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
@@ -20,13 +21,28 @@ class BeltsListScreen extends ConsumerStatefulWidget {
 }
 
 class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   int? _selectedBeltTypeId;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(beltsListProvider.notifier).loadMore();
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -49,7 +65,7 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<PagedListState<Belt>> beltsAsync = ref.watch(beltsListProvider);
     final AsyncValue<bool> isAdminAsync = ref.watch(adminRoleProvider);
     final bool isAdmin = isAdminAsync.value ?? false;
 
@@ -110,14 +126,22 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
             child: RefreshIndicator(
               onRefresh: _onRefresh,
               child: beltsAsync.when(
-                data: (List<Belt> belts) {
+                data: (PagedListState<Belt> paged) {
+                  final List<Belt> belts = paged.items;
                   if (belts.isEmpty) {
                     return const Center(child: Text('Nema rezultata.'));
                   }
                   return ListView.separated(
-                    itemCount: belts.length,
+                    controller: _scrollController,
+                    itemCount: belts.length + (paged.isLoadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (BuildContext context, int index) {
+                      if (index >= belts.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
                       final Belt belt = belts[index];
                       return ListTile(
                         leading: _BeltThumbnail(imageUrl: belt.imageUrl),

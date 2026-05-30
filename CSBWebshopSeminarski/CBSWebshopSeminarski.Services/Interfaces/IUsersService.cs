@@ -7,10 +7,10 @@ namespace CBSWebshopSeminarski.Services.Interfaces
     {
         Task<User?> Authenticate(UserAuthenticationRequest request);
         Task<User> Register(RegisterRequest request);
-        Task<List<Bag>> GetLikedBags(int ID, BagSearchRequest request);
+        Task<PagedResult<Bag>> GetLikedBags(int ID, BagSearchRequest request);
         Task<Bag> InsertLikedBags(int ID, int BagID);
         Task<Bag> DeleteLikedBags(int ID, int BagID);
-        Task<List<Belt>> GetLikedBelts(int ID, BeltSearchRequest request);
+        Task<PagedResult<Belt>> GetLikedBelts(int ID, BeltSearchRequest request);
         Task<Belt> InsertLikedBelts(int ID, int BeltID);
         Task<Belt> DeleteLikedBelts(int ID, int BeltID);
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/paged_result.dart';
 import '../domain/belt.dart';
 
 class BeltsApi {
@@ -12,20 +13,43 @@ class BeltsApi {
 
   static const String _beltsPath = '/api/Belts';
 
-  Future<List<Belt>> getBelts({int? beltTypeId, String? query}) async {
+  Future<PagedResult<Belt>> getBelts({
+    int? beltTypeId,
+    String? query,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     final Map<String, String> params = <String, String>{
+      'Page': page.toString(),
+      'PageSize': pageSize.toString(),
       if (beltTypeId != null) 'BeltTypeID': beltTypeId.toString(),
       if (query != null && query.isNotEmpty) 'BeltName': query,
     };
-    final String queryString = Uri(queryParameters: params).query;
-    final String pathWithQuery = params.isEmpty ? _beltsPath : '$_beltsPath?$queryString';
+    final String pathWithQuery = '$_beltsPath?${Uri(queryParameters: params).query}';
     final http.Response response = await _apiClient.get(pathWithQuery);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final List<dynamic> list = json.decode(response.body) as List<dynamic>;
-      return list.map((dynamic e) => Belt.fromJson(e as Map<String, dynamic>)).toList();
+      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+      return PagedResult.fromJson(map, Belt.fromJson);
     }
-    final String body = response.body.isNotEmpty ? response.body : 'no body';
-    throw Exception('Failed to load belts: ${response.statusCode} — $body');
+    throw Exception('Failed to load belts: ${response.statusCode}');
+  }
+
+  Future<List<Belt>> getAllBelts({int? beltTypeId, String? query}) async {
+    const int pageSize = 100;
+    final List<Belt> all = <Belt>[];
+    var page = 1;
+    while (true) {
+      final PagedResult<Belt> result = await getBelts(
+        beltTypeId: beltTypeId,
+        query: query,
+        page: page,
+        pageSize: pageSize,
+      );
+      all.addAll(result.items);
+      if (!result.hasMore) break;
+      page++;
+    }
+    return all;
   }
 
   Future<Belt> getBeltById(int id) async {
@@ -98,4 +122,3 @@ class BeltsApi {
     throw Exception('Failed to delete belt $id: ${response.statusCode}');
   }
 }
-

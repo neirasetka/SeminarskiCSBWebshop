@@ -17,7 +17,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _context = context;
             _mapper = mapper;
         }
-        public override async Task<List<Belt>> Get(BeltSearchRequest request)
+        public override async Task<PagedResult<Belt>> Get(BeltSearchRequest request)
         {
             request ??= new BeltSearchRequest();
             var query = _context.Belts.Include(i => i.User).Include(i => i.BeltType).AsQueryable().OrderBy(c => c.BeltName);
@@ -36,9 +36,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 query = query.Where(x => x.BeltName.Contains(request.BeltName)).Include(i => i.User).OrderBy(c => c.BeltName);
             }
-            var list = await query.ToListAsync();
 
-            return _mapper.Map<List<Belt>>(list);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<Belt> Insert(BeltUpsertRequest request)

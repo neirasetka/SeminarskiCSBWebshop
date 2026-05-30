@@ -19,7 +19,7 @@ namespace CBSWebshopSeminarski.Services.Services
             _mapper = mapper;
         }
 
-        public override async Task<List<OutfitIdea>> Get(OutfitIdeaSearchRequest request)
+        public override async Task<PagedResult<OutfitIdea>> Get(OutfitIdeaSearchRequest request)
         {
             request ??= new OutfitIdeaSearchRequest();
             var query = _context.OutfitIdeas
@@ -46,8 +46,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.Where(x => x.Title != null && x.Title.Contains(request.Title));
             }
 
-            var list = await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
-            return _mapper.Map<List<OutfitIdea>>(list);
+            query = query.OrderByDescending(x => x.CreatedAt);
+            return await ToPagedResultAsync(query, request);
         }
 
         public override async Task<OutfitIdea> GetById(int id)

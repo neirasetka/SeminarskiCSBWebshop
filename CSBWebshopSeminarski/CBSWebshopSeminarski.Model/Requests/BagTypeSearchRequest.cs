@@ -1,6 +1,6 @@
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class BagTypeSearchRequest
+    public class BagTypeSearchRequest : PagedSearchRequest
     {
         public string? BagName { get; set; }
     }
