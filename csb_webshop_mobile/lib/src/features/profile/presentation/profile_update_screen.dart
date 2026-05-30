@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/form_validators.dart';
 import '../../auth/application/auth_controller.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
@@ -155,15 +156,8 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
                 border: OutlineInputBorder(),
               ),
               textInputAction: TextInputAction.next,
-              validator: (String? value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Ime je obavezno';
-                }
-                if (value.trim().length < 2) {
-                  return 'Ime mora imati najmanje 2 znaka';
-                }
-                return null;
-              },
+              validator: (String? value) =>
+                  FormValidators.minLength(value, 2, fieldName: 'Ime'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -174,15 +168,8 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
                 border: OutlineInputBorder(),
               ),
               textInputAction: TextInputAction.next,
-              validator: (String? value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Prezime je obavezno';
-                }
-                if (value.trim().length < 2) {
-                  return 'Prezime mora imati najmanje 2 znaka';
-                }
-                return null;
-              },
+              validator: (String? value) =>
+                  FormValidators.minLength(value, 2, fieldName: 'Prezime'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -195,6 +182,7 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
               ),
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
+              validator: FormValidators.optionalPhone,
             ),
             const SizedBox(height: 32),
             FilledButton.icon(

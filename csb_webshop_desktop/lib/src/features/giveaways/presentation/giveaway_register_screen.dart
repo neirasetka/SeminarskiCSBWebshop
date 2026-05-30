@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../../core/form_validators.dart';
 import '../application/giveaways_provider.dart';
 import '../data/giveaways_api.dart';
 import '../domain/giveaway.dart';
@@ -361,12 +362,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
               ),
               prefixIcon: const Icon(Icons.person_outline),
             ),
-            validator: (String? value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Ime je obavezno';
-              }
-              return null;
-            },
+            validator: FormValidators.participantName,
           ),
           const SizedBox(height: 20),
           
@@ -394,12 +390,8 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
               ),
               prefixIcon: const Icon(Icons.person_outline),
             ),
-            validator: (String? value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Prezime je obavezno';
-              }
-              return null;
-            },
+            validator: (String? value) =>
+                FormValidators.minLength(value, 2, fieldName: 'Prezime'),
           ),
           const SizedBox(height: 20),
           
@@ -428,17 +420,7 @@ class _GiveawayRegisterScreenState extends ConsumerState<GiveawayRegisterScreen>
               ),
               prefixIcon: const Icon(Icons.email_outlined),
             ),
-            validator: (String? value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Email je obavezan';
-              }
-              final String val = value.trim();
-              final RegExp re = RegExp(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$");
-              if (!re.hasMatch(val)) {
-                return 'Unesite ispravan email';
-              }
-              return null;
-            },
+            validator: FormValidators.email,
           ),
           const SizedBox(height: 32),
           

@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class OutfitIdeaUpsertRequest
+    public class OutfitIdeaUpsertRequest : IValidatableObject
     {
-        /// Either BagID or BeltID must be set (for bag or belt outfit idea).
         public int? BagID { get; set; }
         
         public int? BeltID { get; set; }
@@ -20,5 +20,13 @@ namespace CBSWebshopSeminarski.Model.Requests
         
         [MaxLength(1000, ErrorMessage = "The description can be up to 1000 characters long.")]
         public string? Description { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Outfit idea"))
+            {
+                yield return result;
+            }
+        }
     }
 }

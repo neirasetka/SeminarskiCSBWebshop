@@ -126,7 +126,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
           final Map<String, dynamic> created = await _api.createOrder(
             orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
             date: DateTime.now(),
-            price: 0,
           );
           return OrderModel.fromJson(created);
         },
@@ -192,7 +191,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
           final Map<String, dynamic> created = await _api.createOrder(
             orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
             date: DateTime.now(),
-            price: 0,
           );
           return OrderModel.fromJson(created);
         },

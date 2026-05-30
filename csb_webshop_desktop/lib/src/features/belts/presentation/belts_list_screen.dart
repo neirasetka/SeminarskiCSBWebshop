@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/form_validators.dart';
 import '../../../core/api_exception.dart';
 import '../../../core/paged_list_state.dart';
 import '../application/belts_provider.dart';
@@ -341,6 +342,7 @@ Future<bool?> _confirm(BuildContext context, String title, String message) {
 
 Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) async {
   final TextEditingController nameController = TextEditingController();
+  final GlobalKey<FormState> typeFormKey = GlobalKey<FormState>();
   await showDialog<void>(
     context: context,
     builder: (BuildContext context) {
@@ -359,33 +361,26 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                       children: <Widget>[
                         Expanded(
                           child: Form(
+                            key: typeFormKey,
                             autovalidateMode: AutovalidateMode.disabled,
                             child: TextFormField(
                               controller: nameController,
                               decoration: const InputDecoration(labelText: 'Novi tip'),
-                              validator: (String? v) {
-                                if (v == null || v.trim().isEmpty) return 'Naziv je obavezan';
-                                final bool exists = types.any((BeltType t) => t.name.toLowerCase().trim() == v.toLowerCase().trim());
-                                if (exists) return 'Tip sa ovim nazivom već postoji';
-                                return null;
-                              },
+                              validator: (String? v) => FormValidators.uniqueTypeName(
+                                v,
+                                existingNames: types.map((BeltType t) => t.name),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
+                            if (!(typeFormKey.currentState?.validate() ?? false)) return;
                             final String name = nameController.text.trim();
-                            if (name.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unesite naziv tipa')));
-                              return;
-                            }
-                            if (types.any((BeltType t) => t.name.toLowerCase().trim() == name.toLowerCase())) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tip već postoji')));
-                              return;
-                            }
                             await ref.read(beltTypesProvider.notifier).create(name);
                             nameController.clear();
+                            typeFormKey.currentState?.reset();
                           },
                           child: const Text('Dodaj'),
                         ),
@@ -401,9 +396,22 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () async {
-                                final String? newName = await _promptText(context, 'Uredi tip', 'Naziv', t.name);
-                                if (newName != null && newName.trim().isNotEmpty) {
-                                  await ref.read(beltTypesProvider.notifier).rename(t.id, newName.trim());
+                                final String? newName =
+                                    await FormValidators.promptValidatedText(
+                                  context,
+                                  title: 'Uredi tip',
+                                  label: 'Naziv',
+                                  initial: t.name,
+                                  validator: (String? v) =>
+                                      FormValidators.uniqueTypeName(
+                                    v,
+                                    existingNames:
+                                        types.map((BeltType t) => t.name),
+                                    currentName: t.name,
+                                  ),
+                                );
+                                if (newName != null && newName.isNotEmpty) {
+                                  await ref.read(beltTypesProvider.notifier).rename(t.id, newName);
                                 }
                               },
                             ),
@@ -432,21 +440,6 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
         );
       });
     },
-  );
-}
-
-Future<String?> _promptText(BuildContext context, String title, String label, String initial) async {
-  final TextEditingController ctrl = TextEditingController(text: initial);
-  return showDialog<String>(
-    context: context,
-    builder: (BuildContext context) => AlertDialog(
-      title: Text(title),
-      content: TextField(controller: ctrl, decoration: InputDecoration(labelText: label)),
-      actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Odustani')),
-        ElevatedButton(onPressed: () => Navigator.of(context).pop(ctrl.text), child: const Text('Sačuvaj')),
-      ],
-    ),
   );
 }
 

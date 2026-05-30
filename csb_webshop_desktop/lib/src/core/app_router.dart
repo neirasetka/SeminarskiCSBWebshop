@@ -6,6 +6,7 @@ import '../features/announcements/presentation/announcement_edit_screen.dart';
 import '../features/announcements/presentation/announcement_form_screen.dart';
 import '../features/announcements/presentation/announcements_list_screen.dart';
 import '../features/auth/presentation/auth_gate.dart';
+import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/orders/presentation/cart_screen.dart';
@@ -48,6 +49,16 @@ final GoRouter appRouter = GoRouter(
       path: '/register',
       name: 'register',
       builder: (BuildContext context, GoRouterState state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      name: 'forgot-password',
+      builder: (BuildContext context, GoRouterState state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      name: 'reset-password',
+      builder: (BuildContext context, GoRouterState state) => const ResetPasswordScreen(),
     ),
     GoRoute(
       path: '/',

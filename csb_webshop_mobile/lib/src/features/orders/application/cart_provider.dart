@@ -43,7 +43,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       final created = await _api.createOrder(
         orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
-        price: 0,
       );
       order = OrderModel.fromJson(created);
     }
@@ -88,7 +87,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
       final created = await _api.createOrder(
         orderNumber: 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
         date: DateTime.now(),
-        price: 0,
       );
       order = OrderModel.fromJson(created);
     }

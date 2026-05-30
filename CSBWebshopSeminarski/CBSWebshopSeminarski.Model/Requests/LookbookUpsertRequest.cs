@@ -15,7 +15,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [MaxLength(300, ErrorMessage = "Tags can have a maximum of 300 characters.")]
         public string? Tags { get; set; }
         
-        [Range(0, int.MaxValue, ErrorMessage = "The order must be a positive number.")]
+        [Range(1, int.MaxValue, ErrorMessage = "The order must be a positive number.")]
         public int? SortOrder { get; set; }
         
         public bool IsFeatured { get; set; }

@@ -66,7 +66,7 @@ namespace CSBWebshopSeminarski.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipantOnGiveaway(int id, [FromBody] RegisterParticipantRequest request)
         {
-            var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name, request.Email);
+            var created = await _giveawaysService.RegisterParticipantAsync(id, request.Name ?? string.Empty, request.Email);
             var dto = new ParticipantPublicDto
             {
                 Id = created.Id,

@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class UserUpsertRequest
+    public class UserUpsertRequest : IValidatableObject
     {
         [Required(ErrorMessage = "Name is required.")]
         [MinLength(2, ErrorMessage = "Name must have at least 2 characters.")]
@@ -16,7 +17,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = null!;
         
-        [RegularExpression(@"^[\+]?[\d\s\-\(\)]{6,20}$", ErrorMessage = "Please enter a valid phone number.")]
+        [RegularExpression(ValidationPatterns.Phone, ErrorMessage = ValidationPatterns.PhoneErrorMessage)]
         public string Phone { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Username is required.")]
@@ -31,5 +32,15 @@ namespace CBSWebshopSeminarski.Model.Requests
         public byte[]? Image { get; set; }
         public List<string> RoleNames { get; set; } = new List<string>();
         public List<string> RoleNamesDelete { get; set; } = new List<string>();
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!string.IsNullOrEmpty(Password) && Password != PasswordConfirmation)
+            {
+                yield return new ValidationResult(
+                    "Passwords do not match.",
+                    new[] { nameof(PasswordConfirmation) });
+            }
+        }
     }
 }

@@ -49,7 +49,10 @@ namespace CSBWebshopSeminarski.Mapper
                 .ForMember(d => d.Amount, o => o.MapFrom(s => (decimal)s.Price))
                 .ForMember(d => d.PaymentStatus, o => o.MapFrom(s => s.PaymentStatus.ToString()))
                 .ForMember(d => d.UserUserName, o => o.MapFrom(s => s.User != null ? s.User.UserName : string.Empty));
-            CreateMap<Orders, OrderUpsertRequest>().ReverseMap();
+            CreateMap<Orders, OrderUpsertRequest>().ReverseMap()
+                .ForMember(d => d.Price, o => o.MapFrom(s => s.Price));
+            CreateMap<OrderUpsertRequest, Orders>()
+                .ForMember(d => d.Price, o => o.MapFrom(s => s.Price ?? 0m));
             CreateMap<TrackingEvents, TrackingEvent>().ReverseMap();
             CreateMap<Orders, ShippingInfo>()
                 .ForMember(d => d.TrackingEvents, o => o.Ignore());

@@ -56,7 +56,6 @@ namespace CSBWebshopSeminarski.Controllers
                 throw new ForbiddenException("Access denied.");
             }
             request.UserID = currentUserId;
-            request.Price = 0;
             return await _service.Insert(request);
         }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 
@@ -140,12 +141,8 @@ class _AnnouncementEditScreenState extends ConsumerState<AnnouncementEditScreen>
                       filled: true,
                       fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     ),
-                    validator: (String? value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Naslov je obavezan';
-                      }
-                      return null;
-                    },
+                    validator: (String? value) =>
+                        FormValidators.minLength(value, 2, fieldName: 'Naslov'),
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
@@ -160,12 +157,8 @@ class _AnnouncementEditScreenState extends ConsumerState<AnnouncementEditScreen>
                       fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     ),
                     maxLines: 6,
-                    validator: (String? value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Sadržaj je obavezan';
-                      }
-                      return null;
-                    },
+                    validator: (String? value) =>
+                        FormValidators.minLength(value, 1, fieldName: 'Sadržaj'),
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<AnnouncementType>(

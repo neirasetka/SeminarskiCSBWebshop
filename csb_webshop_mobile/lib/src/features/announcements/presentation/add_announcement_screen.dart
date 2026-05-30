@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/announcements_provider.dart';
 
 class AddAnnouncementScreen extends ConsumerStatefulWidget {
@@ -57,12 +58,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                     labelText: 'Naziv torbice',
                     hintText: 'Unesite naziv torbice',
                   ),
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Naziv torbice je obavezan';
-                    }
-                    return null;
-                  },
+                  validator: FormValidators.announcementBagName,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -73,16 +69,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                     labelText: 'Cijena torbice',
                     hintText: 'Unesite cijenu (npr. 149.90)',
                   ),
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Cijena je obavezna';
-                    }
-                    final double? price = double.tryParse(value.replaceAll(',', '.'));
-                    if (price == null || price <= 0) {
-                      return 'Unesite ispravnu cijenu';
-                    }
-                    return null;
-                  },
+                  validator: FormValidators.price,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -92,12 +79,8 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                     labelText: 'Boja torbice',
                     hintText: 'Unesite boju torbice',
                   ),
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Boja je obavezna';
-                    }
-                    return null;
-                  },
+                  validator: (String? value) =>
+                      FormValidators.required(value, fieldName: 'Boja torbice'),
                 ),
                 const SizedBox(height: 32),
                 Row(

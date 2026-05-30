@@ -1,14 +1,24 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class ConfirmCheckoutSessionRequest
     {
+        [Required(ErrorMessage = "Session ID is required.")]
+        [MinLength(1, ErrorMessage = "Session ID cannot be empty.")]
         public string SessionId { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue, ErrorMessage = "Order ID must be valid when provided.")]
         public int? OrderId { get; set; }
     }
 
     public class ConfirmPaymentIntentRequest
     {
+        [Required(ErrorMessage = "Payment intent ID is required.")]
+        [MinLength(1, ErrorMessage = "Payment intent ID cannot be empty.")]
         public string PaymentIntentId { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue, ErrorMessage = "Order ID must be valid when provided.")]
         public int? OrderId { get; set; }
     }
 

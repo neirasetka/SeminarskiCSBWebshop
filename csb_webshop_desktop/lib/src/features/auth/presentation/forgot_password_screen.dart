@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../core/form_validators.dart';
 import '../data/password_reset_api.dart';
 
@@ -10,11 +12,17 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _api = PasswordResetApi();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final PasswordResetApi _api = PasswordResetApi();
   bool _loading = false;
   bool _sent = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -42,7 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: _sent
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: <Widget>[
                   const Icon(Icons.email, size: 64, color: Colors.green),
                   const SizedBox(height: 16),
                   const Text(
@@ -52,11 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ResetPasswordScreen()),
-                    ),
+                    onPressed: () => context.go('/reset-password'),
                     child: const Text('Unesi kod za reset'),
                   ),
                 ],
@@ -65,7 +69,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                  children: <Widget>[
                     const Text(
                       'Unesite email adresu za reset lozinke',
                       style: TextStyle(fontSize: 16),
@@ -86,7 +90,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: ElevatedButton(
                         onPressed: _loading ? null : _submit,
                         child: _loading
-                            ? const CircularProgressIndicator()
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
                             : const Text('Pošalji reset link'),
                       ),
                     ),
@@ -106,12 +114,20 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _tokenController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  final _api = PasswordResetApi();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _tokenController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+  final PasswordResetApi _api = PasswordResetApi();
   bool _loading = false;
+
+  @override
+  void dispose() {
+    _tokenController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -126,7 +142,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lozinka je uspješno promijenjena!')),
         );
-        Navigator.popUntil(context, (route) => route.isFirst);
+        context.go('/login');
       }
     } catch (e) {
       if (mounted) {
@@ -148,7 +164,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            children: [
+            children: <Widget>[
               const SizedBox(height: 24),
               TextFormField(
                 controller: _tokenController,
@@ -183,7 +199,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ElevatedButton(
                 onPressed: _loading ? null : _submit,
                 child: _loading
-                    ? const CircularProgressIndicator()
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Promijeni lozinku'),
               ),
             ],

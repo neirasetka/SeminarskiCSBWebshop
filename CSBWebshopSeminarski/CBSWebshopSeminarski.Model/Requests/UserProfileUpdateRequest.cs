@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -19,6 +20,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = null!;
 
+        [RegularExpression(ValidationPatterns.Phone, ErrorMessage = ValidationPatterns.PhoneErrorMessage)]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Username is required.")]

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -16,6 +17,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = null!;
 
+        [RegularExpression(ValidationPatterns.Phone, ErrorMessage = ValidationPatterns.PhoneErrorMessage)]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Username is required.")]
@@ -26,6 +28,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [MinLength(6, ErrorMessage = "Password must have at least 6 characters.")]
         public string Password { get; set; } = null!;
 
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
         public string PasswordConfirmation { get; set; } = null!;
 
         public byte[]? Image { get; set; }

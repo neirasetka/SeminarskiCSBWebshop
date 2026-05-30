@@ -35,32 +35,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)
         {
-            if (!request.BagID.HasValue && !request.BeltID.HasValue)
-                throw new ValidationException("Order item must have either BagID or BeltID.");
-            if (request.BagID.HasValue && request.BagID.Value < 1)
-                throw new ValidationException("BagID must be a valid bag identifier.");
-            if (request.BeltID.HasValue && request.BeltID.Value < 1)
-                throw new ValidationException("BeltID must be a valid belt identifier.");
-
-            // Ako klijent pošalje cijenu 0, dohvati pravu cijenu iz artikla (Bag ili Belt)
-            if (request.Price <= 0)
-            {
-                if (request.BagID.HasValue)
-                {
-                    var bag = await _context.Bags.FindAsync(request.BagID.Value);
-                    if (bag != null)
-                        request.Price = bag.Price;
-                }
-                else if (request.BeltID.HasValue)
-                {
-                    var belt = await _context.Belts.FindAsync(request.BeltID.Value);
-                    if (belt != null)
-                        request.Price = belt.Price;
-                }
-            }
-
-            if (request.Price <= 0)
-                throw new ValidationException("Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
+            await ResolveCatalogPriceAsync(request);
 
             var entity = _mapper.Map<OrderItems>(request);
 
@@ -72,7 +47,6 @@ namespace CBSWebshopSeminarski.Services.Services
             order.OrderItems.Add(entity);
             ApplyOrderTotal(order);
             await SaveChangesWithOrderItemsNullableRepairAsync();
-            // Ponovno učitaj stavku s Bag/Belt radi stabilnog mapiranja na OrderItem (izbjegava iznimke na pratnom entitetu).
             var insertedId = entity.OrderItemID;
             var forReturn = await _context.OrderItems
                 .AsNoTracking()
@@ -87,6 +61,9 @@ namespace CBSWebshopSeminarski.Services.Services
             var entity = _context.Set<OrderItems>().Find(ID);
             if (entity == null)
                 throw new NotFoundException($"Order item with ID {ID} not found.");
+
+            await ResolveCatalogPriceAsync(request);
+
             _context.Set<OrderItems>().Attach(entity);
             _context.Set<OrderItems>().Update(entity);
 
@@ -117,6 +94,31 @@ namespace CBSWebshopSeminarski.Services.Services
 
             await SaveChangesWithOrderItemsNullableRepairAsync();
             return true;
+        }
+
+        private async Task ResolveCatalogPriceAsync(OrderItemUpsertRequest request)
+        {
+            if (request.Price.HasValue && request.Price.Value > 0)
+                return;
+
+            if (request.BagID.HasValue)
+            {
+                var bag = await _context.Bags.FindAsync(request.BagID.Value);
+                if (bag != null)
+                    request.Price = bag.Price;
+            }
+            else if (request.BeltID.HasValue)
+            {
+                var belt = await _context.Belts.FindAsync(request.BeltID.Value);
+                if (belt != null)
+                    request.Price = belt.Price;
+            }
+
+            if (!request.Price.HasValue || request.Price.Value <= 0)
+            {
+                throw new ValidationException(
+                    "Cijena stavke mora biti veća od 0. Osvježite katalog ili provjerite artikal u administraciji.");
+            }
         }
 
         /// <summary>

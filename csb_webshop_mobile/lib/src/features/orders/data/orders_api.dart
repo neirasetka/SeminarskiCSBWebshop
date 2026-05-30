@@ -38,12 +38,12 @@ class OrdersApi {
   Future<Map<String, dynamic>> createOrder({
     required String orderNumber,
     required DateTime date,
-    double price = 0,
+    double? price,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
       'OrderNumber': orderNumber,
       'Date': date.toUtc().toIso8601String(),
-      'Price': price,
+      if (price != null) 'Price': price,
       'items': <Map<String, dynamic>>[],
     };
     final http.Response response = await _apiClient.post('$_ordersPath/Create', body: json.encode(body));

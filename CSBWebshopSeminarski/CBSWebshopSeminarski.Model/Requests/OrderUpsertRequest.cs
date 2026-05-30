@@ -12,9 +12,12 @@ namespace CBSWebshopSeminarski.Model.Requests
         [Required(ErrorMessage = "Date is required.")]
         public DateTime Date { get; set; }
         
-        [Required(ErrorMessage = "Price is required.")]
-        [Range(0, double.MaxValue, ErrorMessage = "Price must be zero or greater.")]
-        public decimal Price { get; set; }
+        /// <summary>
+        /// Opcionalno pri kreiranju prazne korpe — server postavlja 0 dok nema stavki.
+        /// Kad je poslano, mora biti veće od 0.
+        /// </summary>
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
+        public decimal? Price { get; set; }
         
         [Required(ErrorMessage = "User ID is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]

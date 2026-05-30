@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/auth_controller.dart';
 import '../domain/auth_session.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({
@@ -79,12 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _usernameController,
                       decoration: const InputDecoration(labelText: 'Korisničko ime'),
-                      validator: (String? value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Unesite korisničko ime';
-                        }
-                        return null;
-                      },
+                      validator: FormValidators.loginUsername,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -97,12 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       obscureText: _obscurePassword,
-                      validator: (String? value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Unesite lozinku';
-                        }
-                        return null;
-                      },
+                      validator: FormValidators.loginPassword,
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -128,6 +120,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: const Text('Registrirajte se'),
                         ),
                       ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('Zaboravili ste lozinku?'),
                     ),
                     if (!widget.embedded)
                       TextButton(

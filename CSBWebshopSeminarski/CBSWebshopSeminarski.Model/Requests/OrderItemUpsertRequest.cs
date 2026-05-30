@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
-    public class OrderItemUpsertRequest
+    public class OrderItemUpsertRequest : IValidatableObject
     {
         public int? BagID { get; set; }
         public int? BeltID { get; set; }
@@ -16,13 +17,21 @@ namespace CBSWebshopSeminarski.Model.Requests
         public int Quantity { get; set; }
         
         /// <summary>
-        /// 0 je dopušteno: API nadopunjava cijenu iz torbe ili kaiša pri spremanju stavke.
+        /// Kad nije poslano, servis dohvaća cijenu iz torbe ili kaiša.
+        /// Kad je poslano, mora biti veće od 0.
         /// </summary>
-        [Required(ErrorMessage = "Price is required.")]
-        [Range(0, 100_000_000, ErrorMessage = "Price must be zero or greater.")]
-        public decimal Price { get; set; }
+        [Range(0.01, 100_000_000, ErrorMessage = "Price must be greater than zero.")]
+        public decimal? Price { get; set; }
         
         [Range(0, 100, ErrorMessage = "Discount must be between 0 and 100.")]
         public decimal? Discount { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Order item"))
+            {
+                yield return result;
+            }
+        }
     }
 }

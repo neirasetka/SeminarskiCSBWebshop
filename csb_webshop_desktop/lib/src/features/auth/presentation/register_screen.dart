@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_api.dart';
 
@@ -38,35 +39,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email je obavezan';
-    }
-    final RegExp emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Unesite ispravnu email adresu';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Lozinka je obavezna';
-    }
-    if (value.length < 6) {
-      return 'Lozinka mora imati najmanje 6 znakova';
-    }
-    return null;
-  }
-
   String? _validatePasswordConfirm(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Potvrdite lozinku';
-    }
-    if (value != _passwordController.text) {
-      return 'Lozinke se ne podudaraju';
-    }
-    return null;
+    return FormValidators.passwordConfirm(value, _passwordController.text);
   }
 
   Future<void> _onRegister() async {
@@ -162,12 +136,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
-                              validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Ime je obavezno';
-                                }
-                                return null;
-                              },
+                              validator: (String? value) =>
+                                  FormValidators.minLength(value, 2, fieldName: 'Ime'),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -181,12 +151,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
-                              validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Prezime je obavezno';
-                                }
-                                return null;
-                              },
+                              validator: (String? value) =>
+                                  FormValidators.minLength(value, 2, fieldName: 'Prezime'),
                             ),
                           ),
                         ],
@@ -204,7 +170,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        validator: _validateEmail,
+                        validator: FormValidators.email,
                       ),
                       const SizedBox(height: 16),
 
@@ -218,9 +184,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 labelText: 'Telefon (opcionalno)',
                                 prefixIcon: Icon(Icons.phone_outlined),
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 5,
                               ),
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
+                              validator: FormValidators.optionalPhone,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -234,15 +202,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 errorMaxLines: 5,
                               ),
                               textInputAction: TextInputAction.next,
-                              validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Korisničko ime je obavezno';
-                                }
-                                if (value.length < 3) {
-                                  return 'Najmanje 3 znaka';
-                                }
-                                return null;
-                              },
+                              validator: FormValidators.username,
                             ),
                           ),
                         ],
@@ -267,7 +227,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.next,
-                        validator: _validatePassword,
+                        validator: FormValidators.password,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(

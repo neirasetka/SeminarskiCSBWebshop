@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/form_validators.dart';
 import '../../../utils/date_formatter.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
@@ -211,19 +212,14 @@ class _RegisterCard extends ConsumerWidget {
                   TextFormField(
                     controller: nameCtrl,
                     decoration: const InputDecoration(labelText: 'Ime (opcionalno)'),
+                    validator: FormValidators.optionalParticipantName,
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: emailCtrl,
                     decoration: const InputDecoration(labelText: 'Email'),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) return 'Email je obavezan';
-                      final String val = v.trim();
-                      final RegExp re = RegExp(r"^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$");
-                      if (!re.hasMatch(val)) return 'Unesite ispravan email';
-                      return null;
-                    },
+                    validator: FormValidators.email,
                   ),
                 ],
               ),
@@ -399,6 +395,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
   DateTime _start = DateTime.now();
   DateTime _end = DateTime.now().add(const Duration(days: 7));
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String? _dateRangeError;
 
   @override
   Widget build(BuildContext context) {
@@ -418,11 +415,8 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
               child: TextFormField(
                 controller: _title,
                 decoration: const InputDecoration(labelText: 'Naslov'),
-                validator: (String? v) {
-                  if (v == null || v.trim().isEmpty) return 'Naslov je obavezan';
-                  if (v.trim().length < 3) return 'Naslov mora imati bar 3 znaka';
-                  return null;
-                },
+                validator: (String? v) =>
+                    FormValidators.minLength(v, 3, fieldName: 'Naslov'),
               ),
             ),
             const SizedBox(height: 8),
@@ -436,7 +430,12 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                       initialDate: _start,
                     );
-                    if (picked != null) setState(() => _start = picked);
+                    if (picked != null) {
+                      setState(() {
+                        _start = picked;
+                        _dateRangeError = null;
+                      });
+                    }
                   },
                   child: Text('Start: ${DateFormatter.formatDate(_start)}'),
                 ),
@@ -451,12 +450,24 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
                       lastDate: DateTime.now().add(const Duration(days: 730)),
                       initialDate: _end,
                     );
-                    if (picked != null) setState(() => _end = picked);
+                    if (picked != null) {
+                      setState(() {
+                        _end = picked;
+                        _dateRangeError = null;
+                      });
+                    }
                   },
                   child: Text('Kraj: ${DateFormatter.formatDate(_end)}'),
                 ),
               ),
             ]),
+            if (_dateRangeError != null) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                _dateRangeError!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
@@ -464,7 +475,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
                 onPressed: () async {
                   if (!(_formKey.currentState?.validate() ?? false)) return;
                   if (!_end.isAfter(_start)) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kraj mora biti nakon starta')));
+                    setState(() => _dateRangeError = 'Kraj mora biti nakon starta');
                     return;
                   }
                   try {

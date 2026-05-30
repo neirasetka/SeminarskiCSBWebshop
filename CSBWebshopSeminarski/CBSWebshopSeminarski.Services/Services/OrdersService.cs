@@ -75,6 +75,11 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _mapper.Map<Orders>(request);
 
+            if (!request.Price.HasValue)
+            {
+                entity.Price = 0;
+            }
+
             if (string.IsNullOrWhiteSpace(entity.OrderNumber))
             {
                 entity.OrderNumber = GenerateOrderNumber();

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 
@@ -17,9 +18,6 @@ class AnnouncementFormScreen extends ConsumerStatefulWidget {
 }
 
 class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen> {
-  static final RegExp _lettersWithSpaceRegex = RegExp(r'^[A-Za-z\sčćžšđČĆŽŠĐ]+$');
-  static final RegExp _digitsOnlyRegex = RegExp(r'^[0-9]+$');
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -185,22 +183,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                                 LengthLimitingTextInputFormatter(25),
                               ],
                               textInputAction: TextInputAction.next,
-                              validator: (String? value) {
-                                final String trimmed = value?.trim() ?? '';
-                                if (trimmed.isEmpty) {
-                                  return 'Naziv torbice je obavezan';
-                                }
-                                if (trimmed.length < 2) {
-                                  return 'Naziv mora imati najmanje 2 znaka';
-                                }
-                                if (trimmed.length > 25) {
-                                  return 'Naziv može imati najviše 25 znakova';
-                                }
-                                if (!_lettersWithSpaceRegex.hasMatch(trimmed)) {
-                                  return 'Dozvoljena su samo slova';
-                                }
-                                return null;
-                              },
+                              validator: FormValidators.announcementBagName,
                             ),
                             const SizedBox(height: 24),
 
@@ -223,26 +206,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                                 LengthLimitingTextInputFormatter(5),
                               ],
                               textInputAction: TextInputAction.next,
-                              validator: (String? value) {
-                                final String trimmed = value?.trim() ?? '';
-                                if (trimmed.isEmpty) {
-                                  return 'Cijena je obavezna';
-                                }
-                                if (trimmed.length > 5) {
-                                  return 'Cijena može imati najviše 5 cifara';
-                                }
-                                if (!_digitsOnlyRegex.hasMatch(trimmed)) {
-                                  return 'Dozvoljeni su samo brojevi';
-                                }
-                                final double? price = double.tryParse(trimmed);
-                                if (price == null) {
-                                  return 'Unesite ispravnu cijenu';
-                                }
-                                if (price <= 0) {
-                                  return 'Cijena mora biti veća od 0';
-                                }
-                                return null;
-                              },
+                              validator: FormValidators.announcementPriceDigits,
                             ),
                             const SizedBox(height: 24),
 
@@ -264,19 +228,7 @@ class _AnnouncementFormScreenState extends ConsumerState<AnnouncementFormScreen>
                               ],
                               textInputAction: TextInputAction.done,
                               onFieldSubmitted: (_) => _submitAnnouncement(),
-                              validator: (String? value) {
-                                final String trimmed = value?.trim() ?? '';
-                                if (trimmed.isEmpty) {
-                                  return 'Boja je obavezna';
-                                }
-                                if (trimmed.length > 15) {
-                                  return 'Boja može imati najviše 15 znakova';
-                                }
-                                if (!_lettersWithSpaceRegex.hasMatch(trimmed)) {
-                                  return 'Dozvoljena su samo slova';
-                                }
-                                return null;
-                              },
+                              validator: FormValidators.announcementColor,
                             ),
                             const SizedBox(height: 40),
 

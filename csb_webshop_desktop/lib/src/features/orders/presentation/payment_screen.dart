@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/form_validators.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
 import '../domain/order_models.dart';
@@ -85,12 +86,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
 
   Future<void> _processPayment() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Molimo popunite sve obavezne podatke'),
-          backgroundColor: Colors.orange,
-        ),
-      );
       return;
     }
 
@@ -380,12 +375,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ),
-          validator: (String? value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Molimo unesite ime i prezime';
-            }
-            return null;
-          },
+          validator: FormValidators.fullName,
         ),
         const SizedBox(height: 16),
 
@@ -402,15 +392,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ),
-          validator: (String? value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Molimo unesite e-mail adresu';
-            }
-            if (!value.contains('@')) {
-              return 'Molimo unesite ispravnu e-mail adresu';
-            }
-            return null;
-          },
+          validator: FormValidators.email,
         ),
         const SizedBox(height: 16),
 
@@ -418,10 +400,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
-          inputFormatters: <TextInputFormatter>[
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(9),
-          ],
           decoration: InputDecoration(
             labelText: 'Broj telefona *',
             prefixIcon: const Icon(Icons.phone_outlined),
@@ -431,16 +409,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ),
-          validator: (String? value) {
-            final String phone = value?.trim() ?? '';
-            if (phone.isEmpty) {
-              return 'Molimo unesite broj telefona';
-            }
-            if (!RegExp(r'^\d{9}$').hasMatch(phone)) {
-              return 'Broj telefona mora sadržavati tačno 9 cifara';
-            }
-            return null;
-          },
+          validator: FormValidators.requiredPhone,
         ),
         const SizedBox(height: 16),
 
@@ -456,12 +425,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           ),
-          validator: (String? value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Molimo unesite adresu dostave';
-            }
-            return null;
-          },
+          validator: FormValidators.shippingAddress,
         ),
         const SizedBox(height: 16),
 
@@ -485,16 +449,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ),
-                validator: (String? value) {
-                  final String city = value?.trim() ?? '';
-                  if (city.isEmpty) {
-                    return 'Unesite grad';
-                  }
-                  if (!RegExp(r'^[A-Za-zČĆŽŠĐčćžšđ]{1,12}$').hasMatch(city)) {
-                    return 'Grad može sadržavati samo slova (max 12)';
-                  }
-                  return null;
-                },
+                validator: FormValidators.shippingCity,
               ),
             ),
             const SizedBox(width: 16),
@@ -516,16 +471,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ),
-                validator: (String? value) {
-                  final String postalCode = value?.trim() ?? '';
-                  if (postalCode.isEmpty) {
-                    return 'Unesite poštanski broj';
-                  }
-                  if (!RegExp(r'^\d{5}$').hasMatch(postalCode)) {
-                    return 'Poštanski broj mora sadržavati tačno 5 cifara';
-                  }
-                  return null;
-                },
+                validator: FormValidators.postalCodeBiH,
               ),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
+import '../../../core/form_validators.dart';
 import '../application/belt_types_provider.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
@@ -150,21 +151,14 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Naziv'),
                 textInputAction: TextInputAction.next,
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) return 'Naziv je obavezan';
-                  if (value.trim().length < 2) return 'Naziv mora imati bar 2 znaka';
-                  return null;
-                },
+                validator: FormValidators.productName,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _codeController,
                 decoration: const InputDecoration(labelText: 'Šifra'),
                 textInputAction: TextInputAction.next,
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) return 'Šifra je obavezna';
-                  return null;
-                },
+                validator: FormValidators.productCode,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -172,16 +166,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
                 decoration: const InputDecoration(labelText: 'Cijena'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 textInputAction: TextInputAction.next,
-                validator: (String? value) {
-                  if (value == null || value.trim().isEmpty) return 'Cijena je obavezna';
-                  final double? parsed = double.tryParse(value.replaceAll(',', '.'));
-                  if (parsed == null) return 'Unesite ispravan broj';
-                  if (parsed <= 0) return 'Cijena mora biti veća od 0';
-                  final List<String> parts = value.replaceAll(',', '.').split('.');
-                  if (parts.length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
-                  if (parts.length == 2 && parts[1].length > 2) return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
-                  return null;
-                },
+                validator: FormValidators.price,
               ),
               const SizedBox(height: 12),
               typesAsync.when(
@@ -204,10 +189,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
                     ],
                     onChanged: (int? value) => setState(() => _selectedTypeId = value),
                     validator: widget.existing == null
-                        ? (int? value) {
-                            if (value == null) return 'Odaberite tip kaiša';
-                            return null;
-                          }
+                        ? FormValidators.requiredBeltType
                         : null,
                   );
                 },

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/form_validators.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
@@ -283,54 +284,19 @@ Future<bool?> _showBeltEditDialog(BuildContext context, WidgetRef ref,
                         TextFormField(
                           controller: nameController,
                           decoration: const InputDecoration(labelText: 'Naziv'),
-                          validator: (String? v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Naziv je obavezan';
-                            }
-                            if (v.trim().length < 2) {
-                              return 'Naziv mora imati bar 2 znaka';
-                            }
-                            return null;
-                          },
+                          validator: FormValidators.productName,
                         ),
                         TextFormField(
                           controller: codeController,
                           decoration: const InputDecoration(labelText: 'Šifra'),
-                          validator: (String? v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Šifra je obavezna';
-                            }
-                            return null;
-                          },
+                          validator: FormValidators.productCode,
                         ),
                         TextFormField(
                           controller: priceController,
                           decoration: const InputDecoration(labelText: 'Cijena'),
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
-                          validator: (String? v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Cijena je obavezna';
-                            }
-                            final double? price =
-                                double.tryParse(v.replaceAll(',', '.'));
-                            if (price == null) {
-                              return 'Unesite ispravan broj';
-                            }
-                            if (price <= 0) {
-                              return 'Cijena mora biti veća od 0';
-                            }
-                            final List<String> parts =
-                                v.replaceAll(',', '.').split('.');
-                            if (parts.length > 2) {
-                              return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
-                            }
-                            if (parts.length == 2 &&
-                                parts[1].length > 2) {
-                              return 'Cijena mora biti u formatu xx.yy (maks. 2 decimale)';
-                            }
-                            return null;
-                          },
+                          validator: FormValidators.price,
                         ),
                         TextFormField(
                           controller: descController,
