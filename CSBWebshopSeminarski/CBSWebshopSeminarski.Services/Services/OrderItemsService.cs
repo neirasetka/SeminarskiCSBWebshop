@@ -62,9 +62,14 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var entity = _mapper.Map<OrderItems>(request);
 
-            _context.Set<OrderItems>().Add(entity);
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
+                ?? throw new ArgumentException($"Order with ID {entity.OrderID} not found.");
+
+            order.OrderItems.Add(entity);
+            ApplyOrderTotal(order);
             await SaveChangesWithOrderItemsNullableRepairAsync();
-            await RecalculateOrderTotal(entity.OrderID);
             // Ponovno učitaj stavku s Bag/Belt radi stabilnog mapiranja na OrderItem (izbjegava iznimke na pratnom entitetu).
             var insertedId = entity.OrderItemID;
             var forReturn = await _context.OrderItems
@@ -85,8 +90,13 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _mapper.Map(request, entity);
 
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
+            if (order != null)
+                ApplyOrderTotal(order);
+
             await SaveChangesWithOrderItemsNullableRepairAsync();
-            await RecalculateOrderTotal(entity.OrderID);
             return _mapper.Map<OrderItem>(entity);
         }
 
@@ -94,10 +104,16 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
             if (entity == null) return false;
-            var orderId = entity.OrderID;
+
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
+
             _context.OrderItems.Remove(entity);
-            await _context.SaveChangesAsync();
-            await RecalculateOrderTotal(orderId);
+            if (order != null)
+                ApplyOrderTotal(order);
+
+            await SaveChangesWithOrderItemsNullableRepairAsync();
             return true;
         }
 
@@ -136,18 +152,15 @@ namespace CBSWebshopSeminarski.Services.Services
             return false;
         }
 
-        private async Task RecalculateOrderTotal(int orderId)
+        private void ApplyOrderTotal(Orders order)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.OrderID == orderId);
-
-            if (order == null) return;
-
             decimal total = 0m;
 
             foreach (var item in order.OrderItems)
             {
+                if (_context.Entry(item).State == EntityState.Deleted)
+                    continue;
+
                 var price = item.Price ?? 0m;
                 var qty = item.Quantity ?? 1;
 
@@ -160,8 +173,6 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             order.Price = total;
-
-            await _context.SaveChangesAsync();
         }
     }
 }

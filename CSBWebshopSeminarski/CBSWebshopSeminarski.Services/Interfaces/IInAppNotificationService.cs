@@ -5,6 +5,13 @@ namespace CBSWebshopSeminarski.Services.Interfaces
 {
     public interface IInAppNotificationService
     {
+        void StageCreate(
+            int userId,
+            string type,
+            string title,
+            string message,
+            int? relatedEntityId = null);
+
         Task CreateAsync(
             int userId,
             string type,

@@ -165,15 +165,21 @@ namespace CBSWebshopSeminarski.Services.Services
             if (order == null) return false;
             StateMachines.OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, status);
             order.PaymentStatus = status;
-            await _context.SaveChangesAsync();
+
             if (status == PaymentStatus.Paid)
             {
-                await _inAppNotifications.CreateAsync(
+                _inAppNotifications.StageCreate(
                     order.UserID,
                     InAppNotificationTypes.OrderPaid,
                     "Plaćanje potvrđeno",
                     $"Uspješno plaćena narudžba #{order.OrderNumber}.",
                     order.OrderID);
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (status == PaymentStatus.Paid)
+            {
                 await _paymentsService.SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
             }
             return true;
@@ -219,9 +225,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 order.PaymentStatus = PaymentStatus.Failed;
             }
 
-            await _context.SaveChangesAsync();
-
-            await _inAppNotifications.CreateAsync(
+            _inAppNotifications.StageCreate(
                 order.UserID,
                 InAppNotificationTypes.OrderCancelled,
                 "Narudžba otkazana",
@@ -229,6 +233,8 @@ namespace CBSWebshopSeminarski.Services.Services
                     ? $"Aktivna korpa (narudžba #{order.OrderNumber}) je otkazana."
                     : $"Narudžba #{order.OrderNumber} je otkazana.",
                 order.OrderID);
+
+            await _context.SaveChangesAsync();
 
             return true;
         }

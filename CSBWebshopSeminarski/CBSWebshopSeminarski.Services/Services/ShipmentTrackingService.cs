@@ -56,8 +56,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 });
             }
 
+            StageShippingNotification(order, previousStatus);
+
             await _dbContext.SaveChangesAsync();
-            await TryNotifyShippingUpdateAsync(order, previousStatus);
             return await GetShippingInfoAsync(orderId);
         }
 
@@ -97,8 +98,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 Source = "Manual"
             });
 
+            StageShippingNotification(order, previousStatus);
+
             await _dbContext.SaveChangesAsync();
-            await TryNotifyShippingUpdateAsync(order, previousStatus);
             return await GetShippingInfoAsync(orderId);
         }
 
@@ -142,11 +144,12 @@ namespace CBSWebshopSeminarski.Services.Services
                 RawPayload = payload.RawJson
             });
 
+            StageShippingNotification(order, previousStatus);
+
             await _dbContext.SaveChangesAsync();
-            await TryNotifyShippingUpdateAsync(order, previousStatus);
         }
 
-        private async Task TryNotifyShippingUpdateAsync(Orders order, ShippingStatusEntity previousStatus)
+        private void StageShippingNotification(Orders order, ShippingStatusEntity previousStatus)
         {
             if (order.ShippingStatus == previousStatus)
                 return;
@@ -155,7 +158,7 @@ namespace CBSWebshopSeminarski.Services.Services
             if (text == null)
                 return;
 
-            await _inAppNotifications.CreateAsync(
+            _inAppNotifications.StageCreate(
                 order.UserID,
                 InAppNotificationTypes.OrderShipping,
                 text.Value.Title,

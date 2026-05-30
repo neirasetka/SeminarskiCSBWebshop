@@ -137,13 +137,13 @@ namespace CBSWebshopSeminarski.Services.Services
             StateMachines.ReviewStateMachine.ValidateTransition(
                 entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved);
             entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved;
-            await _context.SaveChangesAsync();
-            await _inAppNotifications.CreateAsync(
+            _inAppNotifications.StageCreate(
                 entity.UserID,
                 InAppNotificationTypes.ReviewApproved,
                 "Recenzija odobrena",
                 "Vaša recenzija je odobrena i vidljiva kupcima.",
                 entity.ReviewID);
+            await _context.SaveChangesAsync();
             return _mapper.Map<Review>(entity);
         }
 
@@ -157,13 +157,13 @@ namespace CBSWebshopSeminarski.Services.Services
             StateMachines.ReviewStateMachine.ValidateTransition(
                 entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected);
             entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected;
-            await _context.SaveChangesAsync();
-            await _inAppNotifications.CreateAsync(
+            _inAppNotifications.StageCreate(
                 entity.UserID,
                 InAppNotificationTypes.ReviewRejected,
                 "Recenzija odbijena",
                 "Vaša recenzija nije odobrena za objavu.",
                 entity.ReviewID);
+            await _context.SaveChangesAsync();
             return _mapper.Map<Review>(entity);
         }
 

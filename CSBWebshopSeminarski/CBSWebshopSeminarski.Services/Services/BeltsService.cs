@@ -110,7 +110,6 @@ namespace CBSWebshopSeminarski.Services.Services
                 var rates = await _context.Rates.Where(i => i.BeltID == ID).ToListAsync();
                 if (rates != null)
                     _context.Rates.RemoveRange(rates);
-                await _context.SaveChangesAsync();
 
                 _context.Belts.Remove(belt);
                 await _context.SaveChangesAsync();

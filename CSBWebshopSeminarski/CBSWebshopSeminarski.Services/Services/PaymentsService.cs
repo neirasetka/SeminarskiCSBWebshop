@@ -358,14 +358,13 @@ namespace CBSWebshopSeminarski.Services.Services
             };
 
             _db.Purchases.Add(purchase);
-            await _db.SaveChangesAsync();
-
-            await _inAppNotifications.CreateAsync(
+            _inAppNotifications.StageCreate(
                 order.UserID,
                 InAppNotificationTypes.OrderPaid,
                 "Plaćanje potvrđeno",
                 $"Uspješno plaćena narudžba #{order.OrderNumber}.",
                 order.OrderID);
+            await _db.SaveChangesAsync();
 
             var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
                 ? email.Trim()

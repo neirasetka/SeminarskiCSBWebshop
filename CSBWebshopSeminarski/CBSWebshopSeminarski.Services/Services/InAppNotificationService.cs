@@ -17,7 +17,7 @@ public class InAppNotificationService : IInAppNotificationService
         _db = db;
     }
 
-    public async Task CreateAsync(
+    public void StageCreate(
         int userId,
         string type,
         string title,
@@ -37,7 +37,16 @@ public class InAppNotificationService : IInAppNotificationService
             IsRead = false,
             CreatedAt = DateTime.UtcNow
         });
+    }
 
+    public async Task CreateAsync(
+        int userId,
+        string type,
+        string title,
+        string message,
+        int? relatedEntityId = null)
+    {
+        StageCreate(userId, type, title, message, relatedEntityId);
         await _db.SaveChangesAsync();
     }
 

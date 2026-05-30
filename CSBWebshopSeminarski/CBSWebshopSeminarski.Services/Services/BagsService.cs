@@ -127,7 +127,6 @@ namespace CBSWebshopSeminarski.Services.Services
                 var rates = await _context.Rates.Where(i => i.BagID == ID).ToListAsync();
                 if (rates != null)
                     _context.Rates.RemoveRange(rates);
-                await _context.SaveChangesAsync();
 
                 _context.Bags.Remove(bag);
                 await _context.SaveChangesAsync();

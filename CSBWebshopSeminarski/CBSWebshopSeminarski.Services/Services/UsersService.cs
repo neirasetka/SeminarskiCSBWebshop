@@ -62,37 +62,19 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new InvalidOperationException("Email adresa je već registrirana.");
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                var entity = _mapper.Map<Users>(request);
-                entity.PasswordSalt = GenerateSalt();
-                entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
-                entity.Image = request.Image ?? Array.Empty<byte>();
+            var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
+            var entity = _mapper.Map<Users>(request);
+            entity.PasswordSalt = GenerateSalt();
+            entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
+            entity.Image = request.Image ?? Array.Empty<byte>();
+            entity.UserRoles = roleIds
+                .Select(roleId => new UserRoles { RolesID = roleId })
+                .ToList();
 
-                await _context.Users.AddAsync(entity);
-                await _context.SaveChangesAsync();
+            await _context.Users.AddAsync(entity);
+            await _context.SaveChangesAsync();
 
-                var roleIds = await ResolveRoleIdsByNamesAsync(request.RoleNames);
-                foreach (var roleId in roleIds)
-                {
-                    await _context.UserRoles.AddAsync(new UserRoles
-                    {
-                        UserID = entity.UserID,
-                        RolesID = roleId
-                    });
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return _mapper.Map<User>(entity);
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            return _mapper.Map<User>(entity);
         }
         public async Task<User> UpdateMyProfile(int userId, UserProfileUpdateRequest request)
         {
@@ -288,35 +270,37 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new InvalidOperationException("Email adresa je već registrirana.");
             }
 
-            var entity = new Users
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                Name = request.Name,
-                Surname = request.Surname,
-                Email = request.Email,
-                Phone = request.Phone ?? string.Empty,
-                UserName = request.UserName,
-                Image = request.Image ?? Array.Empty<byte>()
-            };
-            entity.PasswordSalt = GenerateSalt();
-            entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
+                var buyerRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Buyer");
 
-            await _context.Users.AddAsync(entity);
-            await _context.SaveChangesAsync();
-
-            // Assign default Buyer role
-            var buyerRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Buyer");
-            if (buyerRole != null)
-            {
-                var userRole = new UserRoles
+                var entity = new Users
                 {
-                    UserID = entity.UserID,
-                    RolesID = buyerRole.RoleID
+                    Name = request.Name,
+                    Surname = request.Surname,
+                    Email = request.Email,
+                    Phone = request.Phone ?? string.Empty,
+                    UserName = request.UserName,
+                    Image = request.Image ?? Array.Empty<byte>(),
+                    UserRoles = buyerRole != null
+                        ? new List<UserRoles> { new UserRoles { RolesID = buyerRole.RoleID } }
+                        : new List<UserRoles>()
                 };
-                await _context.UserRoles.AddAsync(userRole);
-                await _context.SaveChangesAsync();
-            }
+                entity.PasswordSalt = GenerateSalt();
+                entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
 
-            return _mapper.Map<User>(entity);
+                await _context.Users.AddAsync(entity);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return _mapper.Map<User>(entity);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<PagedResult<Bag>> GetLikedBags(int ID, BagSearchRequest request)
