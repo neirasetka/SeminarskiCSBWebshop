@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
@@ -13,10 +14,16 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private readonly CocoSunBagsWebshopDbContext _context;
         private readonly IMapper _mapper;
-        public ReviewsService(CocoSunBagsWebshopDbContext context, IMapper mapper)
+        private readonly IInAppNotificationService _inAppNotifications;
+
+        public ReviewsService(
+            CocoSunBagsWebshopDbContext context,
+            IMapper mapper,
+            IInAppNotificationService inAppNotifications)
         {
             _context = context;
             _mapper = mapper;
+            _inAppNotifications = inAppNotifications;
         }
         public async Task<List<Review>> Get(ReviewSearchRequest search)
         {
@@ -127,8 +134,16 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new KeyNotFoundException($"Review {id} not found");
             }
+            StateMachines.ReviewStateMachine.ValidateTransition(
+                entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved);
             entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Approved;
             await _context.SaveChangesAsync();
+            await _inAppNotifications.CreateAsync(
+                entity.UserID,
+                InAppNotificationTypes.ReviewApproved,
+                "Recenzija odobrena",
+                "Vaša recenzija je odobrena i vidljiva kupcima.",
+                entity.ReviewID);
             return _mapper.Map<Review>(entity);
         }
 
@@ -139,8 +154,16 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new KeyNotFoundException($"Review {id} not found");
             }
+            StateMachines.ReviewStateMachine.ValidateTransition(
+                entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected);
             entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Rejected;
             await _context.SaveChangesAsync();
+            await _inAppNotifications.CreateAsync(
+                entity.UserID,
+                InAppNotificationTypes.ReviewRejected,
+                "Recenzija odbijena",
+                "Vaša recenzija nije odobrena za objavu.",
+                entity.ReviewID);
             return _mapper.Map<Review>(entity);
         }
 
@@ -151,6 +174,8 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new KeyNotFoundException($"Review {id} not found");
             }
+            StateMachines.ReviewStateMachine.ValidateTransition(
+                entity.Status, CSBWebshopSeminarski.Core.Entities.ReviewStatus.Pending);
             entity.Status = CSBWebshopSeminarski.Core.Entities.ReviewStatus.Pending;
             await _context.SaveChangesAsync();
             return _mapper.Map<Review>(entity);

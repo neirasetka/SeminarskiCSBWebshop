@@ -1,7 +1,10 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.StateMachines;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
@@ -13,17 +16,24 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private readonly CocoSunBagsWebshopDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly IInAppNotificationService _inAppNotifications;
 
-        public ShipmentTrackingService(CocoSunBagsWebshopDbContext dbContext, IMapper mapper)
+        public ShipmentTrackingService(
+            CocoSunBagsWebshopDbContext dbContext,
+            IMapper mapper,
+            IInAppNotificationService inAppNotifications)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _inAppNotifications = inAppNotifications;
         }
 
         public async Task<ShippingInfo> SetTrackingInfoAsync(int orderId, SetShippingInfoRequest request)
         {
             var order = await _dbContext.Orders.Include(o => o.TrackingEvents).FirstOrDefaultAsync(o => o.OrderID == orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found");
+
+            var previousStatus = order.ShippingStatus;
 
             order.CarrierCode = request.CarrierCode;
             order.TrackingNumber = request.TrackingNumber;
@@ -32,6 +42,7 @@ namespace CBSWebshopSeminarski.Services.Services
             if (order.ShippingStatus == ShippingStatusEntity.Pending
                 || order.ShippingStatus == ShippingStatusEntity.Processing)
             {
+                ShippingStateMachine.ValidateTransition(order.ShippingStatus, ShippingStatusEntity.Shipped);
                 order.ShippingStatus = ShippingStatusEntity.Shipped;
                 order.LastStatusUpdate = DateTime.UtcNow;
 
@@ -46,6 +57,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             await _dbContext.SaveChangesAsync();
+            await TryNotifyShippingUpdateAsync(order, previousStatus);
             return await GetShippingInfoAsync(orderId);
         }
 
@@ -69,7 +81,10 @@ namespace CBSWebshopSeminarski.Services.Services
             var order = await _dbContext.Orders.Include(o => o.TrackingEvents).FirstOrDefaultAsync(o => o.OrderID == orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found");
 
-            order.ShippingStatus = (ShippingStatusEntity)request.Status;
+            var previousStatus = order.ShippingStatus;
+            var newStatus = (ShippingStatusEntity)request.Status;
+            ShippingStateMachine.ValidateTransition(order.ShippingStatus, newStatus);
+            order.ShippingStatus = newStatus;
             order.LastStatusUpdate = DateTime.UtcNow;
 
             _dbContext.TrackingEvents.Add(new TrackingEvents
@@ -83,6 +98,7 @@ namespace CBSWebshopSeminarski.Services.Services
             });
 
             await _dbContext.SaveChangesAsync();
+            await TryNotifyShippingUpdateAsync(order, previousStatus);
             return await GetShippingInfoAsync(orderId);
         }
 
@@ -101,11 +117,14 @@ namespace CBSWebshopSeminarski.Services.Services
                                            (!string.IsNullOrEmpty(payload.TrackingNumber) && o.TrackingNumber == payload.TrackingNumber));
             if (order == null)
             {
-                return;
+                throw new NotFoundException(
+                    "Order not found for the given OrderID or TrackingNumber.");
             }
 
+            var previousStatus = order.ShippingStatus;
             var mappedStatus = MapExternalStatus(payload.Status);
-            if (mappedStatus.HasValue)
+            if (mappedStatus.HasValue
+                && ShippingStateMachine.CanTransition(order.ShippingStatus, mappedStatus.Value))
             {
                 order.ShippingStatus = mappedStatus.Value;
                 order.LastStatusUpdate = DateTime.UtcNow;
@@ -124,6 +143,24 @@ namespace CBSWebshopSeminarski.Services.Services
             });
 
             await _dbContext.SaveChangesAsync();
+            await TryNotifyShippingUpdateAsync(order, previousStatus);
+        }
+
+        private async Task TryNotifyShippingUpdateAsync(Orders order, ShippingStatusEntity previousStatus)
+        {
+            if (order.ShippingStatus == previousStatus)
+                return;
+
+            var text = ShippingStatusNotificationText.ForStatus(order.ShippingStatus, order.OrderNumber);
+            if (text == null)
+                return;
+
+            await _inAppNotifications.CreateAsync(
+                order.UserID,
+                InAppNotificationTypes.OrderShipping,
+                text.Value.Title,
+                text.Value.Message,
+                order.OrderID);
         }
 
         private static ShippingStatusEntity? MapExternalStatus(string? status)

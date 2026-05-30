@@ -703,6 +703,49 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Notifications", b =>
+                {
+                    b.Property<int>("NotificationID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationID"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("RelatedEntityID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("NotificationID");
+
+                    b.HasIndex("UserID", "IsRead")
+                        .HasDatabaseName("IX_Notifications_UserID_IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Subscribers", b =>
                 {
                     b.Property<int>("Id")
@@ -964,6 +1007,17 @@ namespace CSBWebshopSeminarski.Database.Migrations
                     b.Navigation("Bag");
 
                     b.Navigation("Belt");
+                });
+
+            modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.Notifications", b =>
+                {
+                    b.HasOne("CSBWebshopSeminarski.Core.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CSBWebshopSeminarski.Core.Entities.OrderItems", b =>

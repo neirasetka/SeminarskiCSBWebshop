@@ -11,6 +11,7 @@ import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 import '../../orders/presentation/cart_screen.dart';
+import '../../notifications/presentation/notification_badge_button.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
@@ -313,6 +314,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           ),
         ),
         actions: <Widget>[
+          if (!isAdmin) const NotificationBadgeButton(),
           if (!isAdmin)
             IconButton(
               tooltip: 'Korpa',

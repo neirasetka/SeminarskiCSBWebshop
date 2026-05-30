@@ -114,6 +114,7 @@ builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddTransient<IParticipantsService, ParticipantsService>();
 builder.Services.AddTransient<GiveawaysService>();
 builder.Services.AddTransient<NotificationsService>();
+builder.Services.AddTransient<IInAppNotificationService, InAppNotificationService>();
 builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.ITemplateRenderer, CBSWebshopSeminarski.Services.Services.TemplateRenderer>();
 builder.Services.AddTransient<AnnouncementAuditService>();
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();

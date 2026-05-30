@@ -279,6 +279,19 @@ namespace CSBWebshopSeminarski.Database
             modelBuilder.Entity<Purchases>().Property(p => p.Price).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<Transactions>().Property(t => t.Price).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<OrderItems>().Property(oi => oi.Price).HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Notifications>(entity =>
+            {
+                entity.HasKey(n => n.NotificationID);
+                entity.Property(n => n.Type).HasMaxLength(64).IsRequired();
+                entity.Property(n => n.Title).HasMaxLength(200).IsRequired();
+                entity.Property(n => n.Message).HasMaxLength(1000).IsRequired();
+                entity.HasIndex(n => new { n.UserID, n.IsRead }).HasDatabaseName("IX_Notifications_UserID_IsRead");
+                entity.HasOne(n => n.User)
+                    .WithMany()
+                    .HasForeignKey(n => n.UserID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

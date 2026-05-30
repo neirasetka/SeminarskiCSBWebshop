@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
+    /// Email notifications to newsletter subscribers (not in-app user notifications).
     public class NotificationsService
     {
         private readonly CocoSunBagsWebshopDbContext _context;

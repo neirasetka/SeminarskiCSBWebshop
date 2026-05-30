@@ -16,6 +16,7 @@ import '../features/giveaways/presentation/giveaways_list_screen.dart';
 import '../features/lookbook/presentation/lookbook_screen.dart';
 import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -145,6 +146,13 @@ final GoRouter appRouter = GoRouter(
           name: 'giveaways',
           builder: (BuildContext context, GoRouterState state) => const AuthGate(
             child: GiveawaysListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'notifications',
+          name: 'notifications',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: NotificationsScreen(),
           ),
         ),
         GoRoute(

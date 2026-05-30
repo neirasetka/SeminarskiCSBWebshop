@@ -1,6 +1,8 @@
 using CBSWebshopSeminarski.Model.Requests;
-using CSBWebshopSeminarski.Database;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.StateMachines;
+using CSBWebshopSeminarski.Core.Entities;
+using CSBWebshopSeminarski.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -431,9 +433,10 @@ namespace CSBWebshopSeminarski.Controllers
             if (!string.IsNullOrWhiteSpace(session.PaymentIntentId))
                 order.StripePaymentIntentId = session.PaymentIntentId;
 
-            if (order.ShippingStatus == CSBWebshopSeminarski.Core.Entities.ShippingStatus.Pending)
+            if (order.ShippingStatus == ShippingStatus.Pending)
             {
-                order.ShippingStatus = CSBWebshopSeminarski.Core.Entities.ShippingStatus.Processing;
+                ShippingStateMachine.ValidateTransition(order.ShippingStatus, ShippingStatus.Processing);
+                order.ShippingStatus = ShippingStatus.Processing;
                 order.LastStatusUpdate = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
             }

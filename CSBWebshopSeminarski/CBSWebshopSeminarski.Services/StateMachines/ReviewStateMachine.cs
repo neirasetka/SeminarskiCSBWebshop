@@ -13,6 +13,9 @@ namespace CBSWebshopSeminarski.Services.StateMachines
 
         public static bool CanTransition(ReviewStatus from, ReviewStatus to)
         {
+            if (from == to)
+                return true;
+
             return Transitions.TryGetValue(from, out var allowed) && allowed.Contains(to);
         }
 

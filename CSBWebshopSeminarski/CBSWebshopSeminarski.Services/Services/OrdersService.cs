@@ -1,7 +1,9 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.StateMachines;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +16,18 @@ namespace CBSWebshopSeminarski.Services.Services
         private new readonly CocoSunBagsWebshopDbContext _context;
         private new readonly IMapper _mapper;
         private readonly IPaymentsService _paymentsService;
+        private readonly IInAppNotificationService _inAppNotifications;
 
         public OrdersService(
             CocoSunBagsWebshopDbContext context,
             IMapper mapper,
-            IPaymentsService paymentsService) : base(context, mapper)
+            IPaymentsService paymentsService,
+            IInAppNotificationService inAppNotifications) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
             _paymentsService = paymentsService;
+            _inAppNotifications = inAppNotifications;
         }
 
         public override async Task<List<Order>> Get(OrderSearchRequest request)
@@ -166,6 +171,12 @@ namespace CBSWebshopSeminarski.Services.Services
             await _context.SaveChangesAsync();
             if (status == PaymentStatus.Paid)
             {
+                await _inAppNotifications.CreateAsync(
+                    order.UserID,
+                    InAppNotificationTypes.OrderPaid,
+                    "Plaćanje potvrđeno",
+                    $"Uspješno plaćena narudžba #{order.OrderNumber}.",
+                    order.OrderID);
                 await _paymentsService.SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
             }
             return true;
@@ -195,7 +206,7 @@ namespace CBSWebshopSeminarski.Services.Services
             if (order.ShippingStatus == ShippingStatusEntity.Cancelled)
                 return false;
 
-            StateMachines.OrderStateMachine.ValidateShippingTransition(
+            StateMachines.ShippingStateMachine.ValidateTransition(
                 order.ShippingStatus, ShippingStatusEntity.Cancelled);
 
             order.ShippingStatus = ShippingStatusEntity.Cancelled;
@@ -212,6 +223,16 @@ namespace CBSWebshopSeminarski.Services.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await _inAppNotifications.CreateAsync(
+                order.UserID,
+                InAppNotificationTypes.OrderCancelled,
+                "Narudžba otkazana",
+                abandonedCart
+                    ? $"Aktivna korpa (narudžba #{order.OrderNumber}) je otkazana."
+                    : $"Narudžba #{order.OrderNumber} je otkazana.",
+                order.OrderID);
+
             return true;
         }
     }

@@ -31,6 +31,7 @@ import '../features/belts/presentation/belts_detail_screen.dart';
 import '../features/torbice_shop/presentation/torbice_shop_screen.dart';
 import '../features/kaisevi_shop/presentation/kaisevi_shop_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -208,6 +209,13 @@ final GoRouter appRouter = GoRouter(
               },
             ),
           ],
+        ),
+        GoRoute(
+          path: 'notifications',
+          name: 'notifications',
+          builder: (BuildContext context, GoRouterState state) => const AuthGate(
+            child: NotificationsScreen(),
+          ),
         ),
         GoRoute(
           path: 'orders/:id',

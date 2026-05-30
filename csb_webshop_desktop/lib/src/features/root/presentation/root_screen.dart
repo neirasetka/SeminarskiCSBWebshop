@@ -13,6 +13,7 @@ import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../profile/presentation/profile_update_screen.dart';
+import '../../notifications/presentation/notification_badge_button.dart';
 
 class RootScreen extends ConsumerStatefulWidget {
   const RootScreen({super.key, required this.title, this.initialIndex = 0});
@@ -125,6 +126,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           ],
         ),
         actions: <Widget>[
+          if (session != null) const NotificationBadgeButton(),
           IconButton(
             tooltip: 'Torbice',
             icon: const Icon(Icons.shopping_bag),

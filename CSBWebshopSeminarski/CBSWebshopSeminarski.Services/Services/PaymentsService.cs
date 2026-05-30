@@ -1,4 +1,6 @@
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.StateMachines;
+using CBSWebshopSeminarski.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.Extensions.Logging;
@@ -11,15 +13,18 @@ namespace CBSWebshopSeminarski.Services.Services
         private readonly CocoSunBagsWebshopDbContext _db;
         private readonly RabbitMqMailPublisher _mailPublisher;
         private readonly ILogger<PaymentsService> _logger;
+        private readonly IInAppNotificationService _inAppNotifications;
 
         public PaymentsService(
             CocoSunBagsWebshopDbContext db,
             RabbitMqMailPublisher mailPublisher,
-            ILogger<PaymentsService> logger)
+            ILogger<PaymentsService> logger,
+            IInAppNotificationService inAppNotifications)
         {
             _db = db;
             _mailPublisher = mailPublisher;
             _logger = logger;
+            _inAppNotifications = inAppNotifications;
         }
 
         public async Task HandlePaymentSucceededAsync(string paymentIntentId, IDictionary<string, string> metadata)
@@ -57,7 +62,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
-            // mark order as paid
+            OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Paid);
             order.PaymentStatus = PaymentStatus.Paid;
 
             var purchase = new Purchases
@@ -73,6 +78,13 @@ namespace CBSWebshopSeminarski.Services.Services
 
             _db.Purchases.Add(purchase);
             await _db.SaveChangesAsync();
+
+            await _inAppNotifications.CreateAsync(
+                order.UserID,
+                InAppNotificationTypes.OrderPaid,
+                "Plaćanje potvrđeno",
+                $"Uspješno plaćena narudžba #{order.OrderNumber}.",
+                order.OrderID);
 
             var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
                 ? email.Trim()
@@ -155,6 +167,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
                 if (order != null)
                 {
+                    OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Failed);
                     order.PaymentStatus = PaymentStatus.Failed;
                     order.StripePaymentIntentId = null;
                     order.StripeCheckoutSessionId = null;
