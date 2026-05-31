@@ -9,10 +9,11 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, Tar
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main(List<String> args) async {
-  WidgetsFlutterBinding.ensureInitialized();
   if (runWebViewTitleBarWidget(args)) {
     return;
   }
+
+  WidgetsFlutterBinding.ensureInitialized();
 
   // flutter_stripe koristi dart:io Platform pri initu — na webu to baca UnsupportedError.
   if (!kIsWeb && EnvironmentConfig.stripePublishableKey.isNotEmpty) {
