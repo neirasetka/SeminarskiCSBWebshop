@@ -319,23 +319,50 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
+            PaymentIntent paymentIntent;
+            try
+            {
+                paymentIntent = await new PaymentIntentService().GetAsync(paymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Stripe payment intent lookup failed for {PaymentIntentId} (order {OrderId}).",
+                    paymentIntentId,
+                    orderId);
+                throw;
+            }
+
+            await HandlePaymentSucceededAsync(paymentIntent, metadata);
+        }
+
+        private async Task<bool> HandlePaymentSucceededAsync(PaymentIntent paymentIntent, IDictionary<string, string> metadata)
+        {
+            var paymentIntentId = paymentIntent.Id;
+            var orderId = metadata.TryGetValue("order_id", out var idStr) && int.TryParse(idStr, out var id) ? id : 0;
+            if (orderId == 0)
+            {
+                return false;
+            }
+
             var alreadyExists = await _db.Purchases.AnyAsync(p => p.StripeId == paymentIntentId);
             if (alreadyExists)
             {
-                return;
+                return true;
             }
 
             var orderAlreadyPaid = await _db.Purchases.AnyAsync(p => p.OrderID == orderId);
             if (orderAlreadyPaid)
             {
                 _logger.LogWarning("Payment succeeded event for order {OrderId} but a purchase already exists. Skipping.", orderId);
-                return;
+                return true;
             }
 
             var order = await _db.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderID == orderId);
             if (order == null)
             {
-                return;
+                return false;
             }
 
             if (order.PaymentStatus == PaymentStatus.Paid)
@@ -343,7 +370,12 @@ namespace CBSWebshopSeminarski.Services.Services
                 _logger.LogWarning(
                     "Payment succeeded event for order {OrderId} but payment status is already Paid. Skipping purchase creation.",
                     orderId);
-                return;
+                return true;
+            }
+
+            if (!await PaymentIntentMatchesOrderTotalAsync(orderId, paymentIntent))
+            {
+                return false;
             }
 
             OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Paid);
@@ -376,6 +408,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 ? email.Trim()
                 : null;
             await SendPaymentConfirmationIfNotSentYetAsync(order.OrderID, receiptEmail);
+            return true;
         }
 
         public async Task SendPaymentConfirmationIfNotSentYetAsync(int orderId, string? receiptEmailOverride)
@@ -496,12 +529,14 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (isPaid)
             {
-                await HandlePaymentSucceededAsync(paymentIntent.Id, metadata);
+                var recorded = await HandlePaymentSucceededAsync(paymentIntent, metadata);
                 return new PaymentConfirmResult
                 {
-                    Paid = true,
+                    Paid = recorded,
                     OrderId = order.OrderID,
-                    PaymentIntentId = paymentIntent.Id
+                    PaymentIntentId = paymentIntent.Id,
+                    Status = paymentIntent.Status,
+                    Reason = recorded ? null : "payment_amount_mismatch"
                 };
             }
 
@@ -582,6 +617,47 @@ namespace CBSWebshopSeminarski.Services.Services
                 metadata["receipt_email"] = receiptEmail;
             }
             return metadata;
+        }
+
+        private async Task<bool> PaymentIntentMatchesOrderTotalAsync(int orderId, PaymentIntent paymentIntent)
+        {
+            if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning(
+                    "Payment intent {PaymentIntentId} for order {OrderId} has status {Status}, expected succeeded. Skipping.",
+                    paymentIntent.Id,
+                    orderId,
+                    paymentIntent.Status);
+                return false;
+            }
+
+            var (expectedCents, calcError) = await CalculateOrderTotalAsync(orderId);
+            if (calcError != null)
+            {
+                _logger.LogWarning(
+                    "Cannot verify payment amount for order {OrderId}: {Error}. Payment intent {PaymentIntentId}. Skipping.",
+                    orderId,
+                    calcError,
+                    paymentIntent.Id);
+                return false;
+            }
+
+            var currency = GetPaymentCurrency();
+            if (paymentIntent.Amount != expectedCents
+                || !string.Equals(paymentIntent.Currency, currency, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning(
+                    "Payment amount mismatch for order {OrderId}. Stripe charged {StripeAmount} {StripeCurrency}, expected {ExpectedAmount} {ExpectedCurrency}. Payment intent {PaymentIntentId}. Skipping.",
+                    orderId,
+                    paymentIntent.Amount,
+                    paymentIntent.Currency,
+                    expectedCents,
+                    currency,
+                    paymentIntent.Id);
+                return false;
+            }
+
+            return true;
         }
 
         private async Task<(long amountInCents, string? error)> CalculateOrderTotalAsync(int orderId)
