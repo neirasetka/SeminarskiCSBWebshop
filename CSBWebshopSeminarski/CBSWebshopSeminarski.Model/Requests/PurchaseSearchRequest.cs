@@ -2,6 +2,7 @@
 {
     public class PurchaseSearchRequest : PagedSearchRequest
     {
+        public int UserID { get; set; }
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
         public int? BagTypeID { get; set; }

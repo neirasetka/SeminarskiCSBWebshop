@@ -21,6 +21,14 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var query = _context.Purchases.AsQueryable();
 
+            if (request.UserID != 0)
+            {
+                query = query.Where(i => i.UserID == request.UserID);
+            }
+            if (request.OrderID != 0)
+            {
+                query = query.Where(i => i.OrderID == request.OrderID);
+            }
             if (request.From != null)
             {
                 query = query.Where(i => i.PurchaseDate >= request.From);
@@ -31,12 +39,16 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             if (request.BagID != 0)
             {
-                query = query.Where(i => i.OrderID == request.OrderID);
+                query = query.Where(p => _context.OrderItems.Any(oi =>
+                    oi.OrderID == p.OrderID && oi.BagID == request.BagID));
             }
             if (request.BeltID != 0)
             {
-                query = query.Where(i => i.OrderID == request.OrderID);
+                query = query.Where(p => _context.OrderItems.Any(oi =>
+                    oi.OrderID == p.OrderID && oi.BeltID == request.BeltID));
             }
+
+            query = query.OrderByDescending(i => i.PurchaseDate);
 
             return await ToPagedResultAsync(query, request);
         }
