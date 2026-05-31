@@ -23,6 +23,15 @@ class OrdersApi {
     throw Exception('Failed to get active cart: ${response.statusCode}');
   }
 
+  Future<Map<String, dynamic>?> getOrder({required int orderId}) async {
+    final http.Response response = await _apiClient.get('$_ordersPath/$orderId');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    if (response.statusCode == 404) return null;
+    throw Exception('Failed to get order: ${response.statusCode}');
+  }
+
   Future<PagedResult<Map<String, dynamic>>> getMyOrders({int page = 1, int pageSize = 20}) async {
     final http.Response response = await _apiClient.get(
       '$_ordersPath/My?Page=$page&PageSize=$pageSize',

@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_gate.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
-import '../features/orders/domain/order_models.dart';
-import '../features/orders/presentation/order_detail_screen.dart';
+import '../features/orders/presentation/order_detail_loader_screen.dart';
 import '../features/orders/presentation/cart_screen.dart';
 import '../features/orders/presentation/payment_screen.dart';
 import '../features/orders/presentation/order_success_screen.dart';
@@ -118,18 +117,7 @@ final GoRouter appRouter = GoRouter(
           builder: (BuildContext context, GoRouterState state) {
             final String? idParam = state.pathParameters['id'];
             final int orderId = int.tryParse(idParam ?? '') ?? 0;
-            // Minimal placeholder order; in a real app, fetch by id.
-            final OrderModel order = OrderModel(
-              id: orderId,
-              orderNumber: '#$orderId',
-              date: DateTime.now(),
-              userId: 0,
-              amount: 0,
-              items: const <OrderItemModel>[],
-              paymentStatus: 'pending',
-              shippingStatus: 'created',
-            );
-            return AuthGate(child: OrderDetailScreen(order: order));
+            return AuthGate(child: OrderDetailLoaderScreen(orderId: orderId));
           },
         ),
         GoRoute(
