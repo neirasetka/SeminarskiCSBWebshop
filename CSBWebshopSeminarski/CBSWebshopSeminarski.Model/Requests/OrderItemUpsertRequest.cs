@@ -20,10 +20,10 @@ namespace CBSWebshopSeminarski.Model.Requests
         /// Admin može ručno postaviti cijenu. Buyer koristi <see cref="AddToCartRequest"/> bez cijene;
         /// servis tada dohvaća cijenu iz kataloga.
         /// </summary>
-        [Range(0.01, 100_000_000, ErrorMessage = "Price must be greater than zero.")]
+        [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = "Price must be greater than zero.")]
         public decimal? Price { get; set; }
 
-        [Range(0, 100, ErrorMessage = "Discount must be between 0 and 100.")]
+        [Range(typeof(decimal), "0", "100", ErrorMessage = "Discount must be between 0 and 100.")]
         public decimal? Discount { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

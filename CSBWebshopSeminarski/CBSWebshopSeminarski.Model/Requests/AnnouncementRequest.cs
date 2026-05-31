@@ -25,7 +25,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         public DateTime? LaunchDate { get; set; }
         public string? ProductName { get; set; }
         
-        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
+        [Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = "Price must be greater than 0.")]
         public decimal? Price { get; set; }
         
         public string? Color { get; set; }

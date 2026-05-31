@@ -14,7 +14,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         /// Samo za admin ažuriranje — buyer koristi <see cref="CreateOrderRequest"/>.
         /// Server računa total iz stavki narudžbe.
         /// </summary>
-        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
+        [Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = "Price must be greater than zero.")]
         public decimal? Price { get; set; }
 
         /// <summary>

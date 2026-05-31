@@ -16,7 +16,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [Required(ErrorMessage = "Purchase date is required.")]
         public DateTime PurchaseDate { get; set; }
 
-        [Range(0.01, 100_000_000, ErrorMessage = "Price must be greater than zero.")]
+        [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = "Price must be greater than zero.")]
         public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Username is required.")]

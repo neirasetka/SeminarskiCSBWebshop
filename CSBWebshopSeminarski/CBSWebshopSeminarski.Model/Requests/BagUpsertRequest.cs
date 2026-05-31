@@ -9,7 +9,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [Required]
         public string Code { get; set; } = null!;
         [Required]
-        [Range(0.01, 100_000_000, ErrorMessage = "Price must be greater than zero.")]
+        [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = "Price must be greater than zero.")]
         public decimal Price { get; set; }
         public string Description { get; set; } = null!;
         public int BagTypeID { get; set; }
