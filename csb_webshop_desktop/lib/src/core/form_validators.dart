@@ -1,6 +1,7 @@
 /// Zajednički validatori usklađeni s backend DataAnnotations pravilima.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 
 
@@ -12,7 +13,17 @@ class FormValidators {
 
   /// Backend: `ValidationPatterns.Phone`
 
-  static final RegExp optionalPhoneRegex = RegExp(r'^[\+]?[\d\s\-\(\)]{6,20}$');
+  static final RegExp optionalPhoneRegex = RegExp(r'^\d{9}$');
+
+  static const int phoneDigitCount = 9;
+
+  static const String phoneValidationMessage =
+      'Unesite ispravan broj telefona (9 brojeva)';
+
+  static List<TextInputFormatter> get phoneInputFormatters => <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(phoneDigitCount),
+      ];
 
 
 
@@ -86,7 +97,7 @@ class FormValidators {
 
     if (!optionalPhoneRegex.hasMatch(value.trim())) {
 
-      return 'Unesite ispravan broj telefona (6–20 znakova)';
+      return phoneValidationMessage;
 
     }
 
@@ -106,7 +117,7 @@ class FormValidators {
 
     if (!optionalPhoneRegex.hasMatch(value!.trim())) {
 
-      return 'Unesite ispravan broj telefona (6–20 znakova)';
+      return phoneValidationMessage;
 
     }
 

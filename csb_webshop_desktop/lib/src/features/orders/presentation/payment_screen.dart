@@ -400,6 +400,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          inputFormatters: FormValidators.phoneInputFormatters,
           decoration: InputDecoration(
             labelText: 'Broj telefona *',
             prefixIcon: const Icon(Icons.phone_outlined),

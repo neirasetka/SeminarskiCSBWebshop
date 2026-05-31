@@ -187,6 +187,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 errorMaxLines: 5,
                               ),
                               keyboardType: TextInputType.phone,
+                              inputFormatters: FormValidators.phoneInputFormatters,
                               textInputAction: TextInputAction.next,
                               validator: FormValidators.optionalPhone,
                             ),
