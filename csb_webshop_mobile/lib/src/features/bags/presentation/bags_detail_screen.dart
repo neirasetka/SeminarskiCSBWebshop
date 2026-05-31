@@ -125,11 +125,12 @@ class _BagDetailBody extends StatelessWidget {
                   ],
                 ),
               const Spacer(),
-              IconButton(
-                icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: isFavorite ? Colors.red : null),
-                tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
-                onPressed: onToggleFavorite,
-              ),
+              if (!isAdmin)
+                IconButton(
+                  icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: isFavorite ? Colors.red : null),
+                  tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                  onPressed: onToggleFavorite,
+                ),
             ],
           ),
           const SizedBox(height: 16),

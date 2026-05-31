@@ -28,8 +28,7 @@ class BeltsApi {
     final String pathWithQuery = '$_beltsPath?${Uri(queryParameters: params).query}';
     final http.Response response = await _apiClient.get(pathWithQuery);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
-      return PagedResult.fromJson(map, Belt.fromJson);
+      return _parseBeltsResponse(response.body, page: page, pageSize: pageSize);
     }
     throw Exception('Failed to load belts: ${response.statusCode}');
   }
@@ -112,6 +111,25 @@ class BeltsApi {
       return Belt.fromJson(map);
     }
     throw Exception('Failed to update belt $id: ${response.statusCode}');
+  }
+
+  PagedResult<Belt> _parseBeltsResponse(String body, {required int page, required int pageSize}) {
+    final dynamic decoded = json.decode(body);
+    if (decoded is List<dynamic>) {
+      final List<Belt> items = decoded
+          .map((dynamic e) => Belt.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return PagedResult<Belt>(
+        items: items,
+        totalCount: items.length,
+        page: page,
+        pageSize: pageSize,
+      );
+    }
+    if (decoded is Map<String, dynamic>) {
+      return PagedResult.fromJson(decoded, Belt.fromJson);
+    }
+    return PagedResult<Belt>(items: <Belt>[], totalCount: 0, page: page, pageSize: pageSize);
   }
 
   Future<void> deleteBelt(int id) async {

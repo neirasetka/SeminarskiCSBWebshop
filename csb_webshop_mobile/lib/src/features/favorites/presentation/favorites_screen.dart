@@ -4,15 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/paged_list_state.dart';
 import '../../auth/application/admin_role_provider.dart';
-import '../../bags/application/bags_provider.dart';
 import '../../bags/domain/bag.dart';
 import '../../bags/presentation/bags_detail_screen.dart';
-import '../../belts/application/belts_provider.dart';
 import '../../belts/domain/belt.dart';
 import '../../belts/presentation/belts_detail_screen.dart';
 import '../../orders/application/cart_provider.dart';
+import '../application/favorites_list_provider.dart';
 import '../application/favorites_provider.dart';
 import '../domain/favorites_collections.dart';
 
@@ -22,15 +20,13 @@ class FavoritesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<FavoritesCollections> favoritesAsync = ref.watch(favoritesProvider);
-    final AsyncValue<PagedListState<Bag>> bagsAsync = ref.watch(bagsListProvider);
-    final AsyncValue<PagedListState<Belt>> beltsAsync = ref.watch(beltsListProvider);
+    final AsyncValue<FavoritesListResult> favoritesAsync = ref.watch(favoritesListProvider);
+    final AsyncValue<FavoritesCollections> favoriteIdsAsync = ref.watch(favoritesProvider);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     Future<void> onRefresh() async {
-      await ref.read(bagsListProvider.notifier).loadFullCatalog(bagTypeId: null, query: null);
-      await ref.read(beltsListProvider.notifier).loadFullCatalog(beltTypeId: null, query: null);
       await ref.read(favoritesProvider.notifier).refresh();
+      await ref.read(favoritesListProvider.notifier).refresh();
     }
 
     return Scaffold(
@@ -39,14 +35,16 @@ class FavoritesScreen extends ConsumerWidget {
       ),
       body: favoritesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Greška pri učitavanju favorita: $e'),
-          ),
+        error: (Object e, _) => _CatalogError(
+          message: 'Greška pri učitavanju favorita',
+          error: e,
+          onRetry: onRefresh,
         ),
-        data: (FavoritesCollections collections) {
-          if (collections.isEmpty) {
+        data: (FavoritesListResult result) {
+          final bool hasStoredFavorites =
+              favoriteIdsAsync.valueOrNull?.isEmpty == false;
+
+          if (result.isEmpty && !hasStoredFavorites) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -74,182 +72,163 @@ class FavoritesScreen extends ConsumerWidget {
             );
           }
 
-          return bagsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (Object e, _) => _CatalogError(message: 'Greška pri učitavanju kataloga torbi', error: e, onRetry: onRefresh),
-            data: (PagedListState<Bag> pagedBags) {
-              final List<Bag> allBags = pagedBags.items;
-              return beltsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (Object e, _) => _CatalogError(message: 'Greška pri učitavanju kataloga kaiševa', error: e, onRetry: onRefresh),
-                data: (PagedListState<Belt> pagedBelts) {
-                  final List<Belt> allBelts = pagedBelts.items;
-                  final Map<int, Bag> bagsById = <int, Bag>{for (final Bag b in allBags) b.id: b};
-                  final Map<int, Belt> beltsById = <int, Belt>{for (final Belt b in allBelts) b.id: b};
+          if (result.isEmpty && hasStoredFavorites) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.inventory_2_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Favoriti više nisu u katalogu',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: onRefresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Osvježi'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
-                  final List<Bag> favoriteBags = <Bag>[];
-                  for (final int id in collections.bagIds) {
-                    final Bag? b = bagsById[id];
-                    if (b != null) favoriteBags.add(b);
-                  }
-                  final List<Belt> favoriteBelts = <Belt>[];
-                  for (final int id in collections.beltIds) {
-                    final Belt? b = beltsById[id];
-                    if (b != null) favoriteBelts.add(b);
-                  }
+          final List<Bag> favoriteBags = result.bags;
+          final List<Belt> favoriteBelts = result.belts;
 
-                  if (favoriteBags.isEmpty && favoriteBelts.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                if (favoriteBags.isNotEmpty) ...<Widget>[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        'Torbice',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                        final Bag bag = favoriteBags[index];
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            Icon(Icons.inventory_2_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Favoriti više nisu u katalogu',
-                              style: Theme.of(context).textTheme.titleMedium,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            TextButton.icon(
-                              onPressed: onRefresh,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Osvježi'),
+                            if (index > 0) const Divider(height: 1),
+                            ListTile(
+                              leading: _BagThumbnail(imageUrl: bag.displayImageUrl),
+                              title: Text(bag.name),
+                              subtitle: Text(
+                                bag.description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: _BagRowTrailing(
+                                bag: bag,
+                                isAdmin: isAdmin,
+                                onRemoveFavorite: () async {
+                                  await ref.read(favoritesProvider.notifier).toggleBag(bag.id);
+                                  await ref.read(favoritesListProvider.notifier).refresh();
+                                },
+                                onAddToCart: () async {
+                                  await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Artikal uspješno dodan u korpu'),
+                                        duration: Duration(seconds: 5),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (BuildContext context) => BagDetailScreen(id: bag.id),
+                                  ),
+                                );
+                              },
                             ),
                           ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: onRefresh,
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: <Widget>[
-                        if (favoriteBags.isNotEmpty) ...<Widget>[
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                              child: Text(
-                                'Torbice',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext context, int index) {
-                                final Bag bag = favoriteBags[index];
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    if (index > 0) const Divider(height: 1),
-                                    ListTile(
-                                      leading: _BagThumbnail(imageUrl: bag.displayImageUrl),
-                                      title: Text(bag.name),
-                                      subtitle: Text(
-                                        bag.description,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      trailing: _BagRowTrailing(
-                                        bag: bag,
-                                        isAdmin: isAdmin,
-                                        onRemoveFavorite: () => ref.read(favoritesProvider.notifier).toggleBag(bag.id),
-                                        onAddToCart: () async {
-                                          await ref.read(cartProvider.notifier).addBagToCart(bagId: bag.id);
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Artikal uspješno dodan u korpu'),
-                                                duration: Duration(seconds: 5),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (BuildContext context) => BagDetailScreen(id: bag.id),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                              childCount: favoriteBags.length,
-                            ),
-                          ),
-                        ],
-                        if (favoriteBelts.isNotEmpty) ...<Widget>[
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(16, favoriteBags.isNotEmpty ? 8 : 16, 16, 8),
-                              child: Text(
-                                'Kaiševi',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext context, int index) {
-                                final Belt belt = favoriteBelts[index];
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    if (index > 0) const Divider(height: 1),
-                                    ListTile(
-                                      leading: _BeltThumbnail(displayUrl: belt.displayImageUrl),
-                                      title: Text(belt.name),
-                                      subtitle: Text(
-                                        belt.description,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      trailing: _BeltRowTrailing(
-                                        belt: belt,
-                                        isAdmin: isAdmin,
-                                        onRemoveFavorite: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
-                                        onAddToCart: () async {
-                                          await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Artikal uspješno dodan u korpu'),
-                                                duration: Duration(seconds: 5),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (BuildContext context) => BeltDetailScreen(id: belt.id),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                              childCount: favoriteBelts.length,
-                            ),
-                          ),
-                        ],
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      ],
+                        );
+                      },
+                      childCount: favoriteBags.length,
                     ),
-                  );
-                },
-              );
-            },
+                  ),
+                ],
+                if (favoriteBelts.isNotEmpty) ...<Widget>[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16, favoriteBags.isNotEmpty ? 8 : 16, 16, 8),
+                      child: Text(
+                        'Kaiševi',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                        final Belt belt = favoriteBelts[index];
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (index > 0) const Divider(height: 1),
+                            ListTile(
+                              leading: _BeltThumbnail(displayUrl: belt.displayImageUrl),
+                              title: Text(belt.name),
+                              subtitle: Text(
+                                belt.description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: _BeltRowTrailing(
+                                belt: belt,
+                                isAdmin: isAdmin,
+                                onRemoveFavorite: () async {
+                                  await ref.read(favoritesProvider.notifier).toggleBelt(belt.id);
+                                  await ref.read(favoritesListProvider.notifier).refresh();
+                                },
+                                onAddToCart: () async {
+                                  await ref.read(cartProvider.notifier).addBeltToCart(beltId: belt.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Artikal uspješno dodan u korpu'),
+                                        duration: Duration(seconds: 5),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (BuildContext context) => BeltDetailScreen(id: belt.id),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                      childCount: favoriteBelts.length,
+                    ),
+                  ),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            ),
           );
         },
       ),

@@ -37,10 +37,74 @@ class OrdersApi {
       '$_ordersPath/My?Page=$page&PageSize=$pageSize',
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
-      return PagedResult.fromJson(map, (Map<String, dynamic> item) => item);
+      return _parsePagedOrdersResponse(response.body, page: page, pageSize: pageSize);
     }
     throw Exception('Failed to load orders: ${response.statusCode}');
+  }
+
+  /// Sve narudžbe (samo admin token).
+  Future<PagedResult<Map<String, dynamic>>> listOrdersPage({
+    String? orderNumberPrefix,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final Map<String, String> params = <String, String>{
+      'Page': page.toString(),
+      'PageSize': pageSize.toString(),
+      if (orderNumberPrefix != null && orderNumberPrefix.trim().isNotEmpty)
+        'OrderNumber': orderNumberPrefix.trim(),
+    };
+    final http.Response response = await _apiClient.get('$_ordersPath?${Uri(queryParameters: params).query}');
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return _parsePagedOrdersResponse(response.body, page: page, pageSize: pageSize);
+    }
+    throw Exception('Failed to load orders: ${response.statusCode}');
+  }
+
+  /// Postavlja status isporuke (npr. Processing, Shipped). Samo admin na API-ju.
+  Future<void> updateShippingStatus({
+    required int orderId,
+    required String status,
+    String? message,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'status': status,
+      if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+    };
+    final http.Response response = await _apiClient.patch(
+      '/api/orders/$orderId/shipping/status',
+      body: json.encode(body),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    throw Exception('Failed to update shipping status: ${response.statusCode}');
+  }
+
+  PagedResult<Map<String, dynamic>> _parsePagedOrdersResponse(
+    String body, {
+    required int page,
+    required int pageSize,
+  }) {
+    final dynamic decoded = json.decode(body);
+    if (decoded is List<dynamic>) {
+      final List<Map<String, dynamic>> items = decoded
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      return PagedResult<Map<String, dynamic>>(
+        items: items,
+        totalCount: items.length,
+        page: page,
+        pageSize: pageSize,
+      );
+    }
+    if (decoded is Map<String, dynamic>) {
+      return PagedResult.fromJson(decoded, (Map<String, dynamic> item) => item);
+    }
+    return PagedResult<Map<String, dynamic>>(
+      items: <Map<String, dynamic>>[],
+      totalCount: 0,
+      page: page,
+      pageSize: pageSize,
+    );
   }
 
   Future<Map<String, dynamic>> createOrder({

@@ -6,39 +6,52 @@ import '../domain/order_models.dart';
 import 'shipping_status_timeline.dart';
 
 class OrderDetailScreen extends StatelessWidget {
-  const OrderDetailScreen({super.key, required this.order});
+  const OrderDetailScreen({
+    super.key,
+    required this.order,
+    this.embedded = false,
+  });
 
   final OrderModel order;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Narudžba ${order.orderNumber}')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          _sectionHeader('Pregled'),
-          _kv('Broj narudžbe', order.orderNumber),
-          _kv('Datum', DateFormatter.formatDateTime(order.date)),
-          _kvWidget('Status plaćanja', order.paymentStatus != null ? StatusBadge(status: order.paymentStatus!) : const Text('N/A')),
-          _kvWidget('Status isporuke', order.shippingStatus != null ? StatusBadge(status: order.shippingStatus!) : const Text('N/A')),
-          const SizedBox(height: 8),
-          const Divider(),
-          _sectionHeader('Praćenje dostave'),
-          ShippingStatusTimeline(status: order.shippingStatus),
-          const SizedBox(height: 16),
-          _sectionHeader('Stavke'),
-          ...order.items.map((OrderItemModel item) => _itemTile(item)).toList(),
-          const Divider(height: 32),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+    final Widget body = ListView(
+      padding: const EdgeInsets.all(16),
+      children: <Widget>[
+        _sectionHeader('Pregled'),
+        _kv('Broj narudžbe', order.orderNumber),
+        _kv('Datum', DateFormatter.formatDateTime(order.date)),
+        _kvWidget('Status plaćanja', order.paymentStatus != null ? StatusBadge(status: order.paymentStatus!) : const Text('N/A')),
+        _kvWidget('Status isporuke', order.shippingStatus != null ? StatusBadge(status: order.shippingStatus!) : const Text('N/A')),
+        const SizedBox(height: 8),
+        const Divider(),
+        _sectionHeader('Praćenje dostave'),
+        ShippingStatusTimeline(status: order.shippingStatus),
+        const SizedBox(height: 16),
+        _sectionHeader('Stavke'),
+        ...order.items.map((OrderItemModel item) => _itemTile(item)).toList(),
+        const Divider(height: 32),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            'Ukupno: ${order.amount.toStringAsFixed(2)} KM',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-        ],
+        ),
+      ],
+    );
+
+    if (embedded) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Narudžba ${order.orderNumber}'),
       ),
+      body: body,
     );
   }
 
@@ -82,4 +95,3 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 }
-

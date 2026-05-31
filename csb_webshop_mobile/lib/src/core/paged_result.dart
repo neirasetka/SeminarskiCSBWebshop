@@ -33,14 +33,20 @@ class PagedResult<T> {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic> json) itemFromJson,
   ) {
-    final dynamic rawItems = json['items'] ?? json['Items'];
-    final List<dynamic> itemsList = rawItems is List<dynamic> ? rawItems : <dynamic>[];
+    final List<dynamic> itemsList = _itemsListFromJson(json['items'] ?? json['Items']);
     return PagedResult<T>(
       items: itemsList.map((dynamic e) => itemFromJson(e as Map<String, dynamic>)).toList(),
       totalCount: _readInt(json, 'totalCount', 'TotalCount'),
       page: _readInt(json, 'page', 'Page', fallback: 1),
       pageSize: _readInt(json, 'pageSize', 'PageSize', fallback: 20),
     );
+  }
+
+  /// Podržava listu, pojedinačni objekt (pogrešan API oblik) ili prazan odgovor.
+  static List<dynamic> _itemsListFromJson(dynamic rawItems) {
+    if (rawItems is List<dynamic>) return rawItems;
+    if (rawItems is Map<String, dynamic>) return <dynamic>[rawItems];
+    return <dynamic>[];
   }
 
   static int _readInt(

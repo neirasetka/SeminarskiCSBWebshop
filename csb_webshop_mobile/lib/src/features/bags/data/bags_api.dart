@@ -28,8 +28,7 @@ class BagsApi {
     final String pathWithQuery = '$_bagsPath?${Uri(queryParameters: params).query}';
     final http.Response response = await _apiClient.get(pathWithQuery);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
-      return PagedResult.fromJson(map, Bag.fromJson);
+      return _parseBagsResponse(response.body, page: page, pageSize: pageSize);
     }
     throw Exception('Failed to load bags: ${response.statusCode}');
   }
@@ -112,6 +111,25 @@ class BagsApi {
       return Bag.fromJson(map);
     }
     throw Exception('Failed to update bag $id: ${response.statusCode}');
+  }
+
+  PagedResult<Bag> _parseBagsResponse(String body, {required int page, required int pageSize}) {
+    final dynamic decoded = json.decode(body);
+    if (decoded is List<dynamic>) {
+      final List<Bag> items = decoded
+          .map((dynamic e) => Bag.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return PagedResult<Bag>(
+        items: items,
+        totalCount: items.length,
+        page: page,
+        pageSize: pageSize,
+      );
+    }
+    if (decoded is Map<String, dynamic>) {
+      return PagedResult.fromJson(decoded, Bag.fromJson);
+    }
+    return PagedResult<Bag>(items: <Bag>[], totalCount: 0, page: page, pageSize: pageSize);
   }
 
   Future<void> deleteBag(int id) async {

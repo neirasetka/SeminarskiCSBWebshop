@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 import 'profile_update_screen.dart';
+import '../../auth/application/admin_role_provider.dart';
+import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
 import '../../auth/application/auth_controller.dart';
@@ -19,6 +21,7 @@ class ProfileScreen extends ConsumerWidget {
     final AsyncValue<UserProfile?> profileAsync = ref.watch(
       userProfileProvider,
     );
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -45,6 +48,7 @@ class ProfileScreen extends ConsumerWidget {
           return _ProfileDetails(
             profile: profile,
             session: ref.watch(authControllerProvider).value,
+            isAdmin: isAdmin,
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -108,10 +112,15 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 class _ProfileDetails extends StatelessWidget {
-  const _ProfileDetails({required this.profile, this.session});
+  const _ProfileDetails({
+    required this.profile,
+    this.session,
+    required this.isAdmin,
+  });
 
   final UserProfile profile;
   final AuthSession? session;
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -235,12 +244,16 @@ class _ProfileDetails extends StatelessWidget {
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
-                title: const Text('Narudžbe'),
-                subtitle: const Text('Pogledajte historiju narudžbi'),
+                title: Text(isAdmin ? 'Lista narudžbi' : 'Narudžbe'),
+                subtitle: Text(
+                  isAdmin ? 'Pregled svih narudžbi' : 'Pogledajte historiju narudžbi',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const OrderHistoryScreen(),
+                    builder: (_) => isAdmin
+                        ? const AdminOrdersScreen()
+                        : const OrderHistoryScreen(),
                   ),
                 ),
               ),

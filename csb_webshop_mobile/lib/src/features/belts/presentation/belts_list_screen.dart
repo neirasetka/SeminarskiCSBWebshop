@@ -129,11 +129,12 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            IconButton(
-                              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
-                              tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
-                              onPressed: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
-                            ),
+                            if (!isAdmin)
+                              IconButton(
+                                icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.red : null),
+                                tooltip: isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+                                onPressed: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
+                              ),
                             if (!isAdmin)
                               IconButton(
                                 icon: const Icon(Icons.add_shopping_cart),

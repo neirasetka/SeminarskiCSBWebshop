@@ -12,6 +12,7 @@ import '../../belts/presentation/belts_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 import '../../orders/presentation/cart_screen.dart';
 import '../../notifications/presentation/notification_badge_button.dart';
+import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
@@ -633,14 +634,16 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                     color: theme.colorScheme.onTertiaryContainer,
                   ),
                 ),
-                title: const Text('Moje narudžbe'),
-                subtitle: const Text('Povijest kupovine'),
+                title: Text(isAdmin ? 'Lista narudžbi' : 'Moje narudžbe'),
+                subtitle: Text(isAdmin ? 'Pregled svih narudžbi' : 'Povijest kupovine'),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => const OrderHistoryScreen(),
+                      builder: (_) => isAdmin
+                          ? const AdminOrdersScreen()
+                          : const OrderHistoryScreen(),
                     ),
                   );
                 },
