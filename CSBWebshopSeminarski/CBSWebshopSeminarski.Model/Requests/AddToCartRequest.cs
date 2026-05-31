@@ -4,7 +4,8 @@ using CBSWebshopSeminarski.Model;
 namespace CBSWebshopSeminarski.Model.Requests
 {
     /// <summary>
-    /// Buyer request za dodavanje stavke u korpu — bez cijene (server je dohvaća iz kataloga).
+    /// Buyer request za dodavanje stavke u korpu — bez cijene i popusta (server uzima cijenu iz kataloga).
+    /// Popust i ručna cijena: <see cref="OrderItemUpsertRequest"/> preko Admin CRUD-a.
     /// </summary>
     public class AddToCartRequest : IValidatableObject
     {
@@ -18,9 +19,6 @@ namespace CBSWebshopSeminarski.Model.Requests
         [Required(ErrorMessage = "Quantity is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
-
-        [Range(0, 100, ErrorMessage = "Discount must be between 0 and 100.")]
-        public decimal? Discount { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

@@ -67,14 +67,12 @@ class OrdersApi {
     int? bagId,
     int? beltId,
     required int quantity,
-    double? discount,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
       if (bagId != null) 'BagID': bagId,
       if (beltId != null) 'BeltID': beltId,
       'OrderID': orderId,
       'Quantity': quantity,
-      if (discount != null) 'Discount': discount,
     };
     final http.Response response = await _apiClient.post('$_orderItemsPath/AddToCart', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) {

@@ -40,7 +40,6 @@ namespace CSBWebshopSeminarski.Controllers
                 BeltID = request.BeltID,
                 OrderID = request.OrderID,
                 Quantity = request.Quantity,
-                Discount = request.Discount
             };
 
             if (!User.IsInRole("Admin"))
