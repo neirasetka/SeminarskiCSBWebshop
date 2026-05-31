@@ -68,7 +68,7 @@ namespace CSBWebshopSeminarski.Controllers
                 var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != order.UserID)
                 {
-                    return Forbid();
+                    throw new ForbiddenException("Access denied.");
                 }
             }
             return Ok(order);
