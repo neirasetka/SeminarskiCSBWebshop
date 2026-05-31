@@ -179,5 +179,30 @@ namespace CSBWebshopSeminarski.Controllers
             if (!ok) return NotFound();
             return NoContent();
         }
+
+        [HttpPost("{orderId:int}/reconcile-payment")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<object>> ReconcilePayment(int orderId)
+        {
+            var result = await _service.ReconcilePaymentAsync(orderId);
+            return Ok(MapPaymentConfirmResult(result));
+        }
+
+        private static object MapPaymentConfirmResult(PaymentConfirmResult result)
+        {
+            if (result.Paid)
+            {
+                return new { paid = true, orderId = result.OrderId, paymentIntentId = result.PaymentIntentId, reason = result.Reason };
+            }
+
+            if (!string.IsNullOrEmpty(result.Reason))
+            {
+                return new { paid = false, reason = result.Reason };
+            }
+
+            return new { paid = false, orderId = result.OrderId, status = result.Status };
+        }
     }
 }

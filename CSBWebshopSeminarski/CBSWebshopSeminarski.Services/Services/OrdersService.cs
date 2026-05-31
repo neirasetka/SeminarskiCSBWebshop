@@ -181,29 +181,22 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public async Task<bool> SetPaymentStatusAsync(int orderId, PaymentStatus status, string? receiptEmail = null)
         {
+            if (status == PaymentStatus.Paid)
+            {
+                throw new BusinessException(
+                    "Paid status cannot be set manually. Use POST /api/Orders/{orderId}/reconcile-payment to verify Stripe payment.");
+            }
+
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
             if (order == null) return false;
             StateMachines.OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, status);
             order.PaymentStatus = status;
-
-            if (status == PaymentStatus.Paid)
-            {
-                _inAppNotifications.StageCreate(
-                    order.UserID,
-                    InAppNotificationTypes.OrderPaid,
-                    "Plaćanje potvrđeno",
-                    $"Uspješno plaćena narudžba #{order.OrderNumber}.",
-                    order.OrderID);
-            }
-
             await _context.SaveChangesAsync();
-
-            if (status == PaymentStatus.Paid)
-            {
-                await _paymentsService.SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
-            }
             return true;
         }
+
+        public Task<PaymentConfirmResult> ReconcilePaymentAsync(int orderId) =>
+            _paymentsService.ReconcileOrderPaymentAsync(orderId);
 
         public async Task<bool> CancelActiveCartAsync(int userId, string? cancellationReason = null)
         {

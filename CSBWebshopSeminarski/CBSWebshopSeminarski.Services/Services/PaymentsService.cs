@@ -311,6 +311,43 @@ namespace CBSWebshopSeminarski.Services.Services
             return await ConfirmPaidPaymentIntentAsync(paymentIntent, null, orderId, currentUserId, isAdmin);
         }
 
+        public async Task<PaymentConfirmResult> ReconcileOrderPaymentAsync(int orderId)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId)
+                ?? throw new NotFoundException("Order not found.");
+
+            if (await _db.Purchases.AnyAsync(p => p.OrderID == orderId))
+            {
+                return new PaymentConfirmResult
+                {
+                    Paid = true,
+                    OrderId = orderId,
+                    Reason = "already_recorded"
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(order.StripeCheckoutSessionId))
+            {
+                return await ConfirmCheckoutSessionAsync(
+                    order.StripeCheckoutSessionId,
+                    orderId,
+                    currentUserId: null,
+                    isAdmin: true);
+            }
+
+            if (!string.IsNullOrWhiteSpace(order.StripePaymentIntentId))
+            {
+                return await ConfirmPaymentIntentAsync(
+                    order.StripePaymentIntentId,
+                    orderId,
+                    currentUserId: null,
+                    isAdmin: true);
+            }
+
+            throw new BusinessException(
+                "Order has no Stripe checkout session or payment intent. Payment cannot be reconciled.");
+        }
+
         public async Task HandlePaymentSucceededAsync(string paymentIntentId, IDictionary<string, string> metadata)
         {
             var orderId = metadata.TryGetValue("order_id", out var idStr) && int.TryParse(idStr, out var id) ? id : 0;
@@ -365,21 +402,17 @@ namespace CBSWebshopSeminarski.Services.Services
                 return false;
             }
 
-            if (order.PaymentStatus == PaymentStatus.Paid)
-            {
-                _logger.LogWarning(
-                    "Payment succeeded event for order {OrderId} but payment status is already Paid. Skipping purchase creation.",
-                    orderId);
-                return true;
-            }
-
             if (!await PaymentIntentMatchesOrderTotalAsync(orderId, paymentIntent))
             {
                 return false;
             }
 
-            OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Paid);
-            order.PaymentStatus = PaymentStatus.Paid;
+            var wasAlreadyPaid = order.PaymentStatus == PaymentStatus.Paid;
+            if (!wasAlreadyPaid)
+            {
+                OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Paid);
+                order.PaymentStatus = PaymentStatus.Paid;
+            }
 
             var purchase = new Purchases
             {
@@ -395,12 +428,15 @@ namespace CBSWebshopSeminarski.Services.Services
             await _db.ExecuteInTransactionAsync(async () =>
             {
                 _db.Purchases.Add(purchase);
-                _inAppNotifications.StageCreate(
-                    order.UserID,
-                    InAppNotificationTypes.OrderPaid,
-                    "Plaćanje potvrđeno",
-                    $"Uspješno plaćena narudžba #{order.OrderNumber}.",
-                    order.OrderID);
+                if (!wasAlreadyPaid)
+                {
+                    _inAppNotifications.StageCreate(
+                        order.UserID,
+                        InAppNotificationTypes.OrderPaid,
+                        "Plaćanje potvrđeno",
+                        $"Uspješno plaćena narudžba #{order.OrderNumber}.",
+                        order.OrderID);
+                }
                 await _db.SaveChangesAsync();
             });
 

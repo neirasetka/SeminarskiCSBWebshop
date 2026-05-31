@@ -29,6 +29,8 @@ namespace CBSWebshopSeminarski.Services.Interfaces
             int? currentUserId,
             bool isAdmin);
 
+        Task<PaymentConfirmResult> ReconcileOrderPaymentAsync(int orderId);
+
         Task HandlePaymentSucceededAsync(string paymentIntentId, IDictionary<string, string> metadata);
 
         Task HandlePaymentFailedAsync(string paymentIntentId, IDictionary<string, string> metadata, string failureMessage);
