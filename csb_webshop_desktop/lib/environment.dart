@@ -1,5 +1,19 @@
-docker compose ps
+class EnvironmentConfig {
+  EnvironmentConfig._();
 
+  static const String flavor =
+      String.fromEnvironment('FLAVOR', defaultValue: 'prod');
+
+  /// API root (bez /api sufiksa — putanje u ApiClient već počinju s /api/...).
+  /// Docker: http://localhost:8080
+  /// Lokalni Kestrel: --dart-define=baseUrl=https://localhost:7224
+  static const String apiBaseUrl = String.fromEnvironment(
+    'baseUrl',
+    defaultValue: String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://localhost:8080',
+    ),
+  );
 
   static const bool enableLogging =
       bool.fromEnvironment('ENABLE_LOGGING', defaultValue: false);
