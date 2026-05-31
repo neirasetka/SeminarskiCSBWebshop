@@ -256,10 +256,8 @@ using (var scope = app.Services.CreateScope())
         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("StartupSeeding");
 
-        // Apply migrations
-        await context.Database.MigrateAsync();
-
-        // Legacy DBs: OrderItems.BagID/BeltID were NOT NULL; cart lines need one FK null (bag XOR belt).
+        // Idempotent schema patches run before EF migrate so legacy DBs stay usable even when
+        // MigrateAsync fails (e.g. pending model changes block new migrations).
         await context.Database.ExecuteSqlRawAsync(
             OrderItemsSchemaCompatibility.EnsureOrderItemsBagOrBeltColumnsNullableSql);
 
@@ -280,6 +278,17 @@ using (var scope = app.Services.CreateScope())
 
         await context.Database.ExecuteSqlRawAsync(
             BusinessIdentifiersSchemaCompatibility.EnsureBusinessIdentifierUniqueIndexesSql);
+
+        try
+        {
+            await context.Database.MigrateAsync();
+        }
+        catch (Exception migrateEx)
+        {
+            logger.LogWarning(migrateEx,
+                "EF migrations could not be applied (pending model changes or migration conflict). " +
+                "Idempotent schema patches above were still applied.");
+        }
 
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");

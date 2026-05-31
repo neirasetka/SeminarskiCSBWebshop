@@ -91,23 +91,7 @@ class _AnnouncementEditScreenState extends ConsumerState<AnnouncementEditScreen>
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider);
-
-    // Ensure we have data for this id (e.g. when opening edit directly)
-    announcementAsync.whenOrNull(
-      data: (Announcement a) {
-        if (a.id != widget.id) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(announcementDetailProvider.notifier).fetch(widget.id);
-          });
-        }
-      },
-      error: (_, __) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(announcementDetailProvider.notifier).fetch(widget.id);
-        });
-      },
-    );
+    final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider(widget.id));
 
     return announcementAsync.when(
       data: (Announcement a) {
@@ -240,7 +224,7 @@ class _AnnouncementEditScreenState extends ConsumerState<AnnouncementEditScreen>
               Text(e.toString(), style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => ref.read(announcementDetailProvider.notifier).fetch(widget.id),
+                onPressed: () => ref.invalidate(announcementDetailProvider(widget.id)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Pokušaj ponovno'),
               ),

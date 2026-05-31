@@ -8,6 +8,8 @@ import '../../bags/presentation/bags_list_screen.dart';
 import '../../belts/presentation/belts_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
 import '../../orders/presentation/cart_screen.dart';
+import '../../auth/application/admin_role_provider.dart';
+import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../../profile/domain/user_profile.dart';
@@ -236,7 +238,8 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     final ThemeData theme = Theme.of(context);
     final AsyncValue<AuthSession?> sessionAsync = ref.read(authControllerProvider);
     final AuthSession? session = sessionAsync.valueOrNull;
-    
+    final bool isAdmin = ref.read(adminRoleProvider).valueOrNull ?? false;
+
     await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -382,13 +385,15 @@ class _RootScreenState extends ConsumerState<RootScreen> {
                   ),
                   child: Icon(Icons.receipt_long_outlined, size: 20, color: theme.colorScheme.onTertiaryContainer),
                 ),
-                title: const Text('Moje narudžbe'),
-                subtitle: const Text('Povijest kupovine'),
+                title: Text(isAdmin ? 'Lista narudžbi' : 'Moje narudžbe'),
+                subtitle: Text(isAdmin ? 'Pregled svih narudžbi' : 'Povijest kupovine'),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => isAdmin ? const AdminOrdersScreen() : const OrderHistoryScreen(),
+                    ),
                   );
                 },
               ),

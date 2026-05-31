@@ -14,45 +14,37 @@ class AnnouncementsApi {
   static const String _newsPath = '/api/News';
 
   Future<List<Announcement>> getAnnouncements({int page = 1, int pageSize = 20, String? segment}) async {
-    try {
-      final Map<String, String> params = <String, String>{
-        'page': page.toString(),
-        'pageSize': pageSize.toString(),
-        if (segment != null && segment.isNotEmpty) 'segment': segment,
-      };
-      final String query = Uri(queryParameters: params).query;
-      final String path = query.isEmpty ? _newsPath : '$_newsPath?$query';
-      final http.Response response = await _apiClient.get(path);
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return List<Announcement>.from(_dummyAnnouncements);
-      }
-      final dynamic decoded = json.decode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        return PagedResult.fromJson(decoded, Announcement.fromNewsJson).items;
-      }
-      if (decoded is List<dynamic>) {
-        return decoded
-            .map((dynamic e) => Announcement.fromNewsJson(e as Map<String, dynamic>))
-            .toList();
-      }
-      return List<Announcement>.from(_dummyAnnouncements);
-    } catch (_) {
-      return List<Announcement>.from(_dummyAnnouncements);
+    final Map<String, String> params = <String, String>{
+      'page': page.toString(),
+      'pageSize': pageSize.toString(),
+      if (segment != null && segment.isNotEmpty) 'segment': segment,
+    };
+    final String query = Uri(queryParameters: params).query;
+    final String path = query.isEmpty ? _newsPath : '$_newsPath?$query';
+    final http.Response response = await _apiClient.get(path);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('GET $_newsPath nije uspio: HTTP ${response.statusCode}');
     }
+    final dynamic decoded = json.decode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      return PagedResult.fromJson(decoded, Announcement.fromNewsJson).items;
+    }
+    if (decoded is List<dynamic>) {
+      return decoded
+          .map((dynamic e) => Announcement.fromNewsJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Neočekivani odgovor s $_newsPath');
   }
 
   Future<Announcement> getAnnouncementById(int id) async {
-    try {
-      final http.Response response = await _apiClient.get('$_newsPath/$id');
-      if (response.statusCode == 404) throw Exception('Not found');
-      if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('HTTP ${response.statusCode}');
-      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
-      return Announcement.fromNewsJson(map);
-    } catch (_) {
-      final int idx = _dummyAnnouncements.indexWhere((Announcement a) => a.id == id);
-      if (idx >= 0) return _dummyAnnouncements[idx];
-      rethrow;
+    final http.Response response = await _apiClient.get('$_newsPath/$id');
+    if (response.statusCode == 404) throw Exception('Obavijest nije pronađena.');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('GET $_newsPath/$id nije uspio: HTTP ${response.statusCode}');
     }
+    final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+    return Announcement.fromNewsJson(map);
   }
 
   /// Updates an existing announcement by id.
@@ -63,33 +55,20 @@ class AnnouncementsApi {
     required String body,
     AnnouncementType type = AnnouncementType.announcement,
   }) async {
-    try {
-      final Map<String, dynamic> bodyMap = <String, dynamic>{
-        'title': title,
-        'body': body,
-      };
-      final http.Response response = await _apiClient.put(
-        '$_newsPath/$id',
-        body: json.encode(bodyMap),
-      );
-      if (response.statusCode == 404) throw Exception('Not found');
-      if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('HTTP ${response.statusCode}');
-      final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
-      return Announcement.fromNewsJson(map);
-    } catch (_) {
-      final int idx = _dummyAnnouncements.indexWhere((Announcement a) => a.id == id);
-      if (idx < 0) rethrow;
-      final Announcement existing = _dummyAnnouncements[idx];
-      final Announcement updated = Announcement(
-        id: existing.id,
-        title: title,
-        body: body,
-        publishedAt: existing.publishedAt,
-        type: type,
-      );
-      _dummyAnnouncements[idx] = updated;
-      return updated;
+    final Map<String, dynamic> bodyMap = <String, dynamic>{
+      'title': title,
+      'body': body,
+    };
+    final http.Response response = await _apiClient.put(
+      '$_newsPath/$id',
+      body: json.encode(bodyMap),
+    );
+    if (response.statusCode == 404) throw Exception('Obavijest nije pronađena.');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('PUT $_newsPath/$id nije uspio: HTTP ${response.statusCode}');
     }
+    final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
+    return Announcement.fromNewsJson(map);
   }
 
   /// Creates a new bag announcement via Announcements API.
@@ -134,27 +113,3 @@ class AnnouncementsApi {
     );
   }
 }
-
-final List<Announcement> _dummyAnnouncements = <Announcement>[
-  Announcement(
-    id: 1,
-    title: 'Dobrodošli na CocoSunBags Webshop',
-    body: 'Hvala što koristite našu aplikaciju. Ovo je početna obavijest.',
-    publishedAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-    type: AnnouncementType.info,
-  ),
-  Announcement(
-    id: 2,
-    title: 'Veliki update 1.1',
-    body: 'Dodali smo nove funkcionalnosti i poboljšanja performansi.',
-    publishedAt: DateTime.now().subtract(const Duration(hours: 5)),
-    type: AnnouncementType.update,
-  ),
-  Announcement(
-    id: 3,
-    title: 'Akcija ovog vikenda',
-    body: 'Iskoristite posebne popuste do 30% na odabrane artikle.',
-    publishedAt: DateTime.now().subtract(const Duration(days: 3, hours: 4)),
-    type: AnnouncementType.announcement,
-  ),
-];

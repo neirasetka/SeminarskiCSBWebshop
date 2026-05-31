@@ -18,14 +18,8 @@ class AnnouncementDetailScreen extends ConsumerStatefulWidget {
 
 class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScreen> {
   @override
-  void initState() {
-    super.initState();
-    Future<void>(() => ref.read(announcementDetailProvider.notifier).fetch(widget.id));
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider);
+    final AsyncValue<Announcement> announcementAsync = ref.watch(announcementDetailProvider(widget.id));
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return Scaffold(
@@ -47,8 +41,7 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
                     builder: (_) => AnnouncementEditScreen(id: widget.id),
                   ),
                 ).then((_) {
-                  // Refresh detail after edit
-                  ref.read(announcementDetailProvider.notifier).fetch(widget.id);
+                  ref.invalidate(announcementDetailProvider(widget.id));
                 });
               },
             ),
@@ -85,7 +78,7 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
                         builder: (_) => AnnouncementEditScreen(id: widget.id),
                       ),
                     ).then((_) {
-                      ref.read(announcementDetailProvider.notifier).fetch(widget.id);
+                      ref.invalidate(announcementDetailProvider(widget.id));
                     });
                   },
                   icon: const Icon(Icons.edit_outlined),
@@ -106,7 +99,7 @@ class _AnnouncementDetailScreenState extends ConsumerState<AnnouncementDetailScr
               Text(e.toString(), style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 8),
               ElevatedButton.icon(
-                onPressed: () => ref.read(announcementDetailProvider.notifier).fetch(widget.id),
+                onPressed: () => ref.invalidate(announcementDetailProvider(widget.id)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Pokušaj ponovno'),
               ),

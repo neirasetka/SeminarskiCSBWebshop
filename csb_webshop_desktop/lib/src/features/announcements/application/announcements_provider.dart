@@ -69,19 +69,14 @@ class AnnouncementsListNotifier extends AsyncNotifier<List<Announcement>> {
 final AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>> announcementsListProvider =
     AsyncNotifierProvider<AnnouncementsListNotifier, List<Announcement>>(AnnouncementsListNotifier.new);
 
-class AnnouncementDetailNotifier extends AutoDisposeAsyncNotifier<Announcement> {
+class AnnouncementDetailNotifier extends AutoDisposeFamilyAsyncNotifier<Announcement, int> {
   @override
-  Future<Announcement> build() async {
-    throw UnimplementedError('Call fetch(id) first');
-  }
-
-  Future<void> fetch(int id) async {
+  Future<Announcement> build(int id) async {
     final AnnouncementsApi api = ref.read(announcementsApiProvider);
-    state = const AsyncLoading<Announcement>();
-    state = await AsyncValue.guard(() => api.getAnnouncementById(id));
+    return api.getAnnouncementById(id);
   }
 }
 
-final AutoDisposeAsyncNotifierProvider<AnnouncementDetailNotifier, Announcement> announcementDetailProvider =
-    AutoDisposeAsyncNotifierProvider<AnnouncementDetailNotifier, Announcement>(AnnouncementDetailNotifier.new);
+final announcementDetailProvider = AsyncNotifierProvider.autoDispose
+    .family<AnnouncementDetailNotifier, Announcement, int>(AnnouncementDetailNotifier.new);
 

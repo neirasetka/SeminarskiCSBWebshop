@@ -7,6 +7,7 @@ import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 import 'newsletter_subscribers_screen.dart';
 import 'profile_update_screen.dart';
+import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
 import '../../giveaways/presentation/giveaways_list_screen.dart';
@@ -232,25 +233,7 @@ class _ProfileDetails extends StatelessWidget {
                   ),
                 ),
               ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.receipt_long,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                title: const Text('Narudžbe'),
-                subtitle: const Text('Pogledajte historiju narudžbi'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const OrderHistoryScreen()),
-                ),
-              ),
+              const _OrdersQuickActionTile(),
               const Divider(height: 1, indent: 72),
               ListTile(
                 leading: Container(
@@ -432,6 +415,39 @@ class _NewsletterSubscriptionCardState extends ConsumerState<_NewsletterSubscrip
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrdersQuickActionTile extends ConsumerWidget {
+  const _OrdersQuickActionTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
+    final ThemeData theme = Theme.of(context);
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.receipt_long,
+          color: theme.colorScheme.onPrimaryContainer,
+        ),
+      ),
+      title: Text(isAdmin ? 'Lista narudžbi' : 'Narudžbe'),
+      subtitle: Text(
+        isAdmin ? 'Pregled svih narudžbi' : 'Pogledajte historiju narudžbi',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => isAdmin ? const AdminOrdersScreen() : const OrderHistoryScreen(),
         ),
       ),
     );

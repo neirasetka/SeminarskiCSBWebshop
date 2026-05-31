@@ -51,7 +51,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
     final AsyncValue<PagedListState<OrderModel>> async = ref.watch(adminOrdersListProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Narudžbe'),
+        title: const Text('Lista narudžbi'),
         actions: <Widget>[
           IconButton(
             tooltip: 'Osvježi',
