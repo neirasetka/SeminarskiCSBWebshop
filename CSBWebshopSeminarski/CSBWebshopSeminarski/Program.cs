@@ -282,6 +282,9 @@ using (var scope = app.Services.CreateScope())
         await context.Database.ExecuteSqlRawAsync(
             PasswordResetTokensSchemaCompatibility.EnsurePasswordResetTokensTableSql);
 
+        await context.Database.ExecuteSqlRawAsync(
+            NotificationsSchemaCompatibility.EnsureNotificationsTableSql);
+
         try
         {
             await context.Database.MigrateAsync();
