@@ -121,7 +121,13 @@ class OrdersApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return json.decode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to create checkout session: ${response.statusCode}');
+    final String errorDetail = _parseErrorResponse(response);
+    final String extra = errorDetail.isNotEmpty ? ': $errorDetail' : _rawBodySnippet(response);
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'Kreiranje Stripe checkout sesije nije uspjelo$extra',
+      rawBody: response.body.isNotEmpty ? response.body : null,
+    );
   }
 
   Future<Map<String, dynamic>?> getOrder({required int orderId}) async {

@@ -65,6 +65,17 @@ Future<Webview> _openHostedCheckoutInApp(String url) async {
   return webview;
 }
 
+String? _extractCheckoutSessionIdFromUrl(String url) {
+  final Uri? uri = Uri.tryParse(url);
+  if (uri == null) return null;
+  final String? sessionId =
+      uri.queryParameters['session_id'] ?? uri.queryParameters['sessionId'];
+  if (sessionId != null && sessionId.trim().isNotEmpty) {
+    return sessionId.trim();
+  }
+  return null;
+}
+
 class CartNotifier extends AsyncNotifier<OrderModel?> {
   // Getter: [build] se može ponoviti nakon invalidate (npr. nakon prijave).
   OrdersApi get _api => ref.read(ordersApiProvider);
@@ -285,14 +296,16 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
 
     final Webview checkoutWebview = await _openHostedCheckoutInApp(url);
     final Completer<String> checkoutOutcome = Completer<String>();
+    String? stripeSuccessRedirectUrl;
 
     checkoutWebview.addOnUrlRequestCallback((String requestedUrl) {
       final String lower = requestedUrl.toLowerCase();
-      if (!checkoutOutcome.isCompleted &&
-          lower.startsWith(successUrl)) {
+      final String successPrefix = successUrl.toLowerCase();
+      final String cancelPrefix = cancelUrl.toLowerCase();
+      if (!checkoutOutcome.isCompleted && lower.startsWith(successPrefix)) {
+        stripeSuccessRedirectUrl = requestedUrl;
         checkoutOutcome.complete('success');
-      } else if (!checkoutOutcome.isCompleted &&
-          lower.startsWith(cancelUrl)) {
+      } else if (!checkoutOutcome.isCompleted && lower.startsWith(cancelPrefix)) {
         checkoutOutcome.complete('cancel');
       }
     });
@@ -322,7 +335,11 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
     }
 
     checkoutWebview.close();
-    final String sessionId = resp['SessionId']?.toString() ?? '';
+    String sessionId =
+        (resp['SessionId'] ?? resp['sessionId'] ?? '').toString().trim();
+    if (sessionId.isEmpty && stripeSuccessRedirectUrl != null) {
+      sessionId = _extractCheckoutSessionIdFromUrl(stripeSuccessRedirectUrl!) ?? '';
+    }
 
     if (sessionId.isEmpty) {
       throw Exception('Nedostaje sessionId za potvrdu plaćanja.');

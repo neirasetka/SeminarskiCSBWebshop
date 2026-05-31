@@ -285,6 +285,9 @@ using (var scope = app.Services.CreateScope())
         await context.Database.ExecuteSqlRawAsync(
             NotificationsSchemaCompatibility.EnsureNotificationsTableSql);
 
+        await context.Database.ExecuteSqlRawAsync(
+            UsersSchemaCompatibility.EnsureUserSoftDeleteColumnsSql);
+
         try
         {
             await context.Database.MigrateAsync();

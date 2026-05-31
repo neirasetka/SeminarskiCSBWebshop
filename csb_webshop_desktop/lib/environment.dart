@@ -5,8 +5,8 @@ class EnvironmentConfig {
       String.fromEnvironment('FLAVOR', defaultValue: 'prod');
 
   /// API root (bez /api sufiksa — putanje u ApiClient već počinju s /api/...).
-  /// Docker: http://localhost:8080
-  /// Lokalni Kestrel: --dart-define=baseUrl=https://localhost:7224
+  /// Docker (default): http://localhost:8080
+  /// Visual Studio (Kestrel http profil): --dart-define=baseUrl=http://localhost:5265
   static const String apiBaseUrl = String.fromEnvironment(
     'baseUrl',
     defaultValue: String.fromEnvironment(

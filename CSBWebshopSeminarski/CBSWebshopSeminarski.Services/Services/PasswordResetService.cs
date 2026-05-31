@@ -40,7 +40,9 @@ namespace CBSWebshopSeminarski.Services.Services
             if (string.IsNullOrWhiteSpace(email))
                 return;
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var normalizedEmail = email.ToLowerInvariant();
+            var user = await _db.Users
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == normalizedEmail);
             if (user == null)
                 return;
 
@@ -112,26 +114,27 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             try
             {
-                _mailPublisher.Publish(
-                    sender: "no-reply@cocosunbags.local",
-                    recipient: recipient,
-                    subject: subject,
-                    content: content);
+                await _emailService.SendEmailAsync(recipient, subject, content);
+                _logger.LogInformation("Password reset email sent via SMTP to {Recipient}.", recipient);
                 return;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "RabbitMQ mail publish failed for password reset; trying SMTP fallback.");
+                _logger.LogWarning(ex, "Direct SMTP failed for password reset; trying RabbitMQ queue.");
             }
 
             try
             {
-                await _emailService.SendEmailAsync(recipient, subject, content);
+                _mailPublisher.Publish(
+                    sender: string.Empty,
+                    recipient: recipient,
+                    subject: subject,
+                    content: content);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex,
-                    "SMTP fallback failed for password reset email to {Recipient}. Token was saved in database.",
+                    "RabbitMQ publish failed for password reset email to {Recipient}. Token was saved in database.",
                     recipient);
             }
         }

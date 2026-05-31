@@ -53,6 +53,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public StripeConfigResponse GetStripeConfig()
         {
+            EnsureStripeConfigured(requireSecretKey: false);
             return new StripeConfigResponse
             {
                 PublishableKey = _configuration["Stripe:PublishableKey"] ?? string.Empty,
@@ -105,6 +106,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var metadata = GetCheckoutMetadata(order.OrderID, order.OrderNumber, order.UserID, request.ReceiptEmail);
 
+            EnsureStripeConfigured();
+
             var paymentIntentService = new PaymentIntentService();
             var createOptions = new PaymentIntentCreateOptions
             {
@@ -118,9 +121,17 @@ namespace CBSWebshopSeminarski.Services.Services
                 }
             };
 
-            var intent = await paymentIntentService.CreateAsync(
-                createOptions,
-                new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-pi" });
+            PaymentIntent intent;
+            try
+            {
+                intent = await paymentIntentService.CreateAsync(
+                    createOptions,
+                    new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-pi" });
+            }
+            catch (StripeException ex)
+            {
+                throw new BusinessException($"Stripe payment intent failed: {ex.StripeError?.Message ?? ex.Message}");
+            }
 
             order.StripePaymentIntentId = intent.Id;
             await _db.SaveChangesAsync();
@@ -176,6 +187,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 };
             }
 
+            EnsureStripeConfigured();
+
             var sessionService = new SessionService();
             var createOptions = new SessionCreateOptions
             {
@@ -210,9 +223,17 @@ namespace CBSWebshopSeminarski.Services.Services
                 createOptions.CustomerEmail = request.ReceiptEmail;
             }
 
-            var session = await sessionService.CreateAsync(
-                createOptions,
-                new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-cs" });
+            Session session;
+            try
+            {
+                session = await sessionService.CreateAsync(
+                    createOptions,
+                    new RequestOptions { IdempotencyKey = $"order-{order.OrderID}-cs" });
+            }
+            catch (StripeException ex)
+            {
+                throw new BusinessException($"Stripe checkout session failed: {ex.StripeError?.Message ?? ex.Message}");
+            }
 
             order.StripeCheckoutSessionId = session.Id;
             if (!string.IsNullOrWhiteSpace(session.PaymentIntentId))
@@ -223,8 +244,9 @@ namespace CBSWebshopSeminarski.Services.Services
                 ShippingStateMachine.ValidateTransition(order.ShippingStatus, ShippingStatus.Processing);
                 order.ShippingStatus = ShippingStatus.Processing;
                 order.LastStatusUpdate = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
             }
+
+            await _db.SaveChangesAsync();
 
             return new CreateCheckoutSessionResponse
             {
@@ -659,6 +681,22 @@ namespace CBSWebshopSeminarski.Services.Services
             !string.IsNullOrWhiteSpace(_configuration["Stripe:Currency"])
                 ? _configuration["Stripe:Currency"]!.Trim().ToLowerInvariant()
                 : DefaultPaymentCurrency;
+
+        private void EnsureStripeConfigured(bool requireSecretKey = true)
+        {
+            var secretKey = _configuration["Stripe:SecretKey"]?.Trim();
+            if (requireSecretKey && string.IsNullOrWhiteSpace(secretKey))
+            {
+                throw new BusinessException(
+                    "Stripe plaćanje nije konfigurirano na serveru. Postavite Stripe:SecretKey " +
+                    "(npr. u appsettings.Development.json ili STRIPE_SECRET_KEY u .env za Docker).");
+            }
+
+            if (!string.IsNullOrWhiteSpace(secretKey))
+            {
+                StripeConfiguration.ApiKey = secretKey;
+            }
+        }
 
         private bool IsRedirectUrlAllowed(string url)
         {

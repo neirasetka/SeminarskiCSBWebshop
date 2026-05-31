@@ -219,15 +219,27 @@ namespace CSBWebshopSeminarski.Notifications
 
         private async Task SendEmailAsync(string message, CancellationToken cancellationToken)
         {
-            var smtpServer = _configuration["Smtp:Host"] ?? Environment.GetEnvironmentVariable("SMTP_SERVER") ?? "smtp.gmail.com";
+            var smtpServer = FirstNonEmpty(
+                _configuration["Smtp:Host"],
+                Environment.GetEnvironmentVariable("SMTP_SERVER"),
+                "smtp.gmail.com");
             var smtpPort = int.TryParse(_configuration["Smtp:Port"], out var port)
                 ? port
                 : int.TryParse(Environment.GetEnvironmentVariable("SMTP_PORT"), out var envPort) ? envPort : 587;
-            var smtpUser = _configuration["Smtp:User"] ?? Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? string.Empty;
+            var smtpUser = FirstNonEmpty(
+                _configuration["Smtp:User"],
+                Environment.GetEnvironmentVariable("SMTP_USERNAME"));
             // Gmail app passwords are often shown with spaces; auth requires contiguous string.
-            var smtpPass = (_configuration["Smtp:Pass"] ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? string.Empty)
-                .Replace(" ", string.Empty)
-                .Trim();
+            var smtpPass = FirstNonEmpty(
+                    _configuration["Smtp:Pass"],
+                    Environment.GetEnvironmentVariable("SMTP_PASSWORD"))
+                .Replace(" ", string.Empty);
+
+            if (string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPass))
+            {
+                throw new AuthenticationException(
+                    "SMTP credentials are not configured. Set Smtp:User/Smtp:Pass or SMTP_USERNAME/SMTP_PASSWORD.");
+            }
 
             MailDto? emailData;
             try
@@ -247,18 +259,34 @@ namespace CSBWebshopSeminarski.Notifications
             }
 
             var mailObj = new MimeMessage();
-            mailObj.From.Add(MailboxAddress.Parse(!string.IsNullOrWhiteSpace(emailData.Sender) ? emailData.Sender : smtpUser));
+            // Gmail requires From to match the authenticated account (or a configured alias).
+            mailObj.From.Add(MailboxAddress.Parse(smtpUser));
             mailObj.To.Add(MailboxAddress.Parse(emailData.Recipient));
             mailObj.Subject = emailData.Subject;
             mailObj.Body = new TextPart(TextFormat.Plain) { Text = emailData.Content ?? string.Empty };
 
             using var smtpClient = new SmtpClient();
+            smtpClient.Timeout = 30_000;
             var secureOption = smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
             await smtpClient.ConnectAsync(smtpServer, smtpPort, secureOption, cancellationToken);
             smtpClient.AuthenticationMechanisms.Remove("XOAUTH2");
             await smtpClient.AuthenticateAsync(smtpUser, smtpPass, cancellationToken);
             await smtpClient.SendAsync(mailObj, cancellationToken);
             await smtpClient.DisconnectAsync(true, cancellationToken);
+            _logger.LogInformation("Email sent via SMTP to {Recipient}.", emailData.Recipient);
+        }
+
+        private static string FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return string.Empty;
         }
 
         private sealed class InvalidEmailMessageException : Exception

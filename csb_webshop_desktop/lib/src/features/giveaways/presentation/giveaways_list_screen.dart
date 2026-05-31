@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/back_confirmation_dialog.dart';
 import '../../../core/form_validators.dart';
 import '../../../utils/date_formatter.dart';
+import '../../announcements/application/announcements_provider.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
@@ -544,6 +545,7 @@ class _AdminActions extends ConsumerWidget {
                   
                   try {
                     final AnnounceWinnerResult result = await api.announceWinner(giveawayId);
+                    await ref.read(announcementsListProvider.notifier).refresh();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
