@@ -5,18 +5,22 @@ using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
 {
     public class OrderItemsController : BaseCRUDController<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>
     {
         private readonly ILogger<OrderItemsController> _logger;
+        private readonly IOrderService _orderService;
 
         public OrderItemsController(
             ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest> service,
+            IOrderService orderService,
             ILogger<OrderItemsController> logger) : base(service)
         {
             _logger = logger;
+            _orderService = orderService;
         }
 
         /// <summary>
@@ -38,6 +42,19 @@ namespace CSBWebshopSeminarski.Controllers
                 Quantity = request.Quantity,
                 Discount = request.Discount
             };
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId))
+                    throw new ForbiddenException("Access denied.");
+
+                var order = await _orderService.GetFullOrderByIdAsync(request.OrderID);
+                if (order == null)
+                    throw new NotFoundException($"Order with ID {request.OrderID} not found.");
+                if (order.UserID != currentUserId)
+                    throw new ForbiddenException("Access denied.");
+            }
 
             try
             {
