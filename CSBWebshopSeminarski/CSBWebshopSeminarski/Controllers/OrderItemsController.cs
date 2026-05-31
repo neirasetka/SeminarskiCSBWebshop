@@ -23,6 +23,43 @@ namespace CSBWebshopSeminarski.Controllers
             _orderService = orderService;
         }
 
+        [HttpGet]
+        [Authorize]
+        public override async Task<PagedResult<OrderItem>> Get([FromQuery] OrderItemSearchRequest search)
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                if (search?.OrderID is not int orderId || orderId <= 0)
+                    throw new ForbiddenException("Access denied.");
+
+                await EnsureOrderAccessAsync(orderId);
+            }
+
+            return await base.Get(search);
+        }
+
+        [HttpGet("{ID:int}")]
+        [Authorize]
+        public override async Task<OrderItem> GetById(int ID)
+        {
+            var item = await base.GetById(ID);
+            if (!User.IsInRole("Admin"))
+                await EnsureOrderAccessAsync(item.OrderID);
+
+            return item;
+        }
+
+        private async Task EnsureOrderAccessAsync(int orderId)
+        {
+            var order = await _orderService.GetFullOrderByIdAsync(orderId);
+            if (order == null)
+                throw new NotFoundException($"Order with ID {orderId} not found.");
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != order.UserID)
+                throw new ForbiddenException("Access denied.");
+        }
+
         /// <summary>
         /// Dodavanje stavke u korpu. Zaseban endpoint jer BaseCRUDController.Insert ima [Authorize(Roles = "Admin")]
         /// koji se zbraja s ovim atributom - zato Buyer ne bi prolazio na standardnom POST.

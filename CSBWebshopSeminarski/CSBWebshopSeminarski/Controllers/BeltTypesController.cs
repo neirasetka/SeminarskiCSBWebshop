@@ -18,5 +18,12 @@ namespace CSBWebshopSeminarski.Controllers
         {
             return await base.Get(search ?? new BeltTypeSearchRequest());
         }
+
+        [HttpGet("{ID:int}")]
+        [AllowAnonymous]
+        public override async Task<BeltType> GetById(int ID)
+        {
+            return await base.GetById(ID);
+        }
     }
 }

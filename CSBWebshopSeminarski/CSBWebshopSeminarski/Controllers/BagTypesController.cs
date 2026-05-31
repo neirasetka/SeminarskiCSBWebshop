@@ -18,5 +18,12 @@ namespace CSBWebshopSeminarski.Controllers
         {
             return await base.Get(search ?? new BagTypeSearchRequest());
         }
+
+        [HttpGet("{ID:int}")]
+        [AllowAnonymous]
+        public override async Task<BagType> GetById(int ID)
+        {
+            return await base.GetById(ID);
+        }
     }
 }

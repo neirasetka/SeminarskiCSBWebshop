@@ -12,7 +12,6 @@ namespace CSBWebshopSeminarski.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class OutfitIdeasController : BaseCRUDController<OutfitIdea, OutfitIdeaSearchRequest, OutfitIdeaUpsertRequest, OutfitIdeaUpsertRequest>
     {
         /// <summary>
@@ -86,6 +85,13 @@ namespace CSBWebshopSeminarski.Controllers
             _outfitIdeasService = service;
         }
 
+        [HttpGet("{ID:int}")]
+        [AllowAnonymous]
+        public override async Task<OutfitIdea> GetById(int ID)
+        {
+            return await base.GetById(ID);
+        }
+
         /// <summary>
         /// Override Insert to avoid model binding issues (rawValue/attemptedValue validation errors).
         /// Reads request body manually and deserializes, like GetSearchInternalAsync for query params.
@@ -146,6 +152,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("bag/{bagId}/user/{userId}")]
+        [AllowAnonymous]
         public async Task<ActionResult<OutfitIdea>> GetByBagAndUser(int bagId, int userId)
         {
             var result = await _outfitIdeasService.GetByBagAndUser(bagId, userId);
@@ -157,6 +164,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("belt/{beltId}/user/{userId}")]
+        [AllowAnonymous]
         public async Task<ActionResult<OutfitIdea>> GetByBeltAndUser(int beltId, int userId)
         {
             var result = await _outfitIdeasService.GetByBeltAndUser(beltId, userId);
@@ -189,6 +197,7 @@ namespace CSBWebshopSeminarski.Controllers
         }
 
         [HttpGet("{outfitIdeaId}/images")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<OutfitIdeaImage>>> GetImages(int outfitIdeaId)
         {
             var result = await _outfitIdeasService.GetImages(outfitIdeaId);
