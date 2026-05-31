@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../core/api_client.dart';
+import '../../../core/api_error_reader.dart';
+import '../../../core/paged_result.dart';
 import '../domain/outfit_idea.dart';
 
 class OutfitIdeasApi {
@@ -16,20 +18,24 @@ class OutfitIdeasApi {
     if (bagId != null) params.add('bagID=$bagId');
     if (beltId != null) params.add('beltID=$beltId');
     if (userId != null) params.add('userID=$userId');
-    
+    params.add('pageSize=100');
+
     final String queryString = params.isNotEmpty ? '?${params.join('&')}' : '';
     final response = await _apiClient.get('/api/OutfitIdeas/search$queryString');
-    
+
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-      return jsonList
-          .map((dynamic e) => OutfitIdea.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final dynamic decoded = json.decode(response.body);
+      if (decoded is List<dynamic>) {
+        return decoded
+            .map((dynamic e) => OutfitIdea.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      if (decoded is Map<String, dynamic>) {
+        return PagedResult.fromJson(decoded, OutfitIdea.fromJson).items;
+      }
+      return <OutfitIdea>[];
     }
-    throw Exception(
-      'Failed to load outfit ideas: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to load outfit ideas'));
   }
 
   /// Gets an outfit idea by its ID
@@ -40,10 +46,7 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception(
-      'Failed to load outfit idea: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to load outfit idea'));
   }
 
   /// Gets outfit idea for a specific bag and user
@@ -57,10 +60,7 @@ class OutfitIdeasApi {
     } else if (response.statusCode == 404) {
       return null;
     }
-    throw Exception(
-      'Failed to load outfit idea for bag: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to load outfit idea for bag'));
   }
 
   /// Gets outfit idea for a specific belt and user
@@ -74,10 +74,7 @@ class OutfitIdeasApi {
     } else if (response.statusCode == 404) {
       return null;
     }
-    throw Exception(
-      'Failed to load outfit idea for belt: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to load outfit idea for belt'));
   }
 
   /// Creates a new outfit idea for a bag
@@ -131,15 +128,11 @@ class OutfitIdeasApi {
   }
 
   static String _parseError(dynamic response, String fallback) {
-    if (response.body == null || response.body.isEmpty) {
-      return '$fallback: ${response.statusCode}';
+    final String detail = ApiErrorReader.readDetail(response.body?.toString() ?? '');
+    if (detail.isNotEmpty && detail != '(prazan odgovor)') {
+      return detail;
     }
-    try {
-      final Map<String, dynamic>? json = jsonDecode(response.body) as Map<String, dynamic>?;
-      final String? err = json?['error'] as String?;
-      if (err != null && err.isNotEmpty) return err;
-    } catch (_) {}
-    return '$fallback: ${response.statusCode} - ${response.body}';
+    return '$fallback (${response.statusCode})';
   }
 
   /// Updates an existing outfit idea
@@ -160,10 +153,7 @@ class OutfitIdeasApi {
       return OutfitIdea.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception(
-      'Failed to update outfit idea: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to update outfit idea'));
   }
 
   /// Deletes an outfit idea
@@ -171,10 +161,7 @@ class OutfitIdeasApi {
     final response = await _apiClient.delete('/api/OutfitIdeas/$id');
     
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception(
-        'Failed to delete outfit idea: ${response.statusCode}'
-        '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-      );
+      throw Exception(_parseError(response, 'Failed to delete outfit idea'));
     }
   }
 
@@ -202,10 +189,7 @@ class OutfitIdeasApi {
       return OutfitIdeaImage.fromJson(
           json.decode(response.body) as Map<String, dynamic>);
     }
-    throw Exception(
-      'Failed to add image: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to add image'));
   }
 
   /// Removes an image from an outfit idea
@@ -213,10 +197,7 @@ class OutfitIdeasApi {
     final response = await _apiClient.delete('/api/OutfitIdeas/images/$imageId');
     
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception(
-        'Failed to remove image: ${response.statusCode}'
-        '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-      );
+      throw Exception(_parseError(response, 'Failed to remove image'));
     }
   }
 
@@ -232,9 +213,6 @@ class OutfitIdeasApi {
               OutfitIdeaImage.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-    throw Exception(
-      'Failed to load images: ${response.statusCode}'
-      '${response.body.isNotEmpty ? ' - ${response.body}' : ''}',
-    );
+    throw Exception(_parseError(response, 'Failed to load images'));
   }
 }

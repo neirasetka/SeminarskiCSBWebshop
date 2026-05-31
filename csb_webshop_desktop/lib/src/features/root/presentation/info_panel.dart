@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../utils/date_formatter.dart';
 import '../../announcements/application/announcements_provider.dart';
 import '../../announcements/domain/announcement.dart';
+import '../../auth/application/admin_role_provider.dart';
 import '../../giveaways/application/giveaways_provider.dart';
 import '../../giveaways/domain/giveaway.dart';
 
@@ -85,6 +86,7 @@ class _GiveawayReminderSection extends ConsumerWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final AsyncValue<List<Giveaway>> giveawaysAsync = ref.watch(giveawaysListProvider);
+    final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
 
     return giveawaysAsync.when(
       loading: () => const _LoadingTile(),
@@ -117,7 +119,12 @@ class _GiveawayReminderSection extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 10),
-            ...activeGiveaways.map((Giveaway giveaway) => _GiveawayReminderTile(giveaway: giveaway)),
+            ...activeGiveaways.map(
+              (Giveaway giveaway) => _GiveawayReminderTile(
+                giveaway: giveaway,
+                showRegisterLink: !isAdmin,
+              ),
+            ),
           ],
         );
       },
@@ -127,9 +134,13 @@ class _GiveawayReminderSection extends ConsumerWidget {
 
 /// Tile displaying a single giveaway reminder
 class _GiveawayReminderTile extends StatelessWidget {
-  const _GiveawayReminderTile({required this.giveaway});
+  const _GiveawayReminderTile({
+    required this.giveaway,
+    required this.showRegisterLink,
+  });
 
   final Giveaway giveaway;
+  final bool showRegisterLink;
 
   String _formatTimeRemaining(DateTime endDate) {
     final Duration remaining = endDate.difference(DateTime.now().toUtc());
@@ -194,14 +205,16 @@ class _GiveawayReminderTile extends StatelessWidget {
                       fontWeight: isEndingSoon ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    'Prijavi se →',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colorScheme.tertiary,
-                      fontWeight: FontWeight.w600,
+                  if (showRegisterLink) ...<Widget>[
+                    const Spacer(),
+                    Text(
+                      'Prijavi se →',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.tertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],

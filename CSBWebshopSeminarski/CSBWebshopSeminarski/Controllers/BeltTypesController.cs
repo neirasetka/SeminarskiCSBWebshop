@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
 {
+    [AllowAnonymous]
     public class BeltTypesController : BaseCRUDController<BeltType, BeltTypeSearchRequest, BeltTypeUpsertRequest, BeltTypeUpsertRequest>
     {
         public BeltTypesController(ICRUDService<BeltType, BeltTypeSearchRequest, BeltTypeUpsertRequest, BeltTypeUpsertRequest> service) : base(service)

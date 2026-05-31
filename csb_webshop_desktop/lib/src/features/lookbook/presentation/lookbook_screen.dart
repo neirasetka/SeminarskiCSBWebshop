@@ -351,7 +351,29 @@ class _LookbookTile extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        context.go(item.detailRoute);
+        if (item.kind == _LookbookItemKind.bag) {
+          context.push(
+            '/bags/${item.id}/outfit-idea',
+            extra: Bag(
+              id: item.id,
+              name: item.name,
+              description: '',
+              price: item.price,
+              imageUrl: item.imageUrl,
+            ),
+          );
+        } else {
+          context.push(
+            '/belts/${item.id}/outfit-idea',
+            extra: Belt(
+              id: item.id,
+              name: item.name,
+              description: '',
+              price: item.price,
+              imageUrl: item.imageUrl,
+            ),
+          );
+        }
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
@@ -416,12 +438,6 @@ class _LookbookItem {
   final double price;
   final String? imageUrl;
   final _LookbookItemKind kind;
-
-  String get detailRoute {
-    return kind == _LookbookItemKind.bag
-        ? '/lookbook/bags/$id'
-        : '/lookbook/belts/$id';
-  }
 
   factory _LookbookItem.fromBag(Bag bag) {
     return _LookbookItem(

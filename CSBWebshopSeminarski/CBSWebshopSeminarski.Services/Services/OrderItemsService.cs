@@ -64,7 +64,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     .Include(oi => oi.Bag)
                     .Include(oi => oi.Belt)
                     .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
-                return _mapper.Map<OrderItem>(forReturn ?? entity);
+                return OrderItemProjection.ToModel(forReturn ?? entity);
             });
         }
 
@@ -91,7 +91,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     ApplyOrderTotal(order);
 
                 await SaveChangesWithOrderItemsNullableRepairAsync();
-                return _mapper.Map<OrderItem>(entity);
+                return OrderItemProjection.ToModel(entity);
             });
         }
 

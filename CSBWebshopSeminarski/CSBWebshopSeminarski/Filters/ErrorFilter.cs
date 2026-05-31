@@ -8,17 +8,27 @@ namespace CSBWebshopSeminarski.Filters
     {
         public override void OnException(ExceptionContext context)
         {
-            var (statusCode, message) = context.Exception switch
+            var statusCode = context.Exception switch
             {
-                NotFoundException ex => (StatusCodes.Status404NotFound, ex.Message),
-                ValidationException ex => (StatusCodes.Status400BadRequest, ex.Message),
-                ForbiddenException ex => (StatusCodes.Status403Forbidden, ex.Message),
-                ConflictException ex => (StatusCodes.Status409Conflict, ex.Message),
-                BusinessException ex => (StatusCodes.Status400BadRequest, ex.Message),
-                _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
+                NotFoundException => StatusCodes.Status404NotFound,
+                ValidationException => StatusCodes.Status400BadRequest,
+                ForbiddenException => StatusCodes.Status403Forbidden,
+                ConflictException => StatusCodes.Status409Conflict,
+                BusinessException => StatusCodes.Status400BadRequest,
+                _ => StatusCodes.Status500InternalServerError
             };
 
-            context.Result = new ObjectResult(new { error = message }) { StatusCode = statusCode };
+            var includeExceptionDetails = context.HttpContext.RequestServices
+                .GetRequiredService<IHostEnvironment>()
+                .IsDevelopment();
+
+            var problemDetails = ApiProblemDetailsFactory.Create(
+                context.Exception,
+                statusCode,
+                context.HttpContext,
+                includeExceptionDetails);
+
+            context.Result = ApiProblemDetailsFactory.ToResult(problemDetails);
             context.ExceptionHandled = true;
         }
     }

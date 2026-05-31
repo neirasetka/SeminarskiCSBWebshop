@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/api_error_reader.dart';
 import '../../../core/secure_storage_service.dart';
 import '../domain/user_profile.dart';
 
@@ -92,54 +93,7 @@ class ProfileApi {
     );
   }
 
-  /// Čita poruku iz ASP.NET odgovora: `{"error":"..."}`, ValidationProblemDetails `errors`, ili `title`/`detail`.
-  static String _readApiErrorDetail(String body) {
-    final String trimmed = body.trim();
-    if (trimmed.isEmpty) {
-      return '(prazan odgovor)';
-    }
-    try {
-      final Object? decoded = json.decode(trimmed);
-      if (decoded is Map<String, dynamic>) {
-        final Object? simple = decoded['error'];
-        if (simple != null && simple.toString().isNotEmpty) {
-          return simple.toString();
-        }
-        final Object? errors = decoded['errors'];
-        if (errors is Map<String, dynamic>) {
-          final List<String> parts = <String>[];
-          for (final MapEntry<String, dynamic> e in errors.entries) {
-            final Object? v = e.value;
-            if (v is List) {
-              for (final Object x in v) {
-                parts.add('${e.key}: $x');
-              }
-            } else if (v != null) {
-              parts.add('${e.key}: $v');
-            }
-          }
-          if (parts.isNotEmpty) {
-            return parts.join('; ');
-          }
-        }
-        final Object? detail = decoded['detail'];
-        if (detail != null && detail.toString().isNotEmpty) {
-          return detail.toString();
-        }
-        final Object? title = decoded['title'];
-        if (title != null && title.toString().isNotEmpty) {
-          return title.toString();
-        }
-      }
-    } catch (_) {
-      /* nije JSON */
-    }
-    const int maxLen = 500;
-    if (trimmed.length > maxLen) {
-      return '${trimmed.substring(0, maxLen)}…';
-    }
-    return trimmed;
-  }
+  static String _readApiErrorDetail(String body) => ApiErrorReader.readDetail(body);
 
   Future<bool> isAdmin() async {
     final String? token = await _secureStorage.getToken();

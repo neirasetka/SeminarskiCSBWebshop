@@ -314,12 +314,13 @@ class FormValidators {
 
 
   static String? announcementBagName(String? value) {
-
-    final String? nameError = minLength(value, 2, fieldName: 'Naziv torbice');
-
-    if (nameError != null) return nameError;
-
-    final String trimmed = value!.trim();
+    if (value == null || value.trim().isEmpty) {
+      return 'Naziv torbice je obavezan';
+    }
+    if (value.trim().length < 2) {
+      return 'Naziv torbice mora imati najmanje 2 znaka';
+    }
+    final String trimmed = value.trim();
 
     if (trimmed.length > 25) return 'Naziv može imati najviše 25 znakova';
 

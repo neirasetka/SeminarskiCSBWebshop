@@ -72,8 +72,8 @@ class GiveawaysListScreen extends ConsumerWidget {
                     title: Text(g.title),
                     subtitle: Text('${DateFormatter.formatDateTime(g.startDate)} — ${DateFormatter.formatDateTime(g.endDate)}'),
                     trailing: Chip(
-                      label: Text(g.isClosed ? 'Zatvoren' : (g.isActiveNow ? 'Aktivan' : 'Planiran')),
-                      backgroundColor: g.isClosed
+                      label: Text(g.statusLabel),
+                      backgroundColor: g.isClosed || g.isEnded
                           ? Colors.grey.shade300
                           : g.isActiveNow
                               ? Colors.green.shade100
@@ -135,7 +135,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
             Row(children: <Widget>[
               const Text('Status: '),
               Chip(
-                label: Text(g.isClosed ? 'Zatvoren' : (g.isActiveNow ? 'Aktivan' : 'Planiran')),
+                label: Text(g.statusLabel),
               ),
             ]),
             const SizedBox(height: 16),

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CSBWebshopSeminarski.Controllers
 {
+    [AllowAnonymous]
     public class BagTypesController : BaseCRUDController<BagType, BagTypeSearchRequest, BagTypeUpsertRequest, BagTypeUpsertRequest>
     {
         public BagTypesController(ICRUDService<BagType, BagTypeSearchRequest, BagTypeUpsertRequest, BagTypeUpsertRequest> service) : base(service)

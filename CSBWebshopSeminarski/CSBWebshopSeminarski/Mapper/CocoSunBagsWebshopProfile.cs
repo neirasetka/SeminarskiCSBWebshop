@@ -1,6 +1,7 @@
 using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using OccasionEntity = CSBWebshopSeminarski.Core.Entities.OccasionType;
 using OccasionModel = CBSWebshopSeminarski.Model.Models.OccasionType;
@@ -63,21 +64,7 @@ namespace CSBWebshopSeminarski.Mapper
                 .ConvertUsing(src => (ShippingStatusEntity)src);
 
             CreateMap<OrderItems, OrderItem>()
-                .ForMember(d => d.OrderItemsID, o => o.MapFrom(s => s.OrderItemID))
-                // Nakon inserta BagID/BeltID/Quantity/Price mogu biti null na entitetu; DTO je nullable ili ima defaulte.
-                .ForMember(d => d.Quantity, o => o.MapFrom(s => s.Quantity ?? 0))
-                .ForMember(d => d.Price, o => o.MapFrom(s => s.Price ?? 0m))
-                .ForMember(d => d.Name, o => o.MapFrom(s =>
-                    s.Bag != null ? s.Bag.BagName
-                    : (s.Belt != null ? s.Belt.BeltName : string.Empty)))
-                .ForMember(d => d.Code, o => o.MapFrom(s =>
-                    s.Bag != null ? s.Bag.Code
-                    : (s.Belt != null ? s.Belt.Code : string.Empty)))
-                // Nakon inserta Bag/Belt/Order često nisu učitani; mapiranje na model s null! navigacijama
-                // može baciti AutoMapper iznimku i AddToCart bi padao s generičkom porukom.
-                .ForMember(d => d.Bag, o => o.Ignore())
-                .ForMember(d => d.Belt, o => o.Ignore())
-                .ForMember(d => d.Order, o => o.Ignore());
+                .ConvertUsing(src => OrderItemProjection.ToModel(src));
             CreateMap<OrderItem, OrderItems>()
                 .ForMember(d => d.OrderItemID, o => o.MapFrom(s => s.OrderItemsID));
             CreateMap<OrderItems, OrderItemUpsertRequest>().ReverseMap();

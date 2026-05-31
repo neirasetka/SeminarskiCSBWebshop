@@ -7,7 +7,22 @@ namespace CBSWebshopSeminarski.Services.Exceptions
 
     public class ValidationException : Exception
     {
+        public IDictionary<string, string[]>? Errors { get; }
+
         public ValidationException(string message) : base(message) { }
+
+        public ValidationException(string message, IDictionary<string, string[]> errors) : base(message)
+        {
+            Errors = errors;
+        }
+
+        public ValidationException(string message, string field, string error) : base(message)
+        {
+            Errors = new Dictionary<string, string[]>
+            {
+                [field] = new[] { error }
+            };
+        }
     }
 
     public class ForbiddenException : Exception

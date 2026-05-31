@@ -17,7 +17,24 @@ class Giveaway {
 
   bool get isActiveNow {
     final DateTime now = DateTime.now().toUtc();
-    return !isClosed && startDate.isBefore(now) && endDate.isAfter(now);
+    return !isClosed && !startDate.isAfter(now) && endDate.isAfter(now);
+  }
+
+  bool get isUpcoming {
+    final DateTime now = DateTime.now().toUtc();
+    return !isClosed && startDate.isAfter(now);
+  }
+
+  bool get isEnded {
+    final DateTime now = DateTime.now().toUtc();
+    return !isClosed && !endDate.isAfter(now);
+  }
+
+  String get statusLabel {
+    if (isClosed) return 'Zatvoren';
+    if (isActiveNow) return 'Aktivan';
+    if (isUpcoming) return 'Planiran';
+    return 'Završen';
   }
 
   factory Giveaway.fromJson(Map<String, dynamic> json) {
@@ -40,7 +57,12 @@ class Giveaway {
 
     DateTime toDateTimeUtc(dynamic value) {
       if (value is DateTime) return value.toUtc();
-      if (value is String) return DateTime.parse(value).toUtc();
+      if (value is String) {
+        final String raw = value.trim();
+        final bool hasTimezone = raw.endsWith('Z') ||
+            RegExp(r'[+-]\d{2}:\d{2}$').hasMatch(raw);
+        return DateTime.parse(hasTimezone ? raw : '${raw}Z');
+      }
       throw ArgumentError('Invalid date value: $value');
     }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../core/api_client.dart';
+import '../../../core/api_error_reader.dart';
 import '../../../core/paged_result.dart';
 import '../domain/outfit_idea.dart';
 
@@ -95,8 +96,10 @@ class OutfitIdeasApi {
   }
 
   static String _buildError(dynamic response, String fallback) {
-    final String body = response.body?.toString() ?? '';
-    if (body.isEmpty) return '$fallback: ${response.statusCode}';
-    return '$fallback: ${response.statusCode} - $body';
+    final String detail = ApiErrorReader.readDetail(response.body?.toString() ?? '');
+    if (detail.isNotEmpty && detail != '(prazan odgovor)') {
+      return detail;
+    }
+    return '$fallback (${response.statusCode})';
   }
 }

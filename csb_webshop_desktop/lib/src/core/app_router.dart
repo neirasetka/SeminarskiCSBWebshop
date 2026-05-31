@@ -23,7 +23,6 @@ import '../features/giveaways/presentation/giveaways_list_screen.dart';
 import '../features/lookbook/presentation/lookbook_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/bags/domain/bag.dart';
-import '../features/lookbook/presentation/lookbook_detail_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_screen.dart';
 import '../features/outfit_ideas/presentation/outfit_idea_belt_screen.dart';
 import '../features/belts/domain/belt.dart';
@@ -197,7 +196,7 @@ final GoRouter appRouter = GoRouter(
               builder: (BuildContext context, GoRouterState state) {
                 final String? idParam = state.pathParameters['id'];
                 final int bagId = int.tryParse(idParam ?? '') ?? 0;
-                return AuthGate(child: LookbookDetailScreen(bagId: bagId));
+                return AuthGate(child: OutfitIdeaScreen(bagId: bagId));
               },
             ),
             GoRoute(
@@ -216,7 +215,7 @@ final GoRouter appRouter = GoRouter(
               builder: (BuildContext context, GoRouterState state) {
                 final String? idParam = state.pathParameters['id'];
                 final int bagId = int.tryParse(idParam ?? '') ?? 0;
-                return AuthGate(child: LookbookDetailScreen(bagId: bagId));
+                return AuthGate(child: OutfitIdeaScreen(bagId: bagId));
               },
             ),
           ],
