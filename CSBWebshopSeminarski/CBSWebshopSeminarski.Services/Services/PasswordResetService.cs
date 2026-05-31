@@ -5,6 +5,7 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using System.Text;
 
 using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Exceptions;
@@ -37,16 +38,20 @@ namespace CBSWebshopSeminarski.Services.Services
             if (recentRequests >= MaxResetRequestsPerEmailWindow)
                 return;
 
+            var activeTokens = await _db.PasswordResetTokens
+                .Where(t => t.UserID == user.UserID && !t.Used)
+                .ToListAsync();
+            foreach (var activeToken in activeTokens)
+                activeToken.Used = true;
+
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             var entity = new PasswordResetTokens
             {
                 UserID = user.UserID,
-                Token = token,
+                Token = HashToken(token),
                 ExpiresAt = DateTime.UtcNow.AddMinutes(30),
                 Used = false
             };
-            _db.PasswordResetTokens.Add(entity);
-            await _db.SaveChangesAsync();
 
             try
             {
@@ -62,8 +67,11 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             catch
             {
-                // Same response regardless — do not reveal mail delivery failures.
+                return;
             }
+
+            _db.PasswordResetTokens.Add(entity);
+            await _db.SaveChangesAsync();
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
@@ -71,9 +79,10 @@ namespace CBSWebshopSeminarski.Services.Services
             if (request.NewPassword != request.ConfirmPassword)
                 throw new ValidationException("Lozinke se ne podudaraju.");
 
+            var tokenHash = HashToken(request.Token);
             var tokenEntity = await _db.PasswordResetTokens
                 .Include(t => t.User)
-                .FirstOrDefaultAsync(t => t.Token == request.Token && !t.Used && t.ExpiresAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(t => t.Token == tokenHash && !t.Used && t.ExpiresAt > DateTime.UtcNow);
 
             if (tokenEntity == null)
                 throw new ValidationException("Token je nevažeći ili je istekao.");
@@ -83,9 +92,21 @@ namespace CBSWebshopSeminarski.Services.Services
                 var user = tokenEntity.User;
                 user.PasswordSalt = UsersService.GenerateSalt();
                 user.PasswordHash = UsersService.GenerateHash(user.PasswordSalt, request.NewPassword);
-                tokenEntity.Used = true;
+
+                var remainingTokens = await _db.PasswordResetTokens
+                    .Where(t => t.UserID == user.UserID && !t.Used)
+                    .ToListAsync();
+                foreach (var remainingToken in remainingTokens)
+                    remainingToken.Used = true;
+
                 await _db.SaveChangesAsync();
             });
+        }
+
+        private static string HashToken(string token)
+        {
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(hash);
         }
     }
 }

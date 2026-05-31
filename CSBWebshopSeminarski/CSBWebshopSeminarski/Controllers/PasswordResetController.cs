@@ -23,7 +23,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult> RequestReset([FromBody] RequestPasswordResetRequest request)
         {
             await _passwordResetService.RequestResetAsync(request);
-            return Ok(new { message = "Ako email postoji, link za reset je poslan." });
+            return Ok(new { message = "Ako email postoji, poslan je kod za reset lozinke." });
         }
 
         [HttpPost("reset")]

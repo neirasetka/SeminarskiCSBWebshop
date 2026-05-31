@@ -46,7 +46,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const Icon(Icons.email, size: 64, color: Colors.green),
                   const SizedBox(height: 16),
                   const Text(
-                    'Ako email postoji, poslan je link za reset lozinke.',
+                    'Ako email postoji, poslan je kod za reset lozinke.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
