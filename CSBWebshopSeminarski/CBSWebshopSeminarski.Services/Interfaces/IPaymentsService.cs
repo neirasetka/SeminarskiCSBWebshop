@@ -36,5 +36,10 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task HandlePaymentFailedAsync(string paymentIntentId, IDictionary<string, string> metadata, string failureMessage);
 
         Task SendPaymentConfirmationIfNotSentYetAsync(int orderId, string? receiptEmailOverride);
+
+        /// <summary>
+        /// Cancels an active Stripe PaymentIntent / Checkout Session for the order so cart lines can change safely.
+        /// </summary>
+        Task InvalidateActiveCheckoutAsync(int orderId);
     }
 }

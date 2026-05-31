@@ -447,6 +447,70 @@ namespace CBSWebshopSeminarski.Services.Services
             return true;
         }
 
+        public async Task InvalidateActiveCheckoutAsync(int orderId)
+        {
+            var order = await _db.Orders.FindAsync(orderId)
+                ?? throw new NotFoundException("Order not found.");
+
+            if (string.IsNullOrWhiteSpace(order.StripePaymentIntentId)
+                && string.IsNullOrWhiteSpace(order.StripeCheckoutSessionId))
+            {
+                return;
+            }
+
+            var existingPayment = await GetExistingStripePaymentAsync(order);
+            if (existingPayment.Error != null)
+                throw new BusinessException(existingPayment.Error);
+
+            if (existingPayment.ActivePaymentIntent != null)
+            {
+                try
+                {
+                    await new PaymentIntentService().CancelAsync(existingPayment.ActivePaymentIntent.Id);
+                }
+                catch (StripeException ex) when (IsPaymentInProgressStripeError(ex))
+                {
+                    throw new ConflictException(
+                        "Plaćanje je u tijeku. Pričekajte potvrdu ili neuspjeh plaćanja prije izmjene korpe.");
+                }
+                catch (StripeException ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Stripe PaymentIntent cancel failed for order {OrderId}, intent {PaymentIntentId}. Clearing local reference.",
+                        orderId,
+                        existingPayment.ActivePaymentIntent.Id);
+                }
+            }
+
+            if (existingPayment.ActiveCheckoutSession != null)
+            {
+                try
+                {
+                    await new SessionService().ExpireAsync(existingPayment.ActiveCheckoutSession.Id);
+                }
+                catch (StripeException ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Stripe Checkout Session expire failed for order {OrderId}, session {SessionId}. Clearing local reference.",
+                        orderId,
+                        existingPayment.ActiveCheckoutSession.Id);
+                }
+            }
+
+            order.StripePaymentIntentId = null;
+            order.StripeCheckoutSessionId = null;
+            await _db.SaveChangesAsync();
+        }
+
+        private static bool IsPaymentInProgressStripeError(StripeException ex)
+        {
+            var message = ex.StripeError?.Message ?? ex.Message;
+            return message.Contains("processing", StringComparison.OrdinalIgnoreCase)
+                   || string.Equals(ex.StripeError?.Code, "payment_intent_unexpected_state", StringComparison.OrdinalIgnoreCase);
+        }
+
         public async Task SendPaymentConfirmationIfNotSentYetAsync(int orderId, string? receiptEmailOverride)
         {
             var order = await _db.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderID == orderId);

@@ -2,8 +2,10 @@ using AutoMapper;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services;
+using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
+using ShippingStatusEntity = CSBWebshopSeminarski.Core.Entities.ShippingStatus;
 using Microsoft.EntityFrameworkCore;
 
 using CBSWebshopSeminarski.Services.Exceptions;
@@ -14,11 +16,16 @@ namespace CBSWebshopSeminarski.Services.Services
     {
         private new readonly CocoSunBagsWebshopDbContext _context;
         private new readonly IMapper _mapper;
+        private readonly IPaymentsService _paymentsService;
 
-        public OrderItemsService(CocoSunBagsWebshopDbContext context, IMapper mapper) : base(context, mapper)
+        public OrderItemsService(
+            CocoSunBagsWebshopDbContext context,
+            IMapper mapper,
+            IPaymentsService paymentsService) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
+            _paymentsService = paymentsService;
         }
 
         public override async Task<PagedResult<OrderItem>> Get(OrderItemSearchRequest request)
@@ -38,6 +45,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             return await _context.ExecuteInTransactionAsync(async () =>
             {
+                await PrepareCartMutationAsync(request.OrderID);
                 await ResolveCatalogPriceAsync(request);
 
                 var entity = _mapper.Map<OrderItems>(request);
@@ -68,6 +76,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (entity == null)
                     throw new NotFoundException($"Order item with ID {ID} not found.");
 
+                await PrepareCartMutationAsync(entity.OrderID);
                 await ResolveCatalogPriceAsync(request);
 
                 _context.Set<OrderItems>().Attach(entity);
@@ -93,6 +102,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
                 if (entity == null) return false;
 
+                await PrepareCartMutationAsync(entity.OrderID);
+
                 var order = await _context.Orders
                     .Include(o => o.OrderItems)
                     .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID);
@@ -104,6 +115,23 @@ namespace CBSWebshopSeminarski.Services.Services
                 await SaveChangesWithOrderItemsNullableRepairAsync();
                 return true;
             });
+        }
+
+        private async Task PrepareCartMutationAsync(int orderId)
+        {
+            var order = await _context.Orders.FindAsync(orderId)
+                ?? throw new NotFoundException($"Order with ID {orderId} not found.");
+
+            if (order.ShippingStatus == ShippingStatusEntity.Cancelled)
+                throw new BusinessException("Otkazana narudžba se ne može mijenjati.");
+
+            if (order.PaymentStatus == PaymentStatus.Paid)
+                throw new BusinessException("Plaćena narudžba se ne može mijenjati.");
+
+            if (order.PaymentStatus != PaymentStatus.Pending)
+                throw new BusinessException("Narudžba se ne može mijenjati u trenutnom statusu plaćanja.");
+
+            await _paymentsService.InvalidateActiveCheckoutAsync(orderId);
         }
 
         private async Task ResolveCatalogPriceAsync(OrderItemUpsertRequest request)
