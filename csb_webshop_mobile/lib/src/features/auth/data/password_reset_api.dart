@@ -18,7 +18,20 @@ class PasswordResetApi {
     final http.Response response =
         await _apiClient.post('$_basePath/request', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) return;
-    throw Exception('Failed to request password reset: ${response.statusCode}');
+    throw Exception(_parseErrorMessage(response, 'Slanje reset linka nije uspjelo'));
+  }
+
+  String _parseErrorMessage(http.Response response, String fallback) {
+    String errorMessage = '$fallback: ${response.statusCode}';
+    try {
+      final Map<String, dynamic>? data =
+          json.decode(response.body) as Map<String, dynamic>?;
+      if (data != null) {
+        final Object? err = data['error'] ?? data['message'] ?? data['title'] ?? data['detail'];
+        if (err != null) errorMessage = err.toString();
+      }
+    } catch (_) {}
+    return errorMessage;
   }
 
   Future<void> resetPassword(String token, String newPassword, String confirmPassword) async {
@@ -30,15 +43,6 @@ class PasswordResetApi {
     final http.Response response =
         await _apiClient.post('$_basePath/reset', body: json.encode(body));
     if (response.statusCode >= 200 && response.statusCode < 300) return;
-    String errorMessage = 'Failed to reset password: ${response.statusCode}';
-    try {
-      final Map<String, dynamic>? data =
-          json.decode(response.body) as Map<String, dynamic>?;
-      if (data != null) {
-        final Object? err = data['error'] ?? data['message'] ?? data['title'];
-        if (err != null) errorMessage = err.toString();
-      }
-    } catch (_) {}
-    throw Exception(errorMessage);
+    throw Exception(_parseErrorMessage(response, 'Promjena lozinke nije uspjela'));
   }
 }

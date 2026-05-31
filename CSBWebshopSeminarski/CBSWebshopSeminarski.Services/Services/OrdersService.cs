@@ -47,13 +47,25 @@ namespace CBSWebshopSeminarski.Services.Services
             return await ToPagedResultAsync(query, request);
         }
 
-        public async Task<PagedResult<Order>> GetOrdersForUserAsync(int userId, OrderSearchRequest? request = null)
+        public async Task<PagedResult<Order>> GetOrdersForUserAsync(
+            int userId,
+            OrderSearchRequest? request = null,
+            bool excludeIncompleteCarts = true)
         {
             request ??= new OrderSearchRequest();
             var query = _context.Orders
                 .Include(o => o.User)
-                .Where(o => o.UserID == userId)
-                .OrderByDescending(o => o.Date);
+                .Where(o => o.UserID == userId);
+
+            if (excludeIncompleteCarts)
+            {
+                query = query.Where(o =>
+                    o.PaymentStatus != PaymentStatus.Pending
+                    || (o.ShippingStatus != ShippingStatusEntity.Pending
+                        && o.ShippingStatus != ShippingStatusEntity.Cancelled));
+            }
+
+            query = query.OrderByDescending(o => o.Date);
 
             return await ToPagedResultAsync(query, request);
         }

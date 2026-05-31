@@ -108,7 +108,7 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<PagedResult<Order>>> GetByUser([FromQuery] int userId, [FromQuery] OrderSearchRequest search)
         {
-            var result = await _service.GetOrdersForUserAsync(userId, search);
+            var result = await _service.GetOrdersForUserAsync(userId, search, excludeIncompleteCarts: false);
             return Ok(result);
         }
 

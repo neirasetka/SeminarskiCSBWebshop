@@ -14,7 +14,7 @@ namespace CBSWebshopSeminarski.Services.Interfaces
         Task<PaymentConfirmResult> ReconcilePaymentAsync(int orderId);
         Task<bool> CancelOrderAsync(int orderId, int cancelledByUserId, string? cancellationReason);
         Task<bool> CancelActiveCartAsync(int userId, string? cancellationReason = null);
-        Task<PagedResult<Order>> GetOrdersForUserAsync(int userId, OrderSearchRequest? request = null);
+        Task<PagedResult<Order>> GetOrdersForUserAsync(int userId, OrderSearchRequest? request = null, bool excludeIncompleteCarts = true);
         Task<Order?> GetFullOrderByIdAsync(int orderId);
     }
 }

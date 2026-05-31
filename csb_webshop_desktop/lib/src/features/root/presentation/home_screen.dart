@@ -140,13 +140,6 @@ class _BuyerForYouSection extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Content-based preporuke (favoriti, ocjene, kupnje) s objašnjenjem',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
             const SizedBox(height: 16),
             Expanded(
               child: recommendationsAsync.when(

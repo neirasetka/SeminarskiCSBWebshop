@@ -279,6 +279,9 @@ using (var scope = app.Services.CreateScope())
         await context.Database.ExecuteSqlRawAsync(
             BusinessIdentifiersSchemaCompatibility.EnsureBusinessIdentifierUniqueIndexesSql);
 
+        await context.Database.ExecuteSqlRawAsync(
+            PasswordResetTokensSchemaCompatibility.EnsurePasswordResetTokensTableSql);
+
         try
         {
             await context.Database.MigrateAsync();

@@ -1,9 +1,9 @@
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
-using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,16 +19,28 @@ namespace CBSWebshopSeminarski.Services.Services
 
         private readonly CocoSunBagsWebshopDbContext _db;
         private readonly RabbitMqMailPublisher _mailPublisher;
+        private readonly EmailService _emailService;
+        private readonly ILogger<PasswordResetService> _logger;
 
-        public PasswordResetService(CocoSunBagsWebshopDbContext db, RabbitMqMailPublisher mailPublisher)
+        public PasswordResetService(
+            CocoSunBagsWebshopDbContext db,
+            RabbitMqMailPublisher mailPublisher,
+            EmailService emailService,
+            ILogger<PasswordResetService> logger)
         {
             _db = db;
             _mailPublisher = mailPublisher;
+            _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task RequestResetAsync(RequestPasswordResetRequest request)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var email = request.Email?.Trim();
+            if (string.IsNullOrWhiteSpace(email))
+                return;
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
                 return;
 
@@ -50,28 +62,21 @@ namespace CBSWebshopSeminarski.Services.Services
                 UserID = user.UserID,
                 Token = HashToken(token),
                 ExpiresAt = DateTime.UtcNow.AddMinutes(30),
-                Used = false
+                Used = false,
+                CreatedAt = DateTime.UtcNow
             };
-
-            try
-            {
-                _mailPublisher.Publish(
-                    sender: "no-reply@cocosunbags.local",
-                    recipient: user.Email,
-                    subject: "Reset lozinke - CocoSunBags",
-                    content: $"Poštovani/a {user.Name},\n\n" +
-                             $"Vaš kod za reset lozinke je: {token}\n\n" +
-                             "Kod vrijedi 30 minuta.\n\n" +
-                             "Ako niste zatražili reset, ignorirajte ovu poruku.\n\n" +
-                             "CocoSunBags tim");
-            }
-            catch
-            {
-                return;
-            }
 
             _db.PasswordResetTokens.Add(entity);
             await _db.SaveChangesAsync();
+
+            var subject = "Reset lozinke - CocoSunBags";
+            var content = $"Poštovani/a {user.Name},\n\n" +
+                          $"Vaš kod za reset lozinke je: {token}\n\n" +
+                          "Kod vrijedi 30 minuta.\n\n" +
+                          "Ako niste zatražili reset, ignorirajte ovu poruku.\n\n" +
+                          "CocoSunBags tim";
+
+            await TrySendResetEmailAsync(user.Email, subject, content);
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
@@ -101,6 +106,34 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 await _db.SaveChangesAsync();
             });
+        }
+
+        private async Task TrySendResetEmailAsync(string recipient, string subject, string content)
+        {
+            try
+            {
+                _mailPublisher.Publish(
+                    sender: "no-reply@cocosunbags.local",
+                    recipient: recipient,
+                    subject: subject,
+                    content: content);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "RabbitMQ mail publish failed for password reset; trying SMTP fallback.");
+            }
+
+            try
+            {
+                await _emailService.SendEmailAsync(recipient, subject, content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "SMTP fallback failed for password reset email to {Recipient}. Token was saved in database.",
+                    recipient);
+            }
         }
 
         private static string HashToken(string token)
