@@ -1,8 +1,10 @@
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CSBWebshopSeminarski.Controllers
 {
@@ -11,10 +13,14 @@ namespace CSBWebshopSeminarski.Controllers
     public class ShippingController : ControllerBase
     {
         private readonly IShipmentTrackingService _trackingService;
+        private readonly IOrderService _orderService;
 
-        public ShippingController(IShipmentTrackingService trackingService)
+        public ShippingController(
+            IShipmentTrackingService trackingService,
+            IOrderService orderService)
         {
             _trackingService = trackingService;
+            _orderService = orderService;
         }
 
         [HttpPost]
@@ -29,6 +35,19 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize]
         public async Task<ActionResult<ShippingInfo>> GetShippingInfo(int orderId)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId))
+                    throw new ForbiddenException("Access denied.");
+
+                var order = await _orderService.GetFullOrderByIdAsync(orderId);
+                if (order == null)
+                    throw new NotFoundException("Narudžba nije pronađena.");
+                if (order.UserID != currentUserId)
+                    throw new ForbiddenException("Access denied.");
+            }
+
             var result = await _trackingService.GetShippingInfoAsync(orderId);
             return Ok(result);
         }
