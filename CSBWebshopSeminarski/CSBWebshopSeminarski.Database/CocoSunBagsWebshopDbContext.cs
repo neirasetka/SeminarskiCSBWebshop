@@ -241,13 +241,15 @@ namespace CSBWebshopSeminarski.Database
                     "(BagID IS NOT NULL AND BeltID IS NULL) OR (BagID IS NULL AND BeltID IS NOT NULL)"));
             });
 
-            // Users: unique indexes (Stavka 19)
+            // Users: unique indexes (Stavka 19); soft delete hides anonymized accounts from normal queries
             modelBuilder.Entity<Users>(entity =>
             {
                 entity.Property(u => u.UserName).HasMaxLength(256);
                 entity.Property(u => u.Email).HasMaxLength(256);
+                entity.Property(u => u.IsDeleted).HasDefaultValue(false);
                 entity.HasIndex(u => u.UserName).IsUnique().HasDatabaseName("IX_Users_UserName");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
+                entity.HasQueryFilter(u => !u.IsDeleted);
             });
 
             // Orders: unique index on OrderNumber; cancellation audit fields

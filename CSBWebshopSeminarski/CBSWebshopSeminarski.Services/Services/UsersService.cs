@@ -91,7 +91,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 throw new BusinessException("Korisničko ime je već zauzeto.");
             }
 
-            var entity = await _context.Users.FindAsync(userId);
+            var entity = await _context.Users.FirstOrDefaultAsync(u => u.UserID == userId);
             if (entity == null)
             {
                 throw new NotFoundException($"User with ID {userId} not found.");
@@ -122,7 +122,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             return await _context.ExecuteInTransactionAsync(async () =>
             {
-                var entity = _context.Users.Find(ID);
+                var entity = await _context.Users.FirstOrDefaultAsync(u => u.UserID == ID);
                 if (entity == null)
                     throw new NotFoundException($"User with ID {ID} not found.");
 
@@ -175,56 +175,53 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public override async Task<bool> Delete(int ID)
         {
-            var entity = await _context.Users.
-                Include(i => i.UserRoles).Include(i => i.Reviews).Include(i => i.Rates).
-                FirstOrDefaultAsync(i => i.UserID == ID);
-
-            if (entity == null)
-                return false;
-
-            if (entity.UserRoles.Count != 0)
-                _context.UserRoles.RemoveRange(entity.UserRoles);
-
-            if (entity.Reviews.Count != 0)
-                _context.Reviews.RemoveRange(entity.Reviews);
-            if (entity.Rates.Count != 0)
-                _context.Rates.RemoveRange(entity.Rates);
-
-
-            var rates = await _context.Rates.Where(i => i.UserID == ID).ToListAsync();
-            if (rates.Count > 0)
+            return await _context.ExecuteInTransactionAsync(async () =>
             {
-                _context.Rates.RemoveRange(rates);
-            }
-            var reviews = await _context.Reviews.Where(i => i.UserID == ID).ToListAsync();
-            if (reviews.Count > 0)
-            {
-                _context.Reviews.RemoveRange(reviews);
-            }
+                var entity = await _context.Users
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.UserID == ID);
 
-            var favorites = await _context.Favorites.Where(i => i.UserID == ID).ToListAsync();
-            if (favorites.Count > 0)
-            {
-                _context.Favorites.RemoveRange(favorites);
-            }
-            var transactions = await _context.Transactions.Where(i => i.UserID == ID).ToListAsync();
-            if (transactions.Count > 0)
-            {
-                _context.Transactions.RemoveRange(transactions);
-            }
-            var orders = await _context.Orders.Where(i => i.UserID == ID).ToListAsync();
-            if (orders.Count > 0)
-            {
-                _context.Orders.RemoveRange(orders);
-            }
-            var purchases = await _context.Purchases.Where(i => i.UserID == ID).ToListAsync();
-            if (purchases.Count > 0)
-            {
-                _context.Purchases.RemoveRange(purchases);
-            }
-            _context.Users.Remove(entity);
-            await _context.SaveChangesAsync();
-            return true;
+                if (entity == null || entity.IsDeleted)
+                    return false;
+
+                var userRoles = await _context.UserRoles.Where(r => r.UserID == ID).ToListAsync();
+                if (userRoles.Count > 0)
+                    _context.UserRoles.RemoveRange(userRoles);
+
+                var favorites = await _context.Favorites.Where(f => f.UserID == ID).ToListAsync();
+                if (favorites.Count > 0)
+                    _context.Favorites.RemoveRange(favorites);
+
+                var notifications = await _context.Notifications.Where(n => n.UserID == ID).ToListAsync();
+                if (notifications.Count > 0)
+                    _context.Notifications.RemoveRange(notifications);
+
+                var resetTokens = await _context.PasswordResetTokens.Where(t => t.UserID == ID).ToListAsync();
+                if (resetTokens.Count > 0)
+                    _context.PasswordResetTokens.RemoveRange(resetTokens);
+
+                var outfitIdeas = await _context.OutfitIdeas.Where(o => o.UserID == ID).ToListAsync();
+                if (outfitIdeas.Count > 0)
+                    _context.OutfitIdeas.RemoveRange(outfitIdeas);
+
+                var reviews = await _context.Reviews.Where(r => r.UserID == ID).ToListAsync();
+                foreach (var review in reviews)
+                    review.Comment = "[removed]";
+
+                entity.Name = "Deleted";
+                entity.Surname = "User";
+                entity.Email = $"deleted_{ID}@invalid.local";
+                entity.UserName = $"deleted_{ID}";
+                entity.Phone = string.Empty;
+                entity.Image = Array.Empty<byte>();
+                entity.PasswordSalt = string.Empty;
+                entity.PasswordHash = string.Empty;
+                entity.IsDeleted = true;
+                entity.DeletedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return true;
+            });
         }
 
         public static string GenerateSalt()
@@ -246,7 +243,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var user = await _context.Users
                 .Include(i => i.UserRoles)
                 .ThenInclude(j => j.Roles)
-                .FirstOrDefaultAsync(i => i.UserName == request.UserName);
+                .FirstOrDefaultAsync(i => i.UserName == request.UserName && !i.IsDeleted);
 
             if (user != null)
             {

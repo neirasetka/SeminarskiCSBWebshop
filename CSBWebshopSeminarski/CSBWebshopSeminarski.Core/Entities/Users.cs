@@ -14,6 +14,8 @@ namespace CSBWebshopSeminarski.Core.Entities
         public string PasswordHash { get; set; } = null!;
         public string PasswordSalt { get; set; } = null!;
         public byte[] Image { get; set; } = null!;
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public virtual ICollection<UserRoles> UserRoles { get; set; } = null!;
         public virtual ICollection<Reviews> Reviews { get; set; } = null!;
         public virtual ICollection<Rates> Rates { get; set; } = null!;
