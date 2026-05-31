@@ -49,9 +49,11 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Rate limiting policy for announcements
+// Rate limiting policies
 builder.Services.AddRateLimiter(options =>
 {
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
     options.AddPolicy("AnnouncementsPolicy", httpContext =>
         RateLimitPartition.GetTokenBucketLimiter(
             partitionKey: httpContext.User?.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
@@ -63,6 +65,18 @@ builder.Services.AddRateLimiter(options =>
                 ReplenishmentPeriod = TimeSpan.FromMinutes(1),
                 TokensPerPeriod = 5,
                 AutoReplenishment = true
+            }
+        ));
+
+    options.AddPolicy("PasswordResetPolicy", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(15),
+                PermitLimit = 5,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }
         ));
 });

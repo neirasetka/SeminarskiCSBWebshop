@@ -2,12 +2,14 @@ using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CSBWebshopSeminarski.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [AllowAnonymous]
+    [EnableRateLimiting("PasswordResetPolicy")]
     public class PasswordResetController : ControllerBase
     {
         private readonly IPasswordResetService _passwordResetService;

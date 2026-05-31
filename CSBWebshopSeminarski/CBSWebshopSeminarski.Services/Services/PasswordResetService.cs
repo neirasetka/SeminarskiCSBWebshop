@@ -13,6 +13,9 @@ namespace CBSWebshopSeminarski.Services.Services
 {
     public class PasswordResetService : IPasswordResetService
     {
+        private const int MaxResetRequestsPerEmailWindow = 3;
+        private static readonly TimeSpan ResetRequestWindow = TimeSpan.FromMinutes(15);
+
         private readonly CocoSunBagsWebshopDbContext _db;
         private readonly RabbitMqMailPublisher _mailPublisher;
 
@@ -26,6 +29,12 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
+                return;
+
+            var windowStart = DateTime.UtcNow.Subtract(ResetRequestWindow);
+            var recentRequests = await _db.PasswordResetTokens
+                .CountAsync(t => t.UserID == user.UserID && t.CreatedAt >= windowStart);
+            if (recentRequests >= MaxResetRequestsPerEmailWindow)
                 return;
 
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
