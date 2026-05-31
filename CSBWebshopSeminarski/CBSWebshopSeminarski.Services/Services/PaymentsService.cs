@@ -28,8 +28,6 @@ namespace CBSWebshopSeminarski.Services.Services
         };
 
         private const string DefaultPaymentCurrency = "bam";
-        private const long MinimumAmountInMinorUnits = 50;
-
         private static readonly HashSet<string> ActivePaymentIntentStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "requires_payment_method",
@@ -768,30 +766,11 @@ namespace CBSWebshopSeminarski.Services.Services
                 .Include(oi => oi.Belt)
                 .ToListAsync();
 
-            if (!orderItems.Any())
+            if (orderItems.Count == 0)
                 return (0, "Order has no items.");
 
-            decimal total = 0m;
-            foreach (var item in orderItems)
-            {
-                decimal unitPrice = 0m;
-                if (item.Price.HasValue && item.Price.Value > 0)
-                    unitPrice = (decimal)item.Price.Value;
-                else if (item.Bag != null)
-                    unitPrice = (decimal)item.Bag.Price;
-                else if (item.Belt != null)
-                    unitPrice = (decimal)item.Belt.Price;
-
-                var qty = item.Quantity ?? 1;
-                var discount = item.Discount ?? 0m;
-                var lineTotal = unitPrice * qty * (1 - discount / 100m);
-                total += lineTotal;
-            }
-
-            var cents = (long)Math.Round(total * 100m);
-            if (cents < MinimumAmountInMinorUnits)
-                return (0, "Order total is too small for payment (minimum 0.50 KM).");
-            return (cents, null);
+            var total = OrderPricing.ComputeOrderTotal(orderItems);
+            return OrderPricing.ToPaymentAmountInCents(total);
         }
 
         private async Task<string?> ValidateOrderForPaymentAsync(Orders order)

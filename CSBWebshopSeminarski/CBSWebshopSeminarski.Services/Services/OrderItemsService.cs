@@ -200,25 +200,9 @@ namespace CBSWebshopSeminarski.Services.Services
 
         private void ApplyOrderTotal(Orders order)
         {
-            decimal total = 0m;
-
-            foreach (var item in order.OrderItems)
-            {
-                if (_context.Entry(item).State == EntityState.Deleted)
-                    continue;
-
-                var price = item.Price ?? 0m;
-                var qty = item.Quantity ?? 1;
-
-                var line = price * qty;
-
-                if (item.Discount.HasValue && item.Discount.Value > 0)
-                    line *= 1 - item.Discount.Value / 100m;
-
-                total += line;
-            }
-
-            order.Price = total;
+            order.Price = OrderPricing.ComputeOrderTotal(
+                order.OrderItems,
+                item => _context.Entry(item).State != EntityState.Deleted);
         }
     }
 }
