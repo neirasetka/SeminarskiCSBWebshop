@@ -44,6 +44,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 ReferencePrices.Count > 0 ? ReferencePrices.Average() : null;
         }
 
+        private sealed record PurchasedProductSignal(int TypeId, decimal Price);
+
         private async Task<List<RecommendedProductDto>> GetRecommendationsAsync(
             int userId, int take, ProductKind kind)
         {
@@ -98,12 +100,11 @@ namespace CBSWebshopSeminarski.Services.Services
                         profile.ReferencePrices.Add(rate.Bag.Price);
                 }
 
-                var purchasedBags = await GetPurchasedBagsAsync(userId);
+                var purchasedBags = await GetPurchasedBagSignalsAsync(userId);
                 foreach (var bag in purchasedBags)
                 {
-                    var typeId = bag.BagTypeID ?? 0;
-                    if (typeId > 0)
-                        AddTypeWeight(profile.TypeWeights, typeId, PurchasedTypeWeight);
+                    if (bag.TypeId > 0)
+                        AddTypeWeight(profile.TypeWeights, bag.TypeId, PurchasedTypeWeight);
                     profile.ReferencePrices.Add(bag.Price);
                 }
             }
@@ -135,10 +136,10 @@ namespace CBSWebshopSeminarski.Services.Services
                     profile.ReferencePrices.Add(rate.Belt.Price);
                 }
 
-                var purchasedBelts = await GetPurchasedBeltsAsync(userId);
+                var purchasedBelts = await GetPurchasedBeltSignalsAsync(userId);
                 foreach (var belt in purchasedBelts)
                 {
-                    AddTypeWeight(profile.TypeWeights, belt.BeltTypeID, PurchasedTypeWeight);
+                    AddTypeWeight(profile.TypeWeights, belt.TypeId, PurchasedTypeWeight);
                     profile.ReferencePrices.Add(belt.Price);
                 }
             }
@@ -146,29 +147,41 @@ namespace CBSWebshopSeminarski.Services.Services
             return profile;
         }
 
-        private async Task<List<Bags>> GetPurchasedBagsAsync(int userId)
+        private async Task<List<PurchasedProductSignal>> GetPurchasedBagSignalsAsync(int userId)
         {
-            return await _context.Purchases
+            var purchasedBagIds = await (
+                from oi in _context.OrderItems.AsNoTracking()
+                join p in _context.Purchases.AsNoTracking() on oi.OrderID equals p.OrderID
+                where p.UserID == userId && oi.BagID.HasValue
+                select oi.BagID!.Value
+            ).Distinct().ToListAsync();
+
+            if (purchasedBagIds.Count == 0)
+                return new List<PurchasedProductSignal>();
+
+            return await _context.Bags
                 .AsNoTracking()
-                .Where(p => p.UserID == userId)
-                .Include(p => p.Order).ThenInclude(o => o.OrderItems).ThenInclude(oi => oi.Bag)
-                .SelectMany(p => p.Order.OrderItems)
-                .Where(oi => oi.BagID.HasValue && oi.Bag != null)
-                .Select(oi => oi.Bag!)
-                .Distinct()
+                .Where(b => b.BagID.HasValue && purchasedBagIds.Contains(b.BagID.Value))
+                .Select(b => new PurchasedProductSignal(b.BagTypeID ?? 0, b.Price))
                 .ToListAsync();
         }
 
-        private async Task<List<Belts>> GetPurchasedBeltsAsync(int userId)
+        private async Task<List<PurchasedProductSignal>> GetPurchasedBeltSignalsAsync(int userId)
         {
-            return await _context.Purchases
+            var purchasedBeltIds = await (
+                from oi in _context.OrderItems.AsNoTracking()
+                join p in _context.Purchases.AsNoTracking() on oi.OrderID equals p.OrderID
+                where p.UserID == userId && oi.BeltID.HasValue
+                select oi.BeltID!.Value
+            ).Distinct().ToListAsync();
+
+            if (purchasedBeltIds.Count == 0)
+                return new List<PurchasedProductSignal>();
+
+            return await _context.Belts
                 .AsNoTracking()
-                .Where(p => p.UserID == userId)
-                .Include(p => p.Order).ThenInclude(o => o.OrderItems).ThenInclude(oi => oi.Belt)
-                .SelectMany(p => p.Order.OrderItems)
-                .Where(oi => oi.BeltID.HasValue && oi.Belt != null)
-                .Select(oi => oi.Belt!)
-                .Distinct()
+                .Where(b => purchasedBeltIds.Contains(b.BeltID))
+                .Select(b => new PurchasedProductSignal(b.BeltTypeID, b.Price))
                 .ToListAsync();
         }
 
@@ -178,15 +191,12 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (kind == ProductKind.Bag)
             {
-                var purchased = await _context.Purchases
-                    .AsNoTracking()
-                    .Where(p => p.UserID == userId)
-                    .Include(p => p.Order).ThenInclude(o => o.OrderItems)
-                    .SelectMany(p => p.Order.OrderItems)
-                    .Where(oi => oi.BagID.HasValue)
-                    .Select(oi => oi.BagID!.Value)
-                    .Distinct()
-                    .ToListAsync();
+                var purchased = await (
+                    from oi in _context.OrderItems.AsNoTracking()
+                    join p in _context.Purchases.AsNoTracking() on oi.OrderID equals p.OrderID
+                    where p.UserID == userId && oi.BagID.HasValue
+                    select oi.BagID!.Value
+                ).Distinct().ToListAsync();
 
                 var favorited = await _context.Favorites
                     .AsNoTracking()
@@ -200,15 +210,12 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             else
             {
-                var purchased = await _context.Purchases
-                    .AsNoTracking()
-                    .Where(p => p.UserID == userId)
-                    .Include(p => p.Order).ThenInclude(o => o.OrderItems)
-                    .SelectMany(p => p.Order.OrderItems)
-                    .Where(oi => oi.BeltID.HasValue)
-                    .Select(oi => oi.BeltID!.Value)
-                    .Distinct()
-                    .ToListAsync();
+                var purchased = await (
+                    from oi in _context.OrderItems.AsNoTracking()
+                    join p in _context.Purchases.AsNoTracking() on oi.OrderID equals p.OrderID
+                    where p.UserID == userId && oi.BeltID.HasValue
+                    select oi.BeltID!.Value
+                ).Distinct().ToListAsync();
 
                 var favorited = await _context.Favorites
                     .AsNoTracking()
