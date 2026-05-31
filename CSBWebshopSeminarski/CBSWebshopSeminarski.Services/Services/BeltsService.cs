@@ -22,21 +22,31 @@ namespace CBSWebshopSeminarski.Services.Services
         public override async Task<PagedResult<Belt>> Get(BeltSearchRequest request)
         {
             request ??= new BeltSearchRequest();
-            var query = _context.Belts.Include(i => i.User).Include(i => i.BeltType).AsQueryable().OrderBy(c => c.BeltName);
+            var query = _context.Belts
+                .Include(i => i.User)
+                .Include(i => i.BeltType)
+                .AsQueryable();
 
             if (request.UserID != 0)
             {
-                query = query.Where(x => x.UserID == request.UserID).Include(i => i.User).OrderBy(c => c.BeltName);
+                query = query.Where(x => x.UserID == request.UserID);
+                query = query.OrderBy(c => c.BeltName);
             }
 
             if (request.BeltTypeID.HasValue)
             {
-                query = query.Where(x => x.BeltTypeID == request.BeltTypeID).Include(i => i.BeltType).Include(i => i.User).OrderBy(c => c.BeltTypeID);
+                query = query.Where(x => x.BeltTypeID == request.BeltTypeID);
+                query = query.OrderBy(c => c.BeltTypeID);
             }
 
             if (!string.IsNullOrWhiteSpace(request.BeltName))
             {
-                query = query.Where(x => x.BeltName.Contains(request.BeltName)).Include(i => i.User).OrderBy(c => c.BeltName);
+                query = query.Where(x => x.BeltName.Contains(request.BeltName));
+                query = query.OrderBy(c => c.BeltName);
+            }
+            else if (request.UserID == 0 && !request.BeltTypeID.HasValue)
+            {
+                query = query.OrderBy(c => c.BeltName);
             }
 
             return await ToPagedResultAsync(query, request);

@@ -212,7 +212,7 @@ namespace CBSWebshopSeminarski.Services.Services
             var alreadyExists = await _context.Participants.AnyAsync(p => p.GiveawayId == giveawayId && p.Email == normalizedEmail);
             if (alreadyExists)
             {
-                throw new ConflictException("VeÄ‡ uÄestvujete u giveawayu.");
+                throw new ConflictException("Već učestvujete u giveawayu.");
             }
 
             var participant = new Participants

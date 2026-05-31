@@ -21,21 +21,31 @@ namespace CBSWebshopSeminarski.Services.Services
         }
         public override async Task<PagedResult<Bag>> Get(BagSearchRequest request)
         {
-            var query = _context.Bags.Include(i => i.User).AsQueryable().OrderBy(c => c.BagName);
+            var query = _context.Bags
+                .Include(i => i.User)
+                .Include(i => i.BagType)
+                .AsQueryable();
 
             if (request.UserID != 0)
             {
-                query = query.Where(x => x.UserID == request.UserID).Include(i => i.User).OrderBy(c => c.BagName);
+                query = query.Where(x => x.UserID == request.UserID);
+                query = query.OrderBy(c => c.BagName);
             }
 
             if (request?.BagTypeID.HasValue == true)
             {
-                query = query.Where(x => x.BagTypeID == request.BagTypeID).Include(i => i.BagType).Include(i => i.User).OrderBy(c => c.BagType);
+                query = query.Where(x => x.BagTypeID == request.BagTypeID);
+                query = query.OrderBy(c => c.BagType);
             }
 
             if (!string.IsNullOrWhiteSpace(request?.BagName))
             {
-                query = query.Where(x => x.BagName.Contains(request.BagName)).Include(i => i.User).OrderBy(c => c.BagName);
+                query = query.Where(x => x.BagName.Contains(request.BagName));
+                query = query.OrderBy(c => c.BagName);
+            }
+            else if (request.UserID == 0 && request?.BagTypeID.HasValue != true)
+            {
+                query = query.OrderBy(c => c.BagName);
             }
 
             return await ToPagedResultAsync(query, request);
