@@ -5,7 +5,7 @@ using MimeKit.Text;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Collections.Generic;
+using RabbitMQ.Client.Exceptions;
 using System.Text;
 
 namespace CSBWebshopSeminarski.Notifications
@@ -14,6 +14,7 @@ namespace CSBWebshopSeminarski.Notifications
     {
         private readonly ILogger<RabbitMqEmailConsumer> _logger;
         private readonly IConfiguration _configuration;
+        private readonly SemaphoreSlim _processingLock = new(1, 1);
         private IConnection? _connection;
         private IModel? _channel;
         private string _queueName = "EmailQueue";
@@ -22,8 +23,8 @@ namespace CSBWebshopSeminarski.Notifications
         private string _deadLetterExchange = "EmailDeadLetterExchange";
         private string _deadLetterQueueName = "EmailDeadLetterQueue";
         private string _deadLetterRoutingKey = "email_dead_letter";
-        private bool _consumerStarted;
-        private CancellationToken _stoppingToken;
+        private string? _consumerTag;
+        private bool _consumerRegistered;
 
         public RabbitMqEmailConsumer(
             ILogger<RabbitMqEmailConsumer> logger,
@@ -46,99 +47,120 @@ namespace CSBWebshopSeminarski.Notifications
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _stoppingToken = stoppingToken;
-
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (_channel == null || !_channel.IsOpen || _connection == null || !_connection.IsOpen)
+                try
                 {
-                    TryConnect();
-                }
+                    if (!IsConnected())
+                    {
+                        await ConnectAsync(stoppingToken);
+                    }
 
-                if ((_channel == null || !_channel.IsOpen) && !stoppingToken.IsCancellationRequested)
+                    if (!IsConnected())
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                        continue;
+                    }
+
+                    if (!_consumerRegistered)
+                    {
+                        RegisterConsumer();
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
-                    await Task.Delay(5000, stoppingToken);
-                    continue;
+                    break;
                 }
-
-                if (!_consumerStarted)
+                catch (Exception ex)
                 {
-                    StartConsumer();
+                    _logger.LogError(ex, "Unexpected error in RabbitMQ email consumer loop.");
+                    TeardownConnection();
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                 }
-
-                await Task.Delay(1000, stoppingToken);
             }
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                _channel?.Close();
-                _connection?.Close();
-                _channel?.Dispose();
-                _connection?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Error while closing RabbitMQ connection during shutdown.");
-            }
-
+            TeardownConnection();
             return base.StopAsync(cancellationToken);
         }
 
-        private void TryConnect()
+        private bool IsConnected() =>
+            _connection != null && _connection.IsOpen && _channel != null && _channel.IsOpen;
+
+        private async Task ConnectAsync(CancellationToken cancellationToken)
         {
+            TeardownConnection();
+
+            var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST")
+                ?? _configuration["RabbitMQ:HostName"]
+                ?? "localhost";
+            var port = int.TryParse(
+                Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? _configuration["RabbitMQ:Port"],
+                out var parsedPort)
+                ? parsedPort
+                : 5672;
+            var userName = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME")
+                ?? _configuration["RabbitMQ:UserName"]
+                ?? "guest";
+            var password = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD")
+                ?? _configuration["RabbitMQ:Password"]
+                ?? "guest";
+
+            var factory = new ConnectionFactory
+            {
+                HostName = host,
+                Port = port,
+                UserName = userName,
+                Password = password,
+                RequestedConnectionTimeout = TimeSpan.FromSeconds(30),
+                RequestedHeartbeat = TimeSpan.FromSeconds(60),
+                AutomaticRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
+                DispatchConsumersAsync = true
+            };
+
             try
             {
-                var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST")
-                    ?? _configuration["RabbitMQ:HostName"]
-                    ?? "localhost";
-                var port = int.TryParse(
-                    Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? _configuration["RabbitMQ:Port"],
-                    out var parsedPort)
-                    ? parsedPort
-                    : 5672;
-                var userName = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME")
-                    ?? _configuration["RabbitMQ:UserName"]
-                    ?? "guest";
-                var password = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD")
-                    ?? _configuration["RabbitMQ:Password"]
-                    ?? "guest";
-
-                var factory = new ConnectionFactory
+                _connection = factory.CreateConnection();
+                _connection.ConnectionShutdown += (_, args) =>
                 {
-                    HostName = host,
-                    Port = port,
-                    UserName = userName,
-                    Password = password,
-                    RequestedConnectionTimeout = TimeSpan.FromSeconds(30),
-                    RequestedHeartbeat = TimeSpan.FromSeconds(60),
-                    AutomaticRecoveryEnabled = true,
-                    NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+                    _logger.LogWarning(
+                        "RabbitMQ consumer connection shutdown: {Reason}. Will reconnect.",
+                        args.ReplyText);
+                    _consumerRegistered = false;
                 };
 
-                _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
-                DeclareEmailTopology(_channel);
-                _consumerStarted = false;
-                _logger.LogInformation(
-                    "RabbitMQ connected at {Host}:{Port}. Dead-letter queue: {DeadLetterQueue}.",
-                    host,
-                    port,
-                    _deadLetterQueueName);
+                DeclareTopology(_channel);
+                _consumerRegistered = false;
+                _logger.LogInformation("RabbitMQ email consumer connected at {Host}:{Port}.", host, port);
             }
-            catch (Exception ex)
+            catch (BrokerUnreachableException ex)
             {
-                _logger.LogWarning(ex, "RabbitMQ unavailable. Notifications consumer will retry.");
+                _logger.LogWarning(ex, "RabbitMQ broker unreachable at {Host}:{Port}. Retrying...", host, port);
+                TeardownConnection();
             }
+            catch (OperationInterruptedException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "RabbitMQ topology declaration failed. Ensure queue {QueueName} was not created with different arguments.",
+                    _queueName);
+                TeardownConnection();
+            }
+
+            await Task.CompletedTask;
         }
 
-        private void DeclareEmailTopology(IModel channel)
+        private void DeclareTopology(IModel channel)
         {
-            channel.ExchangeDeclare(_deadLetterExchange, ExchangeType.Direct, durable: true);
+            channel.ExchangeDeclare(_deadLetterExchange, ExchangeType.Direct, durable: true, autoDelete: false);
             channel.QueueDeclare(_deadLetterQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-            channel.QueueBind(_deadLetterQueueName, _deadLetterExchange, _deadLetterRoutingKey, null);
+            channel.QueueBind(_deadLetterQueueName, _deadLetterExchange, _deadLetterRoutingKey, arguments: null);
 
             var queueArgs = new Dictionary<string, object>
             {
@@ -146,70 +168,69 @@ namespace CSBWebshopSeminarski.Notifications
                 { "x-dead-letter-routing-key", _deadLetterRoutingKey }
             };
 
-            channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true);
+            channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true, autoDelete: false);
             channel.QueueDeclare(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: queueArgs);
-            channel.QueueBind(_queueName, _exchangeName, _routingKey, null);
+            channel.QueueBind(_queueName, _exchangeName, _routingKey, arguments: null);
         }
 
-        private void StartConsumer()
+        private void RegisterConsumer()
         {
             if (_channel == null)
-            {
                 return;
-            }
 
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.Received += OnMessageReceivedAsync;
 
-            _channel.BasicQos(0, 1, false);
-            _channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
-            _consumerStarted = true;
-            _logger.LogInformation("RabbitMQ email consumer started on queue {QueueName}.", _queueName);
+            _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+            _consumerTag = _channel.BasicConsume(
+                queue: _queueName,
+                autoAck: false,
+                consumer: consumer);
+            _consumerRegistered = true;
+            _logger.LogInformation("RabbitMQ email consumer listening on queue {QueueName}.", _queueName);
         }
 
         private async Task OnMessageReceivedAsync(object sender, BasicDeliverEventArgs ea)
         {
-            var deliveryTag = ea.DeliveryTag;
-
+            await _processingLock.WaitAsync();
             try
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-                await SendEmailAsync(message, _stoppingToken);
-                _channel!.BasicAck(deliveryTag, multiple: false);
+                await SendEmailAsync(message, CancellationToken.None);
+                _channel!.BasicAck(ea.DeliveryTag, multiple: false);
             }
             catch (InvalidEmailMessageException ex)
             {
-                _logger.LogError(ex, "Invalid email queue payload; sending to dead-letter queue.");
-                RejectMessage(deliveryTag, requeue: false);
+                _logger.LogError(ex, "Invalid email payload; discarding message (delivery tag {DeliveryTag}).", ea.DeliveryTag);
+                SafeNack(ea.DeliveryTag, requeue: false);
             }
             catch (AuthenticationException ex)
             {
-                _logger.LogError(ex, "SMTP authentication failed; sending message to dead-letter queue.");
-                RejectMessage(deliveryTag, requeue: false);
+                _logger.LogError(ex, "SMTP authentication failed; discarding message (delivery tag {DeliveryTag}).", ea.DeliveryTag);
+                SafeNack(ea.DeliveryTag, requeue: false);
             }
             catch (SmtpProtocolException ex) when (ex.Message.Contains("Too many login attempts", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogError(ex, "SMTP rate limit reached; sending message to dead-letter queue.");
-                RejectMessage(deliveryTag, requeue: false);
-            }
-            catch (OperationCanceledException) when (_stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("Email processing cancelled during shutdown; requeueing message.");
-                RejectMessage(deliveryTag, requeue: true);
+                _logger.LogError(ex, "SMTP rate limit reached; requeueing message (delivery tag {DeliveryTag}).", ea.DeliveryTag);
+                SafeNack(ea.DeliveryTag, requeue: true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Transient error processing email queue message; requeueing for retry.");
-                RejectMessage(deliveryTag, requeue: true);
+                _logger.LogError(ex, "Transient error sending email; requeueing message (delivery tag {DeliveryTag}).", ea.DeliveryTag);
+                SafeNack(ea.DeliveryTag, requeue: true);
+            }
+            finally
+            {
+                _processingLock.Release();
             }
         }
 
-        private void RejectMessage(ulong deliveryTag, bool requeue)
+        private void SafeNack(ulong deliveryTag, bool requeue)
         {
             try
             {
-                _channel!.BasicNack(deliveryTag, multiple: false, requeue: requeue);
+                _channel?.BasicNack(deliveryTag, multiple: false, requeue: requeue);
             }
             catch (Exception ex)
             {
@@ -229,7 +250,6 @@ namespace CSBWebshopSeminarski.Notifications
             var smtpUser = FirstNonEmpty(
                 _configuration["Smtp:User"],
                 Environment.GetEnvironmentVariable("SMTP_USERNAME"));
-            // Gmail app passwords are often shown with spaces; auth requires contiguous string.
             var smtpPass = FirstNonEmpty(
                     _configuration["Smtp:Pass"],
                     Environment.GetEnvironmentVariable("SMTP_PASSWORD"))
@@ -251,16 +271,25 @@ namespace CSBWebshopSeminarski.Notifications
                 throw new InvalidEmailMessageException("Email queue payload is not valid JSON.", ex);
             }
 
-            if (emailData == null
-                || string.IsNullOrWhiteSpace(emailData.Recipient)
-                || string.IsNullOrWhiteSpace(emailData.Subject))
+            if (emailData == null)
             {
-                throw new InvalidEmailMessageException("Email queue payload is missing required fields.");
+                throw new InvalidEmailMessageException("Email queue payload deserialized to null.");
             }
 
+            if (string.IsNullOrWhiteSpace(emailData.Recipient))
+            {
+                throw new InvalidEmailMessageException("Email queue payload is missing Recipient.");
+            }
+
+            if (string.IsNullOrWhiteSpace(emailData.Subject))
+            {
+                throw new InvalidEmailMessageException("Email queue payload is missing Subject.");
+            }
+
+            var fromAddress = !string.IsNullOrWhiteSpace(emailData.Sender) ? emailData.Sender : smtpUser;
+
             var mailObj = new MimeMessage();
-            // Gmail requires From to match the authenticated account (or a configured alias).
-            mailObj.From.Add(MailboxAddress.Parse(smtpUser));
+            mailObj.From.Add(MailboxAddress.Parse(fromAddress));
             mailObj.To.Add(MailboxAddress.Parse(emailData.Recipient));
             mailObj.Subject = emailData.Subject;
             mailObj.Body = new TextPart(TextFormat.Plain) { Text = emailData.Content ?? string.Empty };
@@ -273,7 +302,42 @@ namespace CSBWebshopSeminarski.Notifications
             await smtpClient.AuthenticateAsync(smtpUser, smtpPass, cancellationToken);
             await smtpClient.SendAsync(mailObj, cancellationToken);
             await smtpClient.DisconnectAsync(true, cancellationToken);
-            _logger.LogInformation("Email sent via SMTP to {Recipient}.", emailData.Recipient);
+
+            _logger.LogInformation("Email sent via SMTP to {Recipient}. Subject: {Subject}", emailData.Recipient, emailData.Subject);
+        }
+
+        private void TeardownConnection()
+        {
+            _consumerRegistered = false;
+            _consumerTag = null;
+
+            try
+            {
+                _channel?.Close();
+                _channel?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error closing RabbitMQ consumer channel.");
+            }
+            finally
+            {
+                _channel = null;
+            }
+
+            try
+            {
+                _connection?.Close();
+                _connection?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error closing RabbitMQ consumer connection.");
+            }
+            finally
+            {
+                _connection = null;
+            }
         }
 
         private static string FirstNonEmpty(params string?[] values)

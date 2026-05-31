@@ -338,6 +338,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (await _db.Purchases.AnyAsync(p => p.OrderID == orderId))
             {
+                await SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmailOverride: null);
                 return new PaymentConfirmResult
                 {
                     Paid = true,
@@ -403,9 +404,13 @@ namespace CBSWebshopSeminarski.Services.Services
                 return false;
             }
 
+            var receiptEmail = ResolveReceiptEmail(metadata, paymentIntent);
+
             var alreadyExists = await _db.Purchases.AnyAsync(p => p.StripeId == paymentIntentId);
             if (alreadyExists)
             {
+                await EnsureOrderMarkedPaidAsync(orderId);
+                await SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
                 return true;
             }
 
@@ -413,6 +418,8 @@ namespace CBSWebshopSeminarski.Services.Services
             if (orderAlreadyPaid)
             {
                 _logger.LogWarning("Payment succeeded event for order {OrderId} but a purchase already exists. Skipping.", orderId);
+                await EnsureOrderMarkedPaidAsync(orderId);
+                await SendPaymentConfirmationIfNotSentYetAsync(orderId, receiptEmail);
                 return true;
             }
 
@@ -460,9 +467,6 @@ namespace CBSWebshopSeminarski.Services.Services
                 await _db.SaveChangesAsync();
             });
 
-            var receiptEmail = metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
-                ? email.Trim()
-                : null;
             await SendPaymentConfirmationIfNotSentYetAsync(order.OrderID, receiptEmail);
             return true;
         }
@@ -566,15 +570,16 @@ namespace CBSWebshopSeminarski.Services.Services
                 return;
             }
 
+            var subject = $"Potvrda plaćanja — narudžba #{order.OrderNumber}";
+            var message = "Poštovani/a,\n\n" +
+                "Uspješno smo zaprimili Vaše plaćanje.\n\n" +
+                $"Broj narudžbe: {order.OrderNumber}\n" +
+                $"Ukupan iznos: {order.Price:N2} KM\n\n" +
+                "Hvala Vam na povjerenju.\n\n" +
+                "CocoSunBags tim";
+
             try
             {
-                var subject = $"Potvrda plaćanja — narudžba #{order.OrderNumber}";
-                var message = "Poštovani/a,\n\n" +
-                    "Uspješno smo zaprimili Vaše plaćanje.\n\n" +
-                    $"Broj narudžbe: {order.OrderNumber}\n" +
-                    $"Ukupan iznos: {order.Price:N2} KM\n\n" +
-                    "Hvala Vam na povjerenju.\n\n" +
-                    "CocoSunBags tim";
                 _mailPublisher.Publish(
                     sender: "no-reply@cocosunbags.local",
                     recipient: to,
@@ -594,6 +599,44 @@ namespace CBSWebshopSeminarski.Services.Services
                     "Payment confirmation email queue publish failed for order {OrderId} to {Recipient}.",
                     orderId,
                     to);
+            }
+        }
+
+        private async Task EnsureOrderMarkedPaidAsync(int orderId)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == orderId);
+            if (order == null || order.PaymentStatus == PaymentStatus.Paid)
+                return;
+
+            OrderStateMachine.ValidatePaymentTransition(order.PaymentStatus, PaymentStatus.Paid);
+            order.PaymentStatus = PaymentStatus.Paid;
+            await _db.SaveChangesAsync();
+        }
+
+        private static string? GetReceiptEmailFromMetadata(IDictionary<string, string> metadata) =>
+            metadata.TryGetValue("receipt_email", out var email) && !string.IsNullOrWhiteSpace(email)
+                ? email.Trim()
+                : null;
+
+        private static string? ResolveReceiptEmail(IDictionary<string, string> metadata, PaymentIntent paymentIntent)
+        {
+            var fromMetadata = GetReceiptEmailFromMetadata(metadata);
+            if (!string.IsNullOrWhiteSpace(fromMetadata))
+                return fromMetadata;
+
+            return string.IsNullOrWhiteSpace(paymentIntent.ReceiptEmail)
+                ? null
+                : paymentIntent.ReceiptEmail.Trim();
+        }
+
+        private static void EnrichReceiptEmailMetadata(IDictionary<string, string> metadata, PaymentIntent paymentIntent)
+        {
+            if (!string.IsNullOrWhiteSpace(GetReceiptEmailFromMetadata(metadata)))
+                return;
+
+            if (!string.IsNullOrWhiteSpace(paymentIntent.ReceiptEmail))
+            {
+                metadata["receipt_email"] = paymentIntent.ReceiptEmail.Trim();
             }
         }
 
@@ -625,6 +668,8 @@ namespace CBSWebshopSeminarski.Services.Services
             var metadata = paymentIntent.Metadata != null
                 ? new Dictionary<string, string>(paymentIntent.Metadata)
                 : new Dictionary<string, string>();
+
+            EnrichReceiptEmailMetadata(metadata, paymentIntent);
 
             if (!metadata.TryGetValue("order_id", out var metadataOrderId))
             {
@@ -757,16 +802,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
         private async Task<bool> PaymentIntentMatchesOrderTotalAsync(int orderId, PaymentIntent paymentIntent)
         {
-            if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning(
-                    "Payment intent {PaymentIntentId} for order {OrderId} has status {Status}, expected succeeded. Skipping.",
-                    paymentIntent.Id,
-                    orderId,
-                    paymentIntent.Status);
-                return false;
-            }
-
+            // Status is validated by the caller (webhook / confirm endpoint). Here we only verify amount.
             var (expectedCents, calcError) = await CalculateOrderTotalAsync(orderId);
             if (calcError != null)
             {
