@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +19,35 @@ namespace CSBWebshopSeminarski.Controllers
         {
             _service = service;
             _tokenGenerator = tokenGenerator;
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public override async Task<PagedResult<User>> Get([FromQuery] UserSearchRequest search)
+        {
+            return await _service.Get(search);
+        }
+
+        [HttpGet("{ID:int}")]
+        [Authorize]
+        public override async Task<User> GetById(int ID)
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId != ID)
+                {
+                    throw new ForbiddenException("Access denied.");
+                }
+            }
+
+            var user = await _service.GetById(ID);
+            if (user == null || user.UserID == 0)
+            {
+                throw new NotFoundException("Korisnik nije pronađen.");
+            }
+
+            return user;
         }
 
         [HttpPost("Authenticate")]
