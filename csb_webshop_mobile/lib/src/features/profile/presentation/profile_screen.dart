@@ -18,9 +18,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<UserProfile?> profileAsync = ref.watch(
-      userProfileProvider,
-    );
+    final AsyncValue<UserProfile?> profileAsync = ref.watch(userProfileProvider,);
     final bool isAdmin = ref.watch(adminRoleProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(

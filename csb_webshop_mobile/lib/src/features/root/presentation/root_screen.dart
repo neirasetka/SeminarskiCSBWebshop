@@ -361,7 +361,8 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             ),
         ],
       ),
-      body: IndexedStack(index: currentIndex, children: pages),
+      //body: IndexedStack(index: currentIndex, children: pages),
+      body: pages[currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (int i) => setState(() => _index = i),
