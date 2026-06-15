@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/secure_storage_service.dart';
+import '../../favorites/application/favorites_list_provider.dart';
+import '../../favorites/application/favorites_provider.dart';
 import '../../orders/application/cart_provider.dart';
 import '../../orders/application/order_history_provider.dart';
 import '../../profile/application/user_profile_provider.dart';
@@ -41,6 +43,8 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
       ref.invalidate(adminRoleProvider);
       ref.invalidate(cartProvider);
       ref.invalidate(orderHistoryProvider);
+      ref.invalidate(favoritesProvider);
+      ref.invalidate(favoritesListProvider);
     } catch (e, st) {
       state = AsyncError<AuthSession?>(e, st);
     } finally {
@@ -56,6 +60,8 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
     ref.invalidate(userProfileProvider);
     ref.invalidate(adminRoleProvider);
     ref.invalidate(orderHistoryProvider);
+    ref.invalidate(favoritesProvider);
+    ref.invalidate(favoritesListProvider);
     _notify();
   }
 

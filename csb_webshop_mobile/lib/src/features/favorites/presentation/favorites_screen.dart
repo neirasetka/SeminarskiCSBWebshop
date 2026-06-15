@@ -14,7 +14,7 @@ import '../application/favorites_list_provider.dart';
 import '../application/favorites_provider.dart';
 import '../domain/favorites_collections.dart';
 
-/// Prikaz torbi i kaiševa koje je korisnik označio kao favorite (lokalno u aplikaciji).
+/// Prikaz torbi i kaiševa koje je korisnik označio kao favorite (sync s backendom kad je prijavljen).
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
 
