@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/back_confirmation_dialog.dart';
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../utils/date_formatter.dart';
 import '../application/giveaways_provider.dart';
 import '../data/giveaways_api.dart';

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../product_feedback/presentation/product_feedback_section.dart';
 import '../application/belts_provider.dart';
 import '../application/belt_types_provider.dart';
 import '../domain/belt.dart';
@@ -97,6 +98,10 @@ class _BeltDetailScreenState extends ConsumerState<BeltDetailScreen> {
                   extra: belt,
                 );
               },
+              onFeedbackSubmitted: () {
+                ref.invalidate(beltDetailProvider(widget.id));
+                ref.invalidate(beltsListProvider);
+              },
               onBack: () => Navigator.of(context).pop(),
               onEdit: isAdmin ? () => _openEditBelt(belt) : null,
             );
@@ -169,6 +174,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
     required this.onOutfitIdea,
     required this.onBack,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Belt belt;
@@ -183,6 +189,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
   final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +265,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onAddToCart: onAddToCart,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
+                    onFeedbackSubmitted: onFeedbackSubmitted,
                   )
                 : _NarrowLayout(
                     belt: belt,
@@ -268,6 +276,7 @@ class _CustomerBeltDetailBody extends StatelessWidget {
                     onAddToCart: onAddToCart,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
+                    onFeedbackSubmitted: onFeedbackSubmitted,
                   ),
           ),
         ),
@@ -286,6 +295,7 @@ class _WideLayout extends StatelessWidget {
     required this.onAddToCart,
     required this.onOutfitIdea,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Belt belt;
@@ -296,6 +306,7 @@ class _WideLayout extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -322,6 +333,7 @@ class _WideLayout extends StatelessWidget {
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
             onOutfitIdea: onOutfitIdea,
+            onFeedbackSubmitted: onFeedbackSubmitted,
           ),
         ),
       ],
@@ -339,6 +351,7 @@ class _NarrowLayout extends StatelessWidget {
     required this.onAddToCart,
     required this.onOutfitIdea,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Belt belt;
@@ -349,6 +362,7 @@ class _NarrowLayout extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -368,6 +382,7 @@ class _NarrowLayout extends StatelessWidget {
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
           onOutfitIdea: onOutfitIdea,
+          onFeedbackSubmitted: onFeedbackSubmitted,
         ),
       ],
     );
@@ -512,6 +527,7 @@ class _ProductDetails extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onOutfitIdea,
+    this.onFeedbackSubmitted,
   });
 
   final Belt belt;
@@ -521,6 +537,7 @@ class _ProductDetails extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -714,6 +731,12 @@ class _ProductDetails extends StatelessWidget {
             ),
           ),
         ),
+
+        if (showQuantityAndCart)
+          ProductFeedbackSection(
+            beltId: belt.id,
+            onSubmitted: onFeedbackSubmitted,
+          ),
         const SizedBox(height: 32),
       ],
     );

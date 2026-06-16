@@ -5,6 +5,7 @@ import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 import 'profile_update_screen.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../product_feedback/presentation/admin_reviews_screen.dart';
 import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
@@ -230,6 +231,29 @@ class _ProfileDetails extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isAdmin)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.rate_review_outlined,
+                      color: theme.colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                  title: const Text('Moderacija recenzija'),
+                  subtitle: const Text('Odobri ili odbij recenzije kupaca'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminReviewsScreen(),
+                    ),
+                  ),
+                ),
+              if (isAdmin) const Divider(height: 1, indent: 72),
               ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),

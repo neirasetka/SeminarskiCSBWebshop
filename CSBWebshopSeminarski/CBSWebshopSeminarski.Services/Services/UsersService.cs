@@ -182,7 +182,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     .FirstOrDefaultAsync(u => u.UserID == ID);
 
                 if (entity == null || entity.IsDeleted)
-                    return false;
+                    throw new NotFoundException($"User with ID {ID} not found.");
 
                 var userRoles = await _context.UserRoles.Where(r => r.UserID == ID).ToListAsync();
                 if (userRoles.Count > 0)

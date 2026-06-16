@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/announcements_provider.dart';
 
 class AddAnnouncementScreen extends ConsumerStatefulWidget {
@@ -79,8 +80,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
                     labelText: 'Boja torbice',
                     hintText: 'Unesite boju torbice',
                   ),
-                  validator: (String? value) =>
-                      FormValidators.required(value, fieldName: 'Boja torbice'),
+                  validator: FormValidators.announcementColor,
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -139,7 +139,7 @@ class _AddAnnouncementScreenState extends ConsumerState<AddAnnouncementScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Greška: ${error.toString()}'),
+          content: Text(ApiException.formatForDisplay(error)),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );

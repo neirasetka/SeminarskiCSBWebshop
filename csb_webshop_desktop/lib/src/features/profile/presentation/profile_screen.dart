@@ -7,6 +7,7 @@ import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
 import 'newsletter_subscribers_screen.dart';
 import 'profile_update_screen.dart';
+import '../../product_feedback/presentation/admin_reviews_screen.dart';
 import '../../orders/presentation/admin_orders_screen.dart';
 import '../../orders/presentation/order_history_screen.dart';
 import '../../announcements/presentation/announcements_list_screen.dart';
@@ -490,6 +491,14 @@ class _AdminActions extends ConsumerWidget {
           children: <Widget>[
             const Divider(height: 24),
             const Text('Admin', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AdminReviewsScreen()),
+              ),
+              icon: const Icon(Icons.rate_review_outlined),
+              label: const Text('Moderacija recenzija'),
+            ),
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).push(

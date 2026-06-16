@@ -90,7 +90,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 return true;
             }
-            return false;
+
+            throw new NotFoundException($"Transaction with ID {ID} not found.");
         }
     }
 }

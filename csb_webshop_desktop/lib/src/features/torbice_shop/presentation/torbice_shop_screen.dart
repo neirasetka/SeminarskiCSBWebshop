@@ -83,6 +83,9 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
           final double ratingA = a.averageRating ?? 0;
           final double ratingB = b.averageRating ?? 0;
           result = ratingA.compareTo(ratingB);
+          if (result == 0) {
+            result = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          }
           break;
         case 'name':
         default:
@@ -268,11 +271,22 @@ class _TorbiceShopScreenState extends ConsumerState<TorbiceShopScreen> {
       ),
     );
     if (ok == true) {
-      await ref.read(bagsListProvider.notifier).remove(bag.id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${bag.name} je obrisana')),
-        );
+      try {
+        await ref.read(bagsListProvider.notifier).remove(bag.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${bag.name} je obrisana')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -892,17 +906,18 @@ class _FavoriteButton extends StatelessWidget {
     return Material(
       color: Colors.white.withValues(alpha: 0.9),
       shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : Colors.grey,
-            size: 20,
-          ),
+      clipBehavior: Clip.antiAlias,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(
+          isFavorite ? Icons.favorite : Icons.favorite_border,
+          color: isFavorite ? Colors.red : Colors.grey,
+          size: 20,
         ),
+        tooltip: isFavorite ? 'Ukloni iz favorita' : 'Dodaj u favorite',
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
       ),
     );
   }

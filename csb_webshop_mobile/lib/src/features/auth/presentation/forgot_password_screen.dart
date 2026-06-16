@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../data/password_reset_api.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -25,7 +26,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
+          SnackBar(content: Text(ApiException.formatForDisplay(e))),
         );
       }
     } finally {
@@ -44,35 +45,47 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: _sent
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.email, size: 64, color: Colors.green),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Ako email postoji, poslan je kod za reset lozinke.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ResetPasswordScreen()),
+      body: _sent
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    const Icon(Icons.email, size: 64, color: Colors.green),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Ako email postoji, poslan je 6-znamenkasti kod za reset lozinke.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
                     ),
-                    child: const Text('Unesi kod za reset'),
-                  ),
-                ],
-              )
-            : Form(
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ResetPasswordScreen(),
+                        ),
+                      ),
+                      child: const Text('Unesi kod za reset'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                24 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                  children: <Widget>[
                     const Text(
                       'Unesite email adresu za reset lozinke',
                       style: TextStyle(fontSize: 16),
@@ -100,7 +113,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
-      ),
+            ),
     );
   }
 }
@@ -138,7 +151,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
+          SnackBar(content: Text(ApiException.formatForDisplay(e))),
         );
       }
     } finally {
@@ -166,8 +179,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _tokenController,
+                keyboardType: TextInputType.number,
+                inputFormatters: FormValidators.resetCodeInputFormatters,
                 decoration: const InputDecoration(
-                  labelText: 'Reset kod (iz emaila)',
+                  labelText: 'Reset kod (6 brojeva iz emaila)',
                   border: OutlineInputBorder(),
                 ),
                 validator: FormValidators.resetToken,

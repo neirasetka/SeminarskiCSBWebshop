@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/api_exception.dart';
 import '../../../core/paged_result.dart';
 import '../domain/belt.dart';
 
@@ -84,7 +85,11 @@ class BeltsApi {
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return Belt.fromJson(map);
     }
-    throw Exception('Failed to create belt: ${response.statusCode}');
+    throw ApiException.fromBody(
+      statusCode: response.statusCode,
+      body: response.body,
+      fallback: 'Kreiranje kaiša nije uspjelo',
+    );
   }
 
   Future<Belt> updateBelt({
@@ -111,7 +116,11 @@ class BeltsApi {
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return Belt.fromJson(map);
     }
-    throw Exception('Failed to update belt $id: ${response.statusCode}');
+    throw ApiException.fromBody(
+      statusCode: response.statusCode,
+      body: response.body,
+      fallback: 'Ažuriranje kaiša nije uspjelo',
+    );
   }
 
   Future<void> deleteBelt(int id) async {
@@ -119,6 +128,10 @@ class BeltsApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
-    throw Exception('Failed to delete belt $id: ${response.statusCode}');
+    throw ApiException.fromBody(
+      statusCode: response.statusCode,
+      body: response.body,
+      fallback: 'Brisanje kaiša nije uspjelo',
+    );
   }
 }

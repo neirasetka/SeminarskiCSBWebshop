@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../profile/application/user_profile_provider.dart';
 import '../application/cart_provider.dart';
 import '../application/checkout_stripe_error_formatter.dart';

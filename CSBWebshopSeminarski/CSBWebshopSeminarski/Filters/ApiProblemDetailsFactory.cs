@@ -78,7 +78,7 @@ namespace CSBWebshopSeminarski.Filters
         private static (string ErrorCode, string Title) MapException(Exception exception, int statusCode) =>
             exception switch
             {
-                NotFoundException => ("not_found", "Resource not found"),
+                NotFoundException => ("not_found", "Nije pronađeno"),
                 ValidationException => ("validation_error", "Validation failed"),
                 ForbiddenException => ("forbidden", "Access denied"),
                 ConflictException => ("conflict", "Conflict"),

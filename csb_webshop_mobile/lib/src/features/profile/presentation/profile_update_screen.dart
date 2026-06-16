@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../auth/application/auth_controller.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';
@@ -77,7 +78,7 @@ class _ProfileUpdateScreenState extends ConsumerState<ProfileUpdateScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Greška pri spremanju: $e')));
+        ).showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

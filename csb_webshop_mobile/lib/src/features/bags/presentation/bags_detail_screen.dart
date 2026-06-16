@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import '../../product_feedback/presentation/product_feedback_section.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
 import '../../auth/application/admin_role_provider.dart';
@@ -54,6 +55,7 @@ class BagDetailScreen extends ConsumerWidget {
             },
             isAdmin: isAdmin,
             onEdit: null,
+            onFeedbackSubmitted: isAdmin ? null : () => ref.invalidate(bagDetailProvider(id)),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -88,6 +90,7 @@ class _BagDetailBody extends StatelessWidget {
     required this.onOutfitIdea,
     this.isAdmin = false,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Bag bag;
@@ -97,6 +100,7 @@ class _BagDetailBody extends StatelessWidget {
   final VoidCallback onOutfitIdea;
   final bool isAdmin;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +163,13 @@ class _BagDetailBody extends StatelessWidget {
               label: const Text('Outfit ideja'),
             ),
           ),
+          if (onFeedbackSubmitted != null) ...[
+            const SizedBox(height: 24),
+            ProductFeedbackSection(
+              bagId: bag.id,
+              onSubmitted: onFeedbackSubmitted,
+            ),
+          ],
         ],
       ),
     );
@@ -326,6 +337,8 @@ Future<bool?> _showBagEditDialog(BuildContext context, WidgetRef ref, {required 
                           controller: descController,
                           decoration: const InputDecoration(labelText: 'Opis'),
                           maxLines: 3,
+                          inputFormatters: FormValidators.productDescriptionInputFormatters,
+                          validator: FormValidators.productDescription,
                         ),
                         const SizedBox(height: 8),
                         Align(

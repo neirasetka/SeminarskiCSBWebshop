@@ -3,6 +3,7 @@ using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CSBWebshopSeminarski.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -47,16 +48,17 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = _context.Set<TDatabase>().Find(ID);
             if (entity == null)
-                return false;
+                throw new NotFoundException($"Entity with ID {ID} not found.");
             try
             {
                 _context.Set<TDatabase>().Remove(entity);
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception)
+            catch (DbUpdateException ex)
             {
-                return false;
+                DbUpdateExceptionMapper.ThrowDeleteConflictOrRethrow(ex);
+                throw;
             }
         }
     }

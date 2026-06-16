@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../utils/date_formatter.dart';
 import '../../giveaways/data/giveaways_api.dart' show GiveawayRegistrationConflictException;
 import '../../profile/application/user_profile_provider.dart';
@@ -137,7 +138,7 @@ class _EventBody extends ConsumerWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Greška: $e')),
+                            SnackBar(content: Text(ApiException.formatForDisplay(e))),
                           );
                         }
                       }

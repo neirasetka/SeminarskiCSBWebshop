@@ -43,29 +43,37 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OrderItem> Insert(OrderItemUpsertRequest request)
         {
-            return await _context.ExecuteInTransactionAsync(async () =>
+            try
             {
-                await PrepareCartMutationAsync(request.OrderID);
-                await ResolveCatalogPriceAsync(request);
+                return await _context.ExecuteInTransactionAsync(async () =>
+                {
+                    await PrepareCartMutationAsync(request.OrderID);
+                    await ResolveCatalogPriceAsync(request);
 
-                var entity = _mapper.Map<OrderItems>(request);
+                    var entity = _mapper.Map<OrderItems>(request);
 
-                var order = await _context.Orders
-                    .Include(o => o.OrderItems)
-                    .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
-                    ?? throw new NotFoundException($"Order with ID {entity.OrderID} not found.");
+                    var order = await _context.Orders
+                        .Include(o => o.OrderItems)
+                        .FirstOrDefaultAsync(o => o.OrderID == entity.OrderID)
+                        ?? throw new NotFoundException($"Order with ID {entity.OrderID} not found.");
 
-                order.OrderItems.Add(entity);
-                ApplyOrderTotal(order);
-                await SaveChangesWithOrderItemsNullableRepairAsync();
-                var insertedId = entity.OrderItemID;
-                var forReturn = await _context.OrderItems
-                    .AsNoTracking()
-                    .Include(oi => oi.Bag)
-                    .Include(oi => oi.Belt)
-                    .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
-                return OrderItemProjection.ToModel(forReturn ?? entity);
-            });
+                    order.OrderItems.Add(entity);
+                    ApplyOrderTotal(order);
+                    await SaveChangesWithOrderItemsNullableRepairAsync();
+                    var insertedId = entity.OrderItemID;
+                    var forReturn = await _context.OrderItems
+                        .AsNoTracking()
+                        .Include(oi => oi.Bag)
+                        .Include(oi => oi.Belt)
+                        .FirstOrDefaultAsync(oi => oi.OrderItemID == insertedId);
+                    return OrderItemProjection.ToModel(forReturn ?? entity);
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                DbUpdateExceptionMapper.ThrowCartInsertOrRethrow(ex);
+                throw;
+            }
         }
 
         public override async Task<OrderItem> Update(int ID, OrderItemUpsertRequest request)
@@ -100,7 +108,8 @@ namespace CBSWebshopSeminarski.Services.Services
             return await _context.ExecuteInTransactionAsync(async () =>
             {
                 var entity = await _context.OrderItems.Where(oi => oi.OrderItemID == ID).FirstOrDefaultAsync();
-                if (entity == null) return false;
+                if (entity == null)
+                    throw new NotFoundException($"Order item with ID {ID} not found.");
 
                 await PrepareCartMutationAsync(entity.OrderID);
 

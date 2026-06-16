@@ -18,7 +18,10 @@ class FormValidators {
         LengthLimitingTextInputFormatter(phoneDigitCount),
       ];
 
-  static final RegExp emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  /// Usklađeno s backend `[EmailAddress]` — dozvoljava duže TLD-ove (.info, .online, …).
+  static final RegExp emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   static String? required(String? value, {required String fieldName}) {
     if (value == null || value.trim().isEmpty) {
@@ -36,6 +39,17 @@ class FormValidators {
     if (requiredError != null) return requiredError;
     if (value!.trim().length < min) {
       return '$fieldName mora imati najmanje $min znaka';
+    }
+    return null;
+  }
+
+  static String? maxLength(
+    String? value,
+    int max, {
+    required String fieldName,
+  }) {
+    if (value != null && value.length > max) {
+      return '$fieldName može imati najviše $max znakova';
     }
     return null;
   }
@@ -117,6 +131,45 @@ class FormValidators {
     return required(value, fieldName: 'Šifra');
   }
 
+  /// BagUpsertRequest / BeltUpsertRequest — opis proizvoda (max 2000).
+  static const int productDescriptionMaxLength = 2000;
+
+  static List<TextInputFormatter> get productDescriptionInputFormatters =>
+      <TextInputFormatter>[
+        LengthLimitingTextInputFormatter(productDescriptionMaxLength),
+      ];
+
+  static String? productDescription(String? value) {
+    return maxLength(
+      value,
+      productDescriptionMaxLength,
+      fieldName: 'Opis',
+    );
+  }
+
+  /// CreateGiveawayRequest — naslov (min 2).
+  static String? giveawayTitle(String? value) {
+    return minLength(value, 2, fieldName: 'Naslov');
+  }
+
+  /// ReviewUpsertRequest — komentar (min 3, max 1000).
+  static const int reviewCommentMaxLength = 1000;
+
+  static List<TextInputFormatter> get reviewCommentInputFormatters =>
+      <TextInputFormatter>[
+        LengthLimitingTextInputFormatter(reviewCommentMaxLength),
+      ];
+
+  static String? reviewComment(String? value) {
+    final String? minError = minLength(value, 3, fieldName: 'Komentar');
+    if (minError != null) return minError;
+    return maxLength(
+      value,
+      reviewCommentMaxLength,
+      fieldName: 'Komentar',
+    );
+  }
+
   /// BagTypeUpsertRequest / BeltTypeUpsertRequest — novi tip bez duplikata.
   static String? uniqueTypeName(
     String? value, {
@@ -146,6 +199,9 @@ class FormValidators {
     return null;
   }
 
+  static const String giveawayEndAfterStartMessage =
+      'Datum kraja mora biti nakon datuma početka.';
+
   /// Ime/prezime — min 2 znaka (RegisterRequest).
   static String? personName(String? value, {required String fieldName}) {
     return minLength(value, 2, fieldName: fieldName);
@@ -159,8 +215,20 @@ class FormValidators {
     return required(value, fieldName: 'Lozinka');
   }
 
+  static const int resetCodeDigitCount = 6;
+
+  static List<TextInputFormatter> get resetCodeInputFormatters => <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(resetCodeDigitCount),
+      ];
+
   static String? resetToken(String? value) {
-    return required(value, fieldName: 'Reset kod');
+    final String? requiredError = required(value, fieldName: 'Reset kod');
+    if (requiredError != null) return requiredError;
+    if (!RegExp(r'^\d{6}$').hasMatch(value!.trim())) {
+      return 'Reset kod mora imati točno 6 brojeva';
+    }
+    return null;
   }
 
   static String? fullName(String? value) {
@@ -240,8 +308,13 @@ class FormValidators {
     return minLength(value, 2, fieldName: 'Ime');
   }
 
+  static String? requiredBagType(int? value) {
+    if (value == null || value <= 0) return 'Odaberite tip torbe';
+    return null;
+  }
+
   static String? requiredBeltType(int? value) {
-    if (value == null) return 'Odaberite tip kaiša';
+    if (value == null || value <= 0) return 'Odaberite tip kaiša';
     return null;
   }
 

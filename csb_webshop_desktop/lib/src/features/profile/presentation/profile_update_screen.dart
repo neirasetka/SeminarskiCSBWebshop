@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../auth/application/auth_controller.dart';
 import '../application/user_profile_provider.dart';
 import '../domain/user_profile.dart';

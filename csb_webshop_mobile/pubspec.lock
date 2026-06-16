@@ -57,6 +57,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.4+2"
+  csb_webshop_shared:
+    dependency: "direct main"
+    description:
+      path: "../csb_webshop_shared"
+      relative: true
+    source: path
+    version: "0.0.0"
   cupertino_icons:
     dependency: "direct main"
     description:

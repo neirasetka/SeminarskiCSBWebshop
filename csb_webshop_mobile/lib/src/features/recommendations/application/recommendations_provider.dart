@@ -15,9 +15,9 @@ class Recommendations {
 
   bool get isEmpty => bags.isEmpty && belts.isEmpty;
 
-  bool get isFullyPersonalized =>
-      bags.every((RecommendedProduct p) => p.isPersonalized) &&
-      belts.every((RecommendedProduct p) => p.isPersonalized);
+  bool get hasPersonalizedItems =>
+      bags.any((RecommendedProduct p) => p.isPersonalized) ||
+      belts.any((RecommendedProduct p) => p.isPersonalized);
 }
 
 class RecommendationsNotifier extends AutoDisposeAsyncNotifier<Recommendations> {

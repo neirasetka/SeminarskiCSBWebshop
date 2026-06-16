@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/announcements_provider.dart';
 import '../domain/announcement.dart';
 

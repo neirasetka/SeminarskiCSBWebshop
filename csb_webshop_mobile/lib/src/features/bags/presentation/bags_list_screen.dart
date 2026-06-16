@@ -4,7 +4,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../../core/paged_list_state.dart';
 import '../application/bags_provider.dart';
@@ -343,6 +344,8 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                     controller: descController,
                     decoration: const InputDecoration(labelText: 'Opis'),
                     maxLines: 3,
+                    inputFormatters: FormValidators.productDescriptionInputFormatters,
+                    validator: FormValidators.productDescription,
                   ),
                 const SizedBox(height: 8),
                 Align(
@@ -412,12 +415,17 @@ Future<void> _showBagFormDialog(BuildContext context, WidgetRef ref, {Bag? exist
                   data: (List<BagType> types) {
                     return DropdownButtonFormField<int?>(
                       value: selectedTypeId,
-                      items: <DropdownMenuItem<int?>>[
-                        const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
-                        ...types.map((BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name))),
-                      ],
-                      onChanged: (int? v) => selectedTypeId = v,
+                      items: types
+                          .map(
+                            (BagType t) => DropdownMenuItem<int?>(
+                              value: t.id,
+                              child: Text(t.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (int? v) => setState(() => selectedTypeId = v),
                       decoration: const InputDecoration(labelText: 'Tip'),
+                      validator: FormValidators.requiredBagType,
                     );
                   },
                   loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
@@ -560,7 +568,7 @@ Future<void> _showManageBagTypesDialog(BuildContext context, WidgetRef ref) asyn
                 );
               },
               loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-              error: (Object e, StackTrace st) => Text(e.toString()),
+              error: (Object e, StackTrace st) => Text(ApiException.formatForDisplay(e)),
             ),
           ),
           actions: <Widget>[

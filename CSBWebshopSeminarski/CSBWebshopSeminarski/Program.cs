@@ -138,6 +138,7 @@ builder.Services.AddTransient<INewsletterService, NewsletterService>();
 builder.Services.AddTransient<NotificationsService>();
 builder.Services.AddTransient<IInAppNotificationService, InAppNotificationService>();
 builder.Services.AddSingleton<CBSWebshopSeminarski.Services.Interfaces.ITemplateRenderer, CBSWebshopSeminarski.Services.Services.TemplateRenderer>();
+builder.Services.AddTransient<IAnnouncementsService, AnnouncementsService>();
 builder.Services.AddTransient<AnnouncementAuditService>();
 builder.Services.AddTransient<IShipmentTrackingService, ShipmentTrackingService>();
 builder.Services.AddTransient<IReportsService, ReportsService>();

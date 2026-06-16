@@ -77,7 +77,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var beltType = await _context.BeltTypes.Where(i => i.BeltTypeID == ID).FirstOrDefaultAsync();
             if (beltType == null)
-                return false;
+                throw new NotFoundException($"Belt type with ID {ID} not found.");
             var belt = await _context.Belts.Where(i => i.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var orderItems = await _context.OrderItems.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();
             var reviews = await _context.Reviews.Where(i => i.Belt != null && i.Belt.BeltTypeID == beltType.BeltTypeID).ToListAsync();

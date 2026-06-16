@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/auth_controller.dart';
 import '../domain/auth_session.dart';
 import 'forgot_password_screen.dart';
@@ -62,17 +62,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       appBar: widget.embedded ? null : AppBar(title: const Text('Prijava')),
       body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Card(
-            margin: const EdgeInsets.all(24),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Card(
+              margin: const EdgeInsets.all(24),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
                     const Text(
                       'Dobrodošli na CocoSunBags Webshop',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -136,7 +140,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => context.go('/'),
                         child: const Text('Natrag na početnu'),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

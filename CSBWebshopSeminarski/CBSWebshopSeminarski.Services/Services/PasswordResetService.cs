@@ -58,7 +58,7 @@ namespace CBSWebshopSeminarski.Services.Services
             foreach (var activeToken in activeTokens)
                 activeToken.Used = true;
 
-            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            var token = GenerateResetCode();
             var entity = new PasswordResetTokens
             {
                 UserID = user.UserID,
@@ -73,7 +73,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             var subject = "Reset lozinke - CocoSunBags";
             var content = $"Poštovani/a {user.Name},\n\n" +
-                          $"Vaš kod za reset lozinke je: {token}\n\n" +
+                          $"Vaš 6-znamenkasti kod za reset lozinke je: {token}\n\n" +
                           "Kod vrijedi 30 minuta.\n\n" +
                           "Ako niste zatražili reset, ignorirajte ovu poruku.\n\n" +
                           "CocoSunBags tim";
@@ -86,7 +86,7 @@ namespace CBSWebshopSeminarski.Services.Services
             if (request.NewPassword != request.ConfirmPassword)
                 throw new ValidationException("Lozinke se ne podudaraju.");
 
-            var tokenHash = HashToken(request.Token);
+            var tokenHash = HashToken(request.Token.Trim());
             var tokenEntity = await _db.PasswordResetTokens
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.Token == tokenHash && !t.Used && t.ExpiresAt > DateTime.UtcNow);
@@ -137,6 +137,13 @@ namespace CBSWebshopSeminarski.Services.Services
                     "RabbitMQ publish failed for password reset email to {Recipient}. Token was saved in database.",
                     recipient);
             }
+        }
+
+        private static string GenerateResetCode()
+        {
+            // 000000–999999, leading zeros preserved (e.g. 004281)
+            var value = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            return value.ToString("D6", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static string HashToken(string token)

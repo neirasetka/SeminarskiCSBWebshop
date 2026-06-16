@@ -5,8 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/bag_types_provider.dart';
 import '../application/bags_provider.dart';
 import '../domain/bag.dart';
@@ -114,7 +115,7 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška pri čuvanju: $e')),
+          SnackBar(content: Text(ApiException.formatForDisplay(e))),
         );
       }
     } finally {
@@ -174,13 +175,16 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
                   return DropdownButtonFormField<int?>(
                     value: _selectedTypeId,
                     decoration: const InputDecoration(labelText: 'Tip'),
-                    items: <DropdownMenuItem<int?>>[
-                      const DropdownMenuItem<int?>(value: null, child: Text('Bez tipa')),
-                      ...types.map(
-                        (BagType t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.name)),
-                      ),
-                    ],
+                    items: types
+                        .map(
+                          (BagType t) => DropdownMenuItem<int?>(
+                            value: t.id,
+                            child: Text(t.name),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (int? value) => setState(() => _selectedTypeId = value),
+                    validator: FormValidators.requiredBagType,
                   );
                 },
                 loading: () => const Padding(
@@ -202,6 +206,8 @@ class _BagFormScreenState extends ConsumerState<BagFormScreen> {
                 maxLines: 4,
                 minLines: 3,
                 textAlignVertical: TextAlignVertical.top,
+                inputFormatters: FormValidators.productDescriptionInputFormatters,
+                validator: FormValidators.productDescription,
               ),
               const SizedBox(height: 16),
               Text('Slika', style: Theme.of(context).textTheme.titleMedium),

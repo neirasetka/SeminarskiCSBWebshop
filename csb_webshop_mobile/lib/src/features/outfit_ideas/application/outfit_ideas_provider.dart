@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../data/outfit_ideas_api.dart';
 import '../domain/outfit_idea.dart';
 
@@ -61,7 +62,7 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
         clearOutfitIdea: idea == null,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(error: ApiException.formatForDisplay(e), isLoading: false);
     }
   }
 
@@ -82,7 +83,7 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
       state = state.copyWith(outfitIdea: idea, isLoading: false);
       return idea;
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(error: ApiException.formatForDisplay(e), isLoading: false);
       return null;
     }
   }
@@ -108,7 +109,7 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(error: ApiException.formatForDisplay(e), isLoading: false);
       return false;
     }
   }
@@ -130,7 +131,7 @@ class OutfitIdeaNotifier extends StateNotifier<OutfitIdeaState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(error: ApiException.formatForDisplay(e), isLoading: false);
       return false;
     }
   }

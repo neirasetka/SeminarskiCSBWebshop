@@ -30,7 +30,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<IActionResult> Tracking(string carrierCode, [FromBody] CarrierWebhookPayload payload)
         {
             if (!_environment.IsDevelopment())
-                throw new NotFoundException("Resource not found.");
+                throw new NotFoundException("Nije pronađeno.");
 
             CarrierWebhookValidator.Validate(carrierCode, payload);
 

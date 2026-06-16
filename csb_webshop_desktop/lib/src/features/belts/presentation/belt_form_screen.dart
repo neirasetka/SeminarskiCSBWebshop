@@ -5,8 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/belt_types_provider.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
@@ -114,7 +115,7 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška pri čuvanju: $e')),
+          SnackBar(content: Text(ApiException.formatForDisplay(e))),
         );
       }
     } finally {
@@ -212,6 +213,8 @@ class _BeltFormScreenState extends ConsumerState<BeltFormScreen> {
                 maxLines: 4,
                 minLines: 3,
                 textAlignVertical: TextAlignVertical.top,
+                inputFormatters: FormValidators.productDescriptionInputFormatters,
+                validator: FormValidators.productDescription,
               ),
               const SizedBox(height: 16),
               Text('Slika', style: Theme.of(context).textTheme.titleMedium),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../data/password_reset_api.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -52,27 +52,33 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => context.go('/login'),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: _sent
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Icon(Icons.email, size: 64, color: Colors.green),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Ako email postoji, poslan je kod za reset lozinke.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => context.go('/reset-password'),
-                    child: const Text('Unesi kod za reset'),
-                  ),
-                ],
-              )
-            : Form(
+      body: _sent
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    const Icon(Icons.email, size: 64, color: Colors.green),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Ako email postoji, poslan je 6-znamenkasti kod za reset lozinke.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.go('/reset-password'),
+                      child: const Text('Unesi kod za reset'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -108,7 +114,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
-      ),
+            ),
     );
   }
 }
@@ -182,8 +188,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _tokenController,
+                keyboardType: TextInputType.number,
+                inputFormatters: FormValidators.resetCodeInputFormatters,
                 decoration: const InputDecoration(
-                  labelText: 'Reset kod (iz emaila)',
+                  labelText: 'Reset kod (6 brojeva iz emaila)',
                   border: OutlineInputBorder(),
                 ),
                 validator: FormValidators.resetToken,

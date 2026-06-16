@@ -12,5 +12,7 @@ namespace CBSWebshopSeminarski.Model.Models
         public BagType BagType { get; set; } = null!;
         public int UserID { get; set; }
         public User Users { get; set; } = null!;
+        /// <summary>Prosječna ocjena iz tablice Rates; null ako nema ocjena.</summary>
+        public decimal? AverageRating { get; set; }
     }
 }

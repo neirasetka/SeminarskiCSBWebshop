@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
 import '../../auth/application/admin_role_provider.dart';
+import '../../product_feedback/presentation/product_feedback_section.dart';
 import '../application/bags_provider.dart';
 import '../application/bag_types_provider.dart';
 import '../domain/bag.dart';
@@ -98,6 +99,10 @@ class _BagDetailScreenState extends ConsumerState<BagDetailScreen> {
                   extra: bag,
                 );
               },
+              onFeedbackSubmitted: () {
+                ref.invalidate(bagDetailProvider(widget.id));
+                ref.invalidate(bagsListProvider);
+              },
               onBack: () => Navigator.of(context).pop(),
             );
           },
@@ -169,6 +174,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
     required this.onOutfitIdea,
     required this.onBack,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Bag bag;
@@ -183,6 +189,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
   final VoidCallback onOutfitIdea;
   final VoidCallback onBack;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +266,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
                     onAddToCart: onAddToCart,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
+                    onFeedbackSubmitted: onFeedbackSubmitted,
                   )
                 : _NarrowLayout(
                     bag: bag,
@@ -269,6 +277,7 @@ class _CustomerBagDetailBody extends StatelessWidget {
                     onAddToCart: onAddToCart,
                     onOutfitIdea: onOutfitIdea,
                     onEdit: onEdit,
+                    onFeedbackSubmitted: onFeedbackSubmitted,
                   ),
           ),
         ),
@@ -287,6 +296,7 @@ class _WideLayout extends StatelessWidget {
     required this.onAddToCart,
     required this.onOutfitIdea,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Bag bag;
@@ -297,6 +307,7 @@ class _WideLayout extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -323,6 +334,7 @@ class _WideLayout extends StatelessWidget {
             onQuantityChanged: onQuantityChanged,
             onAddToCart: onAddToCart,
             onOutfitIdea: onOutfitIdea,
+            onFeedbackSubmitted: onFeedbackSubmitted,
           ),
         ),
       ],
@@ -340,6 +352,7 @@ class _NarrowLayout extends StatelessWidget {
     required this.onAddToCart,
     required this.onOutfitIdea,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Bag bag;
@@ -350,6 +363,7 @@ class _NarrowLayout extends StatelessWidget {
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -369,6 +383,7 @@ class _NarrowLayout extends StatelessWidget {
           onQuantityChanged: onQuantityChanged,
           onAddToCart: onAddToCart,
           onOutfitIdea: onOutfitIdea,
+          onFeedbackSubmitted: onFeedbackSubmitted,
         ),
       ],
     );
@@ -514,6 +529,7 @@ class _ProductDetails extends StatelessWidget {
     required this.onQuantityChanged,
     required this.onAddToCart,
     required this.onOutfitIdea,
+    this.onFeedbackSubmitted,
   });
 
   final Bag bag;
@@ -523,6 +539,7 @@ class _ProductDetails extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onAddToCart;
   final VoidCallback onOutfitIdea;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -716,6 +733,12 @@ class _ProductDetails extends StatelessWidget {
             ),
           ),
         ),
+
+        if (showQuantityAndCart)
+          ProductFeedbackSection(
+            bagId: bag.id,
+            onSubmitted: onFeedbackSubmitted,
+          ),
         const SizedBox(height: 32),
       ],
     );

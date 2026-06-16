@@ -5,7 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import '../../product_feedback/presentation/product_feedback_section.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/belts_provider.dart';
 import '../domain/belt.dart';
 import '../application/belt_types_provider.dart';
@@ -36,6 +37,7 @@ class BeltDetailScreen extends ConsumerWidget {
             onToggleFavorite: () => ref.read(favoritesProvider.notifier).toggleBelt(belt.id),
             isAdmin: isAdmin,
             onEdit: null,
+            onFeedbackSubmitted: isAdmin ? null : () => ref.invalidate(beltDetailProvider(id)),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -68,6 +70,7 @@ class _BeltDetailBody extends ConsumerWidget {
     required this.onToggleFavorite,
     this.isAdmin = false,
     this.onEdit,
+    this.onFeedbackSubmitted,
   });
 
   final Belt belt;
@@ -75,6 +78,7 @@ class _BeltDetailBody extends ConsumerWidget {
   final VoidCallback onToggleFavorite;
   final bool isAdmin;
   final VoidCallback? onEdit;
+  final VoidCallback? onFeedbackSubmitted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -132,6 +136,13 @@ class _BeltDetailBody extends ConsumerWidget {
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Dodaj u korpu'),
               ),
+            ),
+          ],
+          if (onFeedbackSubmitted != null) ...[
+            const SizedBox(height: 24),
+            ProductFeedbackSection(
+              beltId: belt.id,
+              onSubmitted: onFeedbackSubmitted,
             ),
           ],
         ],
@@ -303,6 +314,8 @@ Future<bool?> _showBeltEditDialog(BuildContext context, WidgetRef ref,
                           controller: descController,
                           decoration: const InputDecoration(labelText: 'Opis'),
                           maxLines: 3,
+                          inputFormatters: FormValidators.productDescriptionInputFormatters,
+                          validator: FormValidators.productDescription,
                         ),
                         const SizedBox(height: 8),
                         Align(

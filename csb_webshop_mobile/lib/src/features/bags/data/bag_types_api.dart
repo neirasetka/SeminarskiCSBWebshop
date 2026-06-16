@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/api_exception.dart';
 import '../../../core/paged_result.dart';
 import '../domain/bag_type.dart';
 
@@ -51,6 +52,10 @@ class BagTypesApi {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
-    throw Exception('Failed to delete bag type: ${response.statusCode}');
+    throw ApiException.fromBody(
+      statusCode: response.statusCode,
+      body: response.body,
+      fallback: 'Brisanje tipa torbice nije uspjelo',
+    );
   }
 }

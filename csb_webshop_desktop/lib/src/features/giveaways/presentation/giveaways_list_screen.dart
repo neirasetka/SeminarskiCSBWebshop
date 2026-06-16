@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../core/back_confirmation_dialog.dart';
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../utils/date_formatter.dart';
 import '../../announcements/application/announcements_provider.dart';
 import '../../auth/application/admin_role_provider.dart';
@@ -221,6 +222,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
   Future<void> _editGiveawayDuration(Giveaway giveaway) async {
     DateTime start = giveaway.startDate.toLocal();
     DateTime end = giveaway.endDate.toLocal();
+    String? dateRangeError;
 
     final bool? shouldSave = await showDialog<bool>(
       context: context,
@@ -243,6 +245,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       );
                       if (picked != null) {
                         setDialogState(() {
+                          dateRangeError = null;
                           start = DateTime(
                             picked.year,
                             picked.month,
@@ -268,6 +271,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       );
                       if (picked != null) {
                         setDialogState(() {
+                          dateRangeError = null;
                           start = DateTime(
                             start.year,
                             start.month,
@@ -296,6 +300,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       );
                       if (picked != null) {
                         setDialogState(() {
+                          dateRangeError = null;
                           end = DateTime(
                             picked.year,
                             picked.month,
@@ -318,6 +323,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       );
                       if (picked != null) {
                         setDialogState(() {
+                          dateRangeError = null;
                           end = DateTime(
                             end.year,
                             end.month,
@@ -332,6 +338,13 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       'Vrijeme kraja: ${TimeOfDay.fromDateTime(end).format(dialogContext)}',
                     ),
                   ),
+                  if (dateRangeError != null) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      dateRangeError!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ],
                 ],
               ),
               actions: <Widget>[
@@ -342,9 +355,9 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                 FilledButton(
                   onPressed: () {
                     if (!end.isAfter(start)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Datum kraja mora biti nakon datuma početka.')),
-                      );
+                      setDialogState(() {
+                        dateRangeError = FormValidators.giveawayEndAfterStartMessage;
+                      });
                       return;
                     }
                     Navigator.of(dialogContext).pop(true);
@@ -377,7 +390,7 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška pri izmjeni trajanja: $e')),
+          SnackBar(content: Text(ApiException.formatForDisplay(e))),
         );
       }
     }
@@ -448,7 +461,7 @@ class _RegisterCard extends ConsumerWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context)
-                              .showSnackBar(SnackBar(content: Text('Greška pri prijavi: $e')));
+                              .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                         }
                       }
                     },
@@ -504,7 +517,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri izvlačenju: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -561,7 +574,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri objavi: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -585,7 +598,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri slanju maila: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -635,8 +648,7 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
                 child: TextFormField(
                   controller: _title,
                   decoration: const InputDecoration(labelText: 'Naslov'),
-                  validator: (String? v) =>
-                      FormValidators.minLength(v, 3, fieldName: 'Naslov'),
+                  validator: FormValidators.giveawayTitle,
                 ),
               ),
               const SizedBox(height: 8),
@@ -695,7 +707,7 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
                   onPressed: () async {
                     if (!(_formKey.currentState?.validate() ?? false)) return;
                     if (!_end.isAfter(_start)) {
-                      setState(() => _dateRangeError = 'Kraj mora biti nakon starta');
+                      setState(() => _dateRangeError = FormValidators.giveawayEndAfterStartMessage);
                       return;
                     }
                     try {
@@ -703,7 +715,7 @@ class _CreateGiveawayDialogState extends ConsumerState<_CreateGiveawayDialog> {
                       if (context.mounted) Navigator.of(context).pop();
                     } catch (e) {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greška: $e')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                       }
                     }
                   },

@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:csb_webshop_shared/recommendation_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/admin_role_provider.dart';
+import '../../favorites/application/favorites_provider.dart';
 import '../../bags/presentation/bags_detail_screen.dart';
 import '../../belts/presentation/belts_detail_screen.dart';
 import '../../orders/application/cart_provider.dart';
@@ -92,7 +94,9 @@ class RecommendationsScreen extends ConsumerWidget {
             );
           }
 
-          final bool showPopularHint = !data.isFullyPersonalized;
+          final bool showPopularHint = !data.hasPersonalizedItems;
+          final bool hasFavorites =
+              !(ref.watch(favoritesProvider).valueOrNull?.isEmpty ?? true);
 
           return RefreshIndicator(
             onRefresh: onRefresh,
@@ -112,7 +116,9 @@ class RecommendationsScreen extends ConsumerWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Prikazujemo popularne proizvode. Dodajte favorite ili ocijenite proizvode za personalizirane preporuke.',
+                                RecommendationMessages.nonPersonalizedHint(
+                                  hasFavorites: hasFavorites,
+                                ),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
@@ -203,14 +209,6 @@ class _RecommendationTile extends ConsumerWidget {
                       ? colors.primaryContainer
                       : colors.secondaryContainer,
                 ),
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  avatar: Icon(Icons.star, size: 14, color: colors.primary),
-                  label: Text(
-                    product.score.toStringAsFixed(1),
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ),
               ],
             ),
             if (product.reason.isNotEmpty) ...<Widget>[
@@ -221,11 +219,12 @@ class _RecommendationTile extends ConsumerWidget {
                       color: colors.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
                     ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],
         ),
-        isThreeLine: true,
         trailing: isAdmin
             ? null
             : IconButton(

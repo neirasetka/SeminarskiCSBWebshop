@@ -81,7 +81,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var bagType = await _context.BagTypes.Where(i => i.BagTypeID == ID).FirstOrDefaultAsync();
             if (bagType == null)
-                return false;
+                throw new NotFoundException($"Bag type with ID {ID} not found.");
             var bag = await _context.Bags.Where(i => i.BagTypeID == bagType.BagTypeID).ToListAsync();
             var orderItems = await _context.OrderItems.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();
             var reviews = await _context.Reviews.Where(i => i.Bag != null && i.Bag.BagTypeID == bagType.BagTypeID).ToListAsync();

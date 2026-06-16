@@ -4,14 +4,16 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class ResetPasswordRequest
     {
-        [Required]
+        [Required(ErrorMessage = "Reset code is required.")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "Reset code must be exactly 6 digits.")]
         public string Token { get; set; } = null!;
 
-        [Required]
-        [MinLength(6)]
+        [Required(ErrorMessage = "New password is required.")]
+        [MinLength(6, ErrorMessage = "Password must have at least 6 characters.")]
         public string NewPassword { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Password confirmation is required.")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = null!;
     }
 }

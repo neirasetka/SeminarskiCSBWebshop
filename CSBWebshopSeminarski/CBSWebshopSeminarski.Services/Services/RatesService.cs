@@ -104,7 +104,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 await _context.SaveChangesAsync();
                 return true;
             }
-            return false;
+
+            throw new NotFoundException($"Rate with ID {ID} not found.");
         }
     }
 }

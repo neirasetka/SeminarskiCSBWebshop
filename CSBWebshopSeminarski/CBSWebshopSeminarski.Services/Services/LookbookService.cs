@@ -97,9 +97,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             var entity = await _context.LookbookItems.FindAsync(ID);
             if (entity == null)
-            {
-                return false;
-            }
+                throw new NotFoundException($"Lookbook item with ID {ID} not found.");
 
             _context.LookbookItems.Remove(entity);
             await _context.SaveChangesAsync();

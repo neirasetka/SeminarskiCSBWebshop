@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../application/cart_provider.dart';
 import '../domain/order_models.dart';
 import 'order_detail_screen.dart';
@@ -67,7 +68,7 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = ApiException.formatForDisplay(e);
       });
     }
   }
@@ -106,7 +107,7 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
     } finally {
       if (mounted) setState(() => _updating = false);
     }

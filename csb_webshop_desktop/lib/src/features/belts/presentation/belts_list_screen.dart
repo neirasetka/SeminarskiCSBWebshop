@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../core/api_exception.dart';
 import '../../../core/paged_list_state.dart';
 import '../application/belts_provider.dart';
@@ -216,9 +216,22 @@ class _BeltsListScreenState extends ConsumerState<BeltsListScreen> {
                                   } else if (value == 'delete') {
                                     final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${belt.name}"?');
                                     if (ok == true) {
-                                      await ref.read(beltsListProvider.notifier).remove(belt.id);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proizvod obrisan')));
+                                      try {
+                                        await ref.read(beltsListProvider.notifier).remove(belt.id);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Proizvod obrisan')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                                              backgroundColor: Theme.of(context).colorScheme.error,
+                                            ),
+                                          );
+                                        }
                                       }
                                     }
                                   }
@@ -420,7 +433,18 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                               onPressed: () async {
                                 final bool? ok = await _confirm(context, 'Obriši tip', 'Obrisati "${t.name}"?');
                                 if (ok == true) {
-                                  await ref.read(beltTypesProvider.notifier).remove(t.id);
+                                  try {
+                                    await ref.read(beltTypesProvider.notifier).remove(t.id);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 }
                               },
                             ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../utils/date_formatter.dart';
 import '../../announcements/application/announcements_provider.dart';
 import '../../auth/application/admin_role_provider.dart';
@@ -89,7 +90,7 @@ class GiveawaysListScreen extends ConsumerWidget {
                 },
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object e, StackTrace st) => Center(child: Text('Greška: $e')),
+              error: (Object e, StackTrace st) => Center(child: Text(ApiException.formatForDisplay(e))),
             ),
           ),
         ],
@@ -173,13 +174,13 @@ class _GiveawayDetailScreenState extends ConsumerState<GiveawayDetailScreen> {
                       .toList(),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (Object e, StackTrace st) => Text('Greška: $e'),
+                error: (Object e, StackTrace st) => Text(ApiException.formatForDisplay(e)),
               ),
             ],
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, StackTrace st) => Center(child: Text('Greška: $e')),
+        error: (Object e, StackTrace st) => Center(child: Text(ApiException.formatForDisplay(e))),
       ),
     );
   }
@@ -249,7 +250,7 @@ class _RegisterCard extends ConsumerWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context)
-                              .showSnackBar(SnackBar(content: Text('Greška pri prijavi: $e')));
+                              .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                         }
                       }
                     },
@@ -292,7 +293,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri izvlačenju: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -349,7 +350,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri objavi: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -373,7 +374,7 @@ class _AdminActions extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text('Greška pri slanju maila: $e')));
+                          .showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },
@@ -417,8 +418,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
               child: TextFormField(
                 controller: _title,
                 decoration: const InputDecoration(labelText: 'Naslov'),
-                validator: (String? v) =>
-                    FormValidators.minLength(v, 3, fieldName: 'Naslov'),
+                validator: FormValidators.giveawayTitle,
               ),
             ),
             const SizedBox(height: 8),
@@ -477,7 +477,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
                 onPressed: () async {
                   if (!(_formKey.currentState?.validate() ?? false)) return;
                   if (!_end.isAfter(_start)) {
-                    setState(() => _dateRangeError = 'Kraj mora biti nakon starta');
+                    setState(() => _dateRangeError = FormValidators.giveawayEndAfterStartMessage);
                     return;
                   }
                   try {
@@ -485,7 +485,7 @@ class _CreateGiveawaySheetState extends ConsumerState<_CreateGiveawaySheet> {
                     if (context.mounted) Navigator.of(context).pop();
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greška: $e')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiException.formatForDisplay(e))));
                     }
                   }
                 },

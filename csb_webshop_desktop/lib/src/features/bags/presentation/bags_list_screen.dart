@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../core/api_exception.dart';
 import '../../../core/paged_list_state.dart';
 import '../application/bags_provider.dart';
@@ -227,9 +227,22 @@ class _BagsListScreenState extends ConsumerState<BagsListScreen> {
                                   } else if (value == 'delete') {
                                     final bool? ok = await _confirm(context, 'Obriši proizvod', 'Da li ste sigurni da želite obrisati "${bag.name}"?');
                                     if (ok == true) {
-                                      await ref.read(bagsListProvider.notifier).remove(bag.id);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proizvod obrisan')));
+                                      try {
+                                        await ref.read(bagsListProvider.notifier).remove(bag.id);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Proizvod obrisan')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                                              backgroundColor: Theme.of(context).colorScheme.error,
+                                            ),
+                                          );
+                                        }
                                       }
                                     }
                                   }
@@ -451,7 +464,18 @@ Future<void> _showManageBagTypesDialog(BuildContext context, WidgetRef ref) asyn
                               onPressed: () async {
                                 final bool? ok = await _confirm(context, 'Obriši tip', 'Obrisati "${t.name}"?');
                                 if (ok == true) {
-                                  await ref.read(bagTypesProvider.notifier).remove(t.id);
+                                  try {
+                                    await ref.read(bagTypesProvider.notifier).remove(t.id);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Greška: ${ApiException.formatForDisplay(e)}'),
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 }
                               },
                             ),

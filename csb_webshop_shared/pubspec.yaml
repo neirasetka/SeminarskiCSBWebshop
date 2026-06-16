@@ -1,0 +1,13 @@
+name: csb_webshop_shared
+description: Shared validators and utilities for CSB webshop Flutter apps.
+publish_to: 'none'
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

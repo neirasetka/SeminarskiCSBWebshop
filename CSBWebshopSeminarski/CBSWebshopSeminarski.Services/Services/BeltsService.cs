@@ -7,6 +7,7 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
 using CBSWebshopSeminarski.Services.Exceptions;
+using CBSWebshopSeminarski.Services;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -49,7 +50,28 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.OrderBy(c => c.BeltName);
             }
 
-            return await ToPagedResultAsync(query, request);
+            return await EnrichAndReturnAsync(query, request);
+        }
+
+        private async Task<PagedResult<Belt>> EnrichAndReturnAsync(IQueryable<Belts> query, BeltSearchRequest? request)
+        {
+            var result = await ToPagedResultAsync(query, request);
+            await ProductRatingEnricher.EnrichBeltsAsync(_context, result.Items);
+            return result;
+        }
+
+        public override async Task<Belt> GetById(int ID)
+        {
+            var entity = await _context.Belts
+                .Include(i => i.User)
+                .Include(i => i.BeltType)
+                .FirstOrDefaultAsync(i => i.BeltID == ID);
+            if (entity == null)
+                throw new NotFoundException($"Belt with ID {ID} not found.");
+
+            var belt = _mapper.Map<Belt>(entity);
+            belt.AverageRating = await ProductRatingEnricher.GetBeltAverageOrNullAsync(_context, ID);
+            return belt;
         }
 
         public override async Task<Belt> Insert(BeltUpsertRequest request)
@@ -128,7 +150,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 return true;
             }
-            return false;
+
+            throw new NotFoundException($"Belt with ID {ID} not found.");
         }
         public async Task<decimal> GetAverage(int BeltID)
         {

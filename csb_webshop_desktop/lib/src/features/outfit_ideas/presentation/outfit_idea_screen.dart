@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
@@ -132,7 +133,7 @@ class _OutfitIdeaScreenState extends ConsumerState<OutfitIdeaScreen> {
         );
       }
     } catch (e) {
-      _showError('Greška pri odabiru slika: $e');
+      _showError(ApiException.formatForDisplay(e));
     }
   }
 

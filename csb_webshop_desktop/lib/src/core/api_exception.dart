@@ -1,6 +1,7 @@
+import 'api_error_reader.dart';
+
 /// Exception from API calls with HTTP status and parsed error details.
-class ApiException implements Exception {
-  ApiException({
+class ApiException implements Exception {  ApiException({
     required this.statusCode,
     required this.message,
     this.rawBody,
@@ -9,6 +10,22 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
   final String? rawBody;
+
+  factory ApiException.fromBody({
+    required int statusCode,
+    required String body,
+    required String fallback,
+  }) {
+    final String detail = ApiErrorReader.readDetail(body, fallback: fallback);
+    final String message = detail.isNotEmpty && detail != '(prazan odgovor)'
+        ? detail
+        : fallback;
+    return ApiException(
+      statusCode: statusCode,
+      message: message,
+      rawBody: body.isEmpty ? null : body,
+    );
+  }
 
   @override
   String toString() => message;
@@ -31,7 +48,7 @@ class ApiException implements Exception {
       case 403:
         return 'Nemate dozvolu – provjerite ulogu korisnika (Buyer/Admin)';
       case 404:
-        return 'Resurs nije pronađen';
+        return 'Tražena stavka nije pronađena';
       case 409:
         return 'Konflikt (npr. duplikat)';
       case 422:

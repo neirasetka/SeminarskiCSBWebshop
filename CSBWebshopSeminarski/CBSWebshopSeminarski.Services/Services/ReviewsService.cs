@@ -125,7 +125,8 @@ namespace CBSWebshopSeminarski.Services.Services
                 await _context.SaveChangesAsync();
                 return true;
             }
-            return false;
+
+            throw new NotFoundException($"Review with ID {ID} not found.");
         }
 
         public async Task<Review> ApproveAsync(int id)

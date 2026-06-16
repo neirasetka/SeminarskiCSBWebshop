@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using CBSWebshopSeminarski.Model;
-using CBSWebshopSeminarski.Model.Models;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -17,9 +16,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         [MaxLength(1000, ErrorMessage = "A comment can have a maximum of 1000 characters.")]
         public string Comment { get; set; } = null!;
 
-        public User Users { get; set; } = null!;
-
-        [Required(ErrorMessage = "Date is required.")]
+        /// <summary>Opcionalno u POST-u — server postavlja UTC sada ako nije poslano.</summary>
         public DateTime Date { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

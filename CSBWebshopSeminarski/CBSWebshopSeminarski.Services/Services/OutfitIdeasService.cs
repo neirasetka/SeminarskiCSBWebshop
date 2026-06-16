@@ -6,6 +6,7 @@ using CSBWebshopSeminarski.Core.Entities;
 using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
+using CBSWebshopSeminarski.Services;
 using CBSWebshopSeminarski.Services.Exceptions;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -81,6 +82,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
         public override async Task<OutfitIdea> Insert(OutfitIdeaUpsertRequest request)
         {
+            NormalizeInsertRequest(request);
+
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
             {
                 throw new ValidationException("Either BagID or BeltID must be set.");
@@ -89,7 +92,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new ValidationException("Only one of BagID or BeltID should be set.");
             }
-            // Validate foreign keys exist before insert
+
             var userExists = await _context.Users.AnyAsync(u => u.UserID == request.UserID);
             if (!userExists)
                 throw new NotFoundException("Korisnik sa tim ID-om ne postoji.");
@@ -97,7 +100,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 var beltExists = await _context.Belts.AnyAsync(b => b.BeltID == request.BeltID.Value);
                 if (!beltExists)
-                    throw new ValidationException("Kaiš sa tim ID-om ne postoji.");
+                    throw new NotFoundException("Kaiš sa tim ID-om ne postoji.");
             }
             if (request.BagID.HasValue)
             {
@@ -105,13 +108,34 @@ namespace CBSWebshopSeminarski.Services.Services
                 if (!bagExists)
                     throw new NotFoundException("Torba sa tim ID-om ne postoji.");
             }
+
             var entity = _mapper.Map<OutfitIdeas>(request);
             entity.CreatedAt = DateTime.UtcNow;
-            
+
             _context.OutfitIdeas.Add(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                DbUpdateExceptionMapper.ThrowOutfitIdeaInsertOrRethrow(ex);
+            }
 
             return _mapper.Map<OutfitIdea>(entity);
+        }
+
+        private static void NormalizeInsertRequest(OutfitIdeaUpsertRequest request)
+        {
+            if (request.UserID < 1)
+            {
+                throw new ValidationException("UserID must be a valid positive integer.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length < 2)
+            {
+                request.Title = "Outfit inspiracija";
+            }
         }
 
         public override async Task<OutfitIdea> Update(int id, OutfitIdeaUpsertRequest request)

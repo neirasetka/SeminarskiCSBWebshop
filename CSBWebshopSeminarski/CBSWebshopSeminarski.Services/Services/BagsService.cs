@@ -7,6 +7,7 @@ using CSBWebshopSeminarski.Database;
 using Microsoft.EntityFrameworkCore;
 
 using CBSWebshopSeminarski.Services.Exceptions;
+using CBSWebshopSeminarski.Services;
 
 namespace CBSWebshopSeminarski.Services.Services
 {
@@ -48,7 +49,28 @@ namespace CBSWebshopSeminarski.Services.Services
                 query = query.OrderBy(c => c.BagName);
             }
 
-            return await ToPagedResultAsync(query, request);
+            return await EnrichAndReturnAsync(query, request);
+        }
+
+        private async Task<PagedResult<Bag>> EnrichAndReturnAsync(IQueryable<Bags> query, BagSearchRequest? request)
+        {
+            var result = await ToPagedResultAsync(query, request);
+            await ProductRatingEnricher.EnrichBagsAsync(_context, result.Items);
+            return result;
+        }
+
+        public override async Task<Bag> GetById(int ID)
+        {
+            var entity = await _context.Bags
+                .Include(i => i.User)
+                .Include(i => i.BagType)
+                .FirstOrDefaultAsync(i => i.BagID == ID);
+            if (entity == null)
+                throw new NotFoundException($"Bag with ID {ID} not found.");
+
+            var bag = _mapper.Map<Bag>(entity);
+            bag.AverageRating = await ProductRatingEnricher.GetBagAverageOrNullAsync(_context, ID);
+            return bag;
         }
 
         public override async Task<Bag> Insert(BagUpsertRequest request)
@@ -145,7 +167,8 @@ namespace CBSWebshopSeminarski.Services.Services
 
                 return true;
             }
-            return false;
+
+            throw new NotFoundException($"Bag with ID {ID} not found.");
         }
         public async Task<decimal> GetAverage(int BagID)
         {

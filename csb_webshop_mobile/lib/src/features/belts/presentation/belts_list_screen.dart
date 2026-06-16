@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../../../core/paged_list_state.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../application/belts_provider.dart';
@@ -317,6 +318,8 @@ Future<void> _showBeltFormDialog(BuildContext context, WidgetRef ref, {Belt? exi
                     controller: descController,
                     decoration: const InputDecoration(labelText: 'Opis'),
                     maxLines: 3,
+                    inputFormatters: FormValidators.productDescriptionInputFormatters,
+                    validator: FormValidators.productDescription,
                   ),
                 const SizedBox(height: 8),
                 typesAsync.when(
@@ -467,7 +470,7 @@ Future<void> _showManageBeltTypesDialog(BuildContext context, WidgetRef ref) asy
                 );
               },
               loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-              error: (Object e, StackTrace st) => Text(e.toString()),
+              error: (Object e, StackTrace st) => Text(ApiException.formatForDisplay(e)),
             ),
           ),
           actions: <Widget>[

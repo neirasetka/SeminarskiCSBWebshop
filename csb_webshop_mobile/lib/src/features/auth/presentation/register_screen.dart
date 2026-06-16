@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/form_validators.dart';
+import '../../../core/api_exception.dart';
+import 'package:csb_webshop_shared/form_validators.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_api.dart';
 
@@ -73,7 +74,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Greška: ${e.toString()}'),
+            content: Text(ApiException.formatForDisplay(e)),
             backgroundColor: Colors.red,
           ),
         );

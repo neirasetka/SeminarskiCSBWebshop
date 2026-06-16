@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api_exception.dart';
 import '../../../utils/date_formatter.dart';
 import '../application/giveaways_provider.dart';
 import '../domain/participant.dart';
@@ -122,7 +123,7 @@ class _GiveawayParticipantsScreenState extends ConsumerState<GiveawayParticipant
                     children: <Widget>[
                       Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
                       const SizedBox(height: 16),
-                      Text('Greška pri učitavanju: $e', textAlign: TextAlign.center),
+                      Text(ApiException.formatForDisplay(e), textAlign: TextAlign.center),
                     ],
                   ),
                 ),

@@ -257,7 +257,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 var typeId = bag.BagTypeID ?? 0;
                 stats.TryGetValue(bagId, out var productStats);
 
-                var (score, reasons) = ComputeScore(
+                var (score, reason) = ComputeScore(
                     profile,
                     typeId,
                     bag.Price,
@@ -265,7 +265,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     productStats.PurchaseCount,
                     bag.BagType?.BagName);
 
-                return ToDto(bagId, bag.BagName, bag.Description, bag.Price, bag.Image, "Bag", score, reasons, true);
+                return ToDto(bagId, bag.BagName, bag.Description, bag.Price, bag.Image, "Bag", score, reason, true);
             })
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.ProductId)
@@ -296,7 +296,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 stats.TryGetValue(belt.BeltID, out var productStats);
 
-                var (score, reasons) = ComputeScore(
+                var (score, reason) = ComputeScore(
                     profile,
                     belt.BeltTypeID,
                     belt.Price,
@@ -304,7 +304,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     productStats.PurchaseCount,
                     belt.BeltType?.BeltName);
 
-                return ToDto(belt.BeltID, belt.BeltName, belt.Description, belt.Price, belt.Image, "Belt", score, reasons, true);
+                return ToDto(belt.BeltID, belt.BeltName, belt.Description, belt.Price, belt.Image, "Belt", score, reason, true);
             })
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.ProductId)
@@ -314,7 +314,7 @@ namespace CBSWebshopSeminarski.Services.Services
             return scored;
         }
 
-        private (double Score, List<string> Reasons) ComputeScore(
+        private (double Score, string Reason) ComputeScore(
             UserProductProfile profile,
             int typeId,
             decimal price,
@@ -323,19 +323,18 @@ namespace CBSWebshopSeminarski.Services.Services
             string? typeName)
         {
             double score = 0;
-            var reasons = new List<string>();
+            string? reason = null;
 
             if (profile.TypeWeights.TryGetValue(typeId, out var typeWeight))
             {
                 var typeScore = typeWeight * TypeMatchMultiplier;
                 score += typeScore;
-                var label = string.IsNullOrWhiteSpace(typeName) ? "proizvoda" : typeName;
                 if (typeWeight >= FavoriteTypeWeight)
-                    reasons.Add($"Tip \"{label}\" iz vaših omiljenih");
+                    reason = "U skladu s vašim favoritima";
                 else if (typeWeight >= RatedTypeWeight)
-                    reasons.Add($"Tip \"{label}\" koji ste visoko ocijenili");
+                    reason = "Preporučeno prema vašim ocjenama";
                 else
-                    reasons.Add($"Tip \"{label}\" sličan vašim kupnjama");
+                    reason = "Slično vašim kupnjama";
             }
 
             var preferredPrice = profile.PreferredPrice;
@@ -346,23 +345,32 @@ namespace CBSWebshopSeminarski.Services.Services
                 {
                     var priceBonus = MaxPriceSimilarityBonus * (1.0 - deviation / 0.25);
                     score += priceBonus;
-                    reasons.Add("Cijena blizu vašeg uobičajenog raspona");
+                    reason ??= "U vašem cjenovnom rangu";
                 }
             }
 
             if (purchaseCount > 0)
             {
                 score += purchaseCount * PopularityPurchaseMultiplier;
-                reasons.Add($"Popularan kod kupaca ({purchaseCount} kupnji)");
+                reason ??= "Popularan izbor";
             }
 
             if (avgRating >= MinRatingForBonus)
             {
                 score += avgRating * PopularityRatingMultiplier;
-                reasons.Add($"Visoka prosječna ocjena ({avgRating:F1})");
+                reason ??= "Visoko ocijenjeno";
             }
 
-            return (score, reasons);
+            return (score, reason ?? "Preporučeno za vas");
+        }
+
+        private static string BuildPopularReason(ProductStats stats)
+        {
+            if (stats.AvgRating >= MinRatingForBonus)
+                return "Visoko ocijenjeno";
+            if (stats.PurchaseCount > 0)
+                return "Popularan izbor";
+            return "Preporučeno za vas";
         }
 
         private async Task<List<RecommendedProductDto>> GetPopularFallbackAsync(
@@ -389,14 +397,10 @@ namespace CBSWebshopSeminarski.Services.Services
                                     ? productStats.AvgRating * PopularityRatingMultiplier
                                     : 0);
 
-                    var reasons = new List<string> { "Popularan proizvod u ponudi" };
-                    if (productStats.PurchaseCount > 0)
-                        reasons.Add($"{productStats.PurchaseCount} kupnji");
-                    if (productStats.AvgRating >= MinRatingForBonus)
-                        reasons.Add($"Prosječna ocjena {productStats.AvgRating:F1}");
+                    var reason = BuildPopularReason(productStats);
 
                     return ToDto(bagId, bag.BagName, bag.Description, bag.Price, bag.Image, "Bag",
-                        score, reasons, false);
+                        score, reason, false);
                 })
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.ProductId)
@@ -422,14 +426,10 @@ namespace CBSWebshopSeminarski.Services.Services
                                 ? productStats.AvgRating * PopularityRatingMultiplier
                                 : 0);
 
-                var reasons = new List<string> { "Popularan proizvod u ponudi" };
-                if (productStats.PurchaseCount > 0)
-                    reasons.Add($"{productStats.PurchaseCount} kupnji");
-                if (productStats.AvgRating >= MinRatingForBonus)
-                    reasons.Add($"Prosječna ocjena {productStats.AvgRating:F1}");
+                var reason = BuildPopularReason(productStats);
 
                 return ToDto(belt.BeltID, belt.BeltName, belt.Description, belt.Price, belt.Image, "Belt",
-                    score, reasons, false);
+                    score, reason, false);
             })
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.ProductId)
@@ -521,7 +521,7 @@ namespace CBSWebshopSeminarski.Services.Services
             byte[] image,
             string productType,
             double score,
-            List<string> reasons,
+            string reason,
             bool isPersonalized)
         {
             return new RecommendedProductDto
@@ -533,7 +533,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 Price = price,
                 Image = image,
                 Score = Math.Round(score, 2),
-                Reason = string.Join("; ", reasons),
+                Reason = reason,
                 IsPersonalized = isPersonalized
             };
         }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:csb_webshop_shared/recommendation_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/application/admin_role_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_session.dart';
+import '../../favorites/application/favorites_provider.dart';
 import '../../recommendations/application/recommendations_provider.dart';
 import '../../recommendations/domain/recommended_product.dart';
 import 'info_panel.dart';
@@ -212,15 +214,19 @@ class _BuyerForYouSection extends ConsumerWidget {
 }
 
 /// Grid displaying recommended products.
-class _RecommendationsGrid extends StatelessWidget {
+class _RecommendationsGrid extends ConsumerWidget {
   const _RecommendationsGrid({required this.recommendations});
 
   final Recommendations recommendations;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
+    final Set<int> bagFavorites = ref.watch(favoritesProvider).valueOrNull ?? <int>{};
+    final Set<int> beltFavorites =
+        ref.watch(beltFavoritesProvider).valueOrNull ?? <int>{};
+    final bool hasFavorites = bagFavorites.isNotEmpty || beltFavorites.isNotEmpty;
 
     return SingleChildScrollView(
       child: Column(
@@ -235,7 +241,7 @@ class _RecommendationsGrid extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Popularni proizvodi — dodajte favorite za personalizaciju.',
+                      RecommendationMessages.nonPersonalizedHint(hasFavorites: hasFavorites),
                       style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -367,21 +373,22 @@ class _ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${product.price.toStringAsFixed(2)} KM · ${product.score.toStringAsFixed(1)}',
+                      '${product.price.toStringAsFixed(2)} KM',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     if (product.reason.isNotEmpty)
-                      Flexible(
+                      Tooltip(
+                        message: product.reason,
                         child: Text(
                           product.reason,
                           style: textTheme.labelSmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             fontStyle: FontStyle.italic,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
