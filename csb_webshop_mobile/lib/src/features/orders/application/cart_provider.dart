@@ -7,6 +7,7 @@ import '../../profile/application/user_profile_provider.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import '../../auth/application/auth_controller.dart';
 
 final Provider<OrdersApi> ordersApiProvider = Provider<OrdersApi>((Ref ref) => OrdersApi());
 
@@ -14,10 +15,16 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   OrdersApi get _api => ref.read(ordersApiProvider);
   ProfileApi get _profileApi => ref.read(profileApiProvider);
 
-  @override
-  Future<OrderModel?> build() async {
-    return await _loadActiveCart();
+@override
+Future<OrderModel?> build() async {
+  final auth = await ref.watch(authControllerProvider.future);
+
+  if (auth == null) {
+    return null;
   }
+
+  return _loadActiveCart();
+}
 
   Future<OrderModel?> _loadActiveCart() async {
     final map = await _api.getActiveCart();
@@ -26,6 +33,11 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   }
 
   Future<void> refresh() async {
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth == null) {
+      state = const AsyncValue.data(null);
+      return;
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_loadActiveCart);
   }
@@ -53,16 +65,6 @@ class CartNotifier extends AsyncNotifier<OrderModel?> {
   /// Resets local cart state after successful payment (does not call backend).
   void resetCartAfterPayment() {
     state = const AsyncValue.data(null);
-  }
-
-  /// Briše aktivnu korpu na serveru dok je token još valjan (pri odjavi).
-  Future<void> discardActiveCartOnLogout() async {
-    try {
-      await _api.cancelActiveCart();
-    } catch (_) {
-      // Mreža / istek tokena — ne blokiraj odjavu.
-    }
-    state = const AsyncValue<OrderModel?>.data(null);
   }
 
   Future<void> clearCart() async {

@@ -1,4 +1,5 @@
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -57,9 +58,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult<object>> ConfirmCheckoutSession([FromBody] ConfirmCheckoutSessionRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.SessionId))
-            {
-                return BadRequest("SessionId is required.");
-            }
+                throw new ValidationException("SessionId is required.");
 
             var (currentUserId, isAdmin) = GetCallerContext();
             var result = await _paymentsService.ConfirmCheckoutSessionAsync(
@@ -76,9 +75,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult<object>> ConfirmPaymentIntent([FromBody] ConfirmPaymentIntentRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.PaymentIntentId))
-            {
-                return BadRequest("PaymentIntentId is required.");
-            }
+                throw new ValidationException("PaymentIntentId is required.");
 
             var (currentUserId, isAdmin) = GetCallerContext();
             var result = await _paymentsService.ConfirmPaymentIntentAsync(

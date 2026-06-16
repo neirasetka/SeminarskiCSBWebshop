@@ -81,7 +81,7 @@ namespace CSBWebshopSeminarski.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
             }
             var order = await _service.GetActiveCartByUser(currentUserId);
             if (order == null)
@@ -98,7 +98,7 @@ namespace CSBWebshopSeminarski.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
             }
             var result = await _service.GetOrdersForUserAsync(currentUserId, search);
             return Ok(result);
@@ -143,7 +143,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var adminUserId))
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
 
             var reason = string.IsNullOrWhiteSpace(request?.Reason)
                 ? "Cancelled by administrator"
@@ -151,7 +151,7 @@ namespace CSBWebshopSeminarski.Controllers
 
             var cancelled = await _service.CancelOrderAsync(ID, adminUserId, reason);
             if (!cancelled)
-                return NotFound();
+                throw new NotFoundException("Narudžba nije pronađena ili je već otkazana.");
 
             return NoContent();
         }
@@ -163,11 +163,11 @@ namespace CSBWebshopSeminarski.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
             }
             var cancelled = await _service.CancelActiveCartAsync(currentUserId, reason);
             if (!cancelled)
-                return NotFound();
+                throw new NotFoundException("Aktivna korpa nije pronađena.");
             return NoContent();
         }
 
@@ -176,7 +176,8 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<ActionResult> UpdatePaymentStatus(int orderId, [FromBody] UpdatePaymentStatusRequest request)
         {
             var ok = await _service.SetPaymentStatusAsync(orderId, request.Status, request.ReceiptEmail);
-            if (!ok) return NotFound();
+            if (!ok)
+                throw new NotFoundException("Narudžba nije pronađena.");
             return NoContent();
         }
 

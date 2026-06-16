@@ -54,12 +54,12 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
             {
-                throw new BusinessException("Korisničko ime je već zauzeto.");
+                throw new ConflictException("Korisničko ime je već zauzeto.");
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new BusinessException("Email adresa je već registrirana.");
+                throw new ConflictException("Email adresa je već registrirana.");
             }
 
             return await _context.ExecuteInTransactionAsync(async () =>
@@ -83,12 +83,12 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (await _context.Users.AnyAsync(u => u.Email == request.Email && u.UserID != userId))
             {
-                throw new BusinessException("Email adresa je već registrirana.");
+                throw new ConflictException("Email adresa je već registrirana.");
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName && u.UserID != userId))
             {
-                throw new BusinessException("Korisničko ime je već zauzeto.");
+                throw new ConflictException("Korisničko ime je već zauzeto.");
             }
 
             var entity = await _context.Users.FirstOrDefaultAsync(u => u.UserID == userId);
@@ -265,12 +265,12 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
             {
-                throw new BusinessException("Korisničko ime je već zauzeto.");
+                throw new ConflictException("Korisničko ime je već zauzeto.");
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new BusinessException("Email adresa je već registrirana.");
+                throw new ConflictException("Email adresa je već registrirana.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();

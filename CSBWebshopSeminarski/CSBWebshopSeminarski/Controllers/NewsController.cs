@@ -1,6 +1,7 @@
 using CBSWebshopSeminarski.Model.DTOs;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var item = await _newsService.GetByIdAsync(id);
             if (item == null)
-                return NotFound();
+                throw new NotFoundException("News item not found.");
 
             return Ok(item);
         }
@@ -41,7 +42,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var item = await _newsService.UpdateAsync(id, request);
             if (item == null)
-                return NotFound();
+                throw new NotFoundException("News item not found.");
 
             return Ok(item);
         }

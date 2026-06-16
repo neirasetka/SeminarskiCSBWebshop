@@ -137,9 +137,9 @@ namespace CBSWebshopSeminarski.Services.Services
             return _mapper.Map<Order>(entity);
         }
 
-        public override async Task<bool> Delete(int ID)
+        public override Task<bool> Delete(int ID)
         {
-            throw new NotSupportedException(
+            throw new BusinessException(
                 "Orders are not physically deleted. Use CancelOrderAsync or the cancel endpoint.");
         }
 

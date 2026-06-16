@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Services.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -37,9 +38,9 @@ namespace CBSWebshopSeminarski.Services.Services
         public void Publish(string sender, string recipient, string subject, string content)
         {
             if (string.IsNullOrWhiteSpace(recipient))
-                throw new ArgumentException("Recipient is required.", nameof(recipient));
+                throw new ValidationException("Recipient is required.");
             if (string.IsNullOrWhiteSpace(subject))
-                throw new ArgumentException("Subject is required.", nameof(subject));
+                throw new ValidationException("Subject is required.");
 
             lock (_sync)
             {

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../data/profile_api.dart';
 import '../domain/user_profile.dart';
 
@@ -12,6 +13,10 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
 
   @override
   Future<UserProfile?> build() async {
+    final auth = await ref.watch(authControllerProvider.future);
+    if (auth == null) {
+      return null;
+    }
     return _load();
   }
 
@@ -27,6 +32,11 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
 
   Future<void> refreshProfile() async {
     state = const AsyncLoading<UserProfile?>();
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth == null) {
+      state = const AsyncData<UserProfile?>(null);
+      return;
+    }
     state = await AsyncValue.guard(_load);
   }
 

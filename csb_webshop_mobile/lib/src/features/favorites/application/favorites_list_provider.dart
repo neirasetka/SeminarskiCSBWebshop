@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_controller.dart';
 import '../../bags/application/bags_provider.dart';
 import '../../bags/data/bags_api.dart';
 import '../../bags/domain/bag.dart';
@@ -32,6 +33,10 @@ final AsyncNotifierProvider<FavoritesListNotifier, FavoritesListResult>
 class FavoritesListNotifier extends AsyncNotifier<FavoritesListResult> {
   @override
   Future<FavoritesListResult> build() async {
+    final auth = await ref.watch(authControllerProvider.future);
+    if (auth == null) {
+      return const FavoritesListResult(bags: <Bag>[], belts: <Belt>[]);
+    }
     ref.watch(favoritesProvider);
     return _load();
   }

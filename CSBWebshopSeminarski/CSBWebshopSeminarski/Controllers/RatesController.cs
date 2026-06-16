@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -24,12 +25,22 @@ namespace CSBWebshopSeminarski.Controllers
         {
             if (search.UserID != 0)
             {
-                var denied = DenyUnlessCanAccessUserRates(search.UserID);
-                if (denied != null) return denied;
+                if (search.UserID <= 0)
+                    throw new ValidationException("UserID must be a positive integer.");
+
+                if (!(User.Identity?.IsAuthenticated ?? false))
+                    return Unauthorized();
+
+                if (!User.IsInRole("Admin"))
+                {
+                    var currentUserId = GetCurrentUserId();
+                    if (currentUserId != search.UserID)
+                        throw new ForbiddenException("Access denied.");
+                }
             }
             else if (search.BagID == 0 && search.BeltID == 0 && !User.IsInRole("Admin"))
             {
-                return Forbid();
+                throw new ForbiddenException("Access denied.");
             }
 
             return Ok(await _service.Get(search));
@@ -39,8 +50,7 @@ namespace CSBWebshopSeminarski.Controllers
         [Authorize]
         public async Task<ActionResult<PagedResult<Rate>>> GetByUser(int userId)
         {
-            var denied = DenyUnlessCanAccessUserRates(userId);
-            if (denied != null) return denied;
+            EnsureCanAccessUserRates(userId);
 
             var search = new RateSearchRequest { UserID = userId };
             return Ok(await _service.Get(search));
@@ -58,25 +68,17 @@ namespace CSBWebshopSeminarski.Controllers
             return int.TryParse(claim, out var id) ? id : 0;
         }
 
-        /// <summary>
-        /// User-specific rate lists require auth; non-admins may only access their own UserID.
-        /// </summary>
-        private ActionResult? DenyUnlessCanAccessUserRates(int userId)
+        private void EnsureCanAccessUserRates(int userId)
         {
             if (userId <= 0)
-                return BadRequest();
-
-            if (!(User.Identity?.IsAuthenticated ?? false))
-                return Unauthorized();
+                throw new ValidationException("UserID must be a positive integer.");
 
             if (!User.IsInRole("Admin"))
             {
                 var currentUserId = GetCurrentUserId();
                 if (currentUserId != userId)
-                    return Forbid();
+                    throw new ForbiddenException("Access denied.");
             }
-
-            return null;
         }
 
         [HttpPost]
@@ -85,9 +87,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var currentUserId = GetCurrentUserId();
             if (currentUserId <= 0)
-            {
-                return Unauthorized();
-            }
+                throw new ForbiddenException("Access denied.");
 
             request.UserID = currentUserId;
             return Ok(await _service.Insert(request));
@@ -100,9 +100,7 @@ namespace CSBWebshopSeminarski.Controllers
             var existing = await _service.GetById(ID);
             var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyRate");
             if (!authorizationResult.Succeeded)
-            {
-                return Forbid();
-            }
+                throw new ForbiddenException("Access denied.");
 
             request.UserID = existing.UserID;
             var updated = await _service.Update(ID, request);
@@ -116,9 +114,7 @@ namespace CSBWebshopSeminarski.Controllers
             var existing = await _service.GetById(ID);
             var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyRate");
             if (!authorizationResult.Succeeded)
-            {
-                return Forbid();
-            }
+                throw new ForbiddenException("Access denied.");
             var result = await _service.Delete(ID);
             return Ok(result);
         }

@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski.Core.Entities;
@@ -26,7 +27,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<IActionResult> NotifyWinner([FromBody] Participants winner)
         {
             if (string.IsNullOrWhiteSpace(winner?.Email))
-                return BadRequest("Email is required");
+                throw new ValidationException("Email is required.");
 
             await _emailService.SendEmailAsync(
                 winner.Email,

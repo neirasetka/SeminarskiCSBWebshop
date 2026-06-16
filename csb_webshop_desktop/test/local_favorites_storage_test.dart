@@ -5,7 +5,7 @@ import 'package:csb_webshop_desktop/src/features/favorites/data/local_favorites_
 
 void main() {
   setUp(() async {
-    SharedPreferences.setMockInitialValues(<String, Object?>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
   test('getFavoriteBagIds returns empty set initially', () async {

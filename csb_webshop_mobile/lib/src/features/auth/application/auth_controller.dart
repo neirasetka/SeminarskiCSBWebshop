@@ -1,26 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/secure_storage_service.dart';
-import '../../favorites/application/favorites_list_provider.dart';
-import '../../favorites/application/favorites_provider.dart';
-import '../../orders/application/cart_provider.dart';
-import '../../orders/application/order_history_provider.dart';
-import '../../profile/application/user_profile_provider.dart';
 import '../data/auth_api.dart';
 import '../domain/auth_session.dart';
-import 'admin_role_provider.dart';
 
 final Provider<AuthApi> authApiProvider = Provider<AuthApi>((Ref ref) {
   return AuthApi();
 });
 
-class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
-  AuthController() : _listeners = <VoidCallback>{};
-
+class AuthController extends AsyncNotifier<AuthSession?> {
   AuthApi get _api => ref.read(authApiProvider);
   final SecureStorageService _storage = SecureStorageService();
-  final Set<VoidCallback> _listeners;
 
   @override
   Future<AuthSession?> build() async {
@@ -33,55 +23,31 @@ class AuthController extends AsyncNotifier<AuthSession?> implements Listenable {
     return AuthSession.fromStoredToken(token);
   }
 
-  Future<void> login({required String username, required String password}) async {
+  Future<void> login({
+    required String username,
+    required String password,
+  }) async {
     state = const AsyncLoading<AuthSession?>();
     try {
-      final AuthSession session = await _api.login(username: username, password: password);
+      final AuthSession session = await _api.login(
+        username: username,
+        password: password,
+      );
       await _storage.saveToken(session.token);
       state = AsyncData<AuthSession?>(session);
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(adminRoleProvider);
-      ref.invalidate(cartProvider);
-      ref.invalidate(orderHistoryProvider);
-      ref.invalidate(favoritesProvider);
-      ref.invalidate(favoritesListProvider);
     } catch (e, st) {
       state = AsyncError<AuthSession?>(e, st);
-    } finally {
-      _notify();
     }
   }
 
   Future<void> logout() async {
     state = const AsyncLoading<AuthSession?>();
-    await ref.read(cartProvider.notifier).discardActiveCartOnLogout();
+    //await ref.read(cartProvider.notifier).discardActiveCartOnLogout();
     await _storage.clearToken();
     state = const AsyncData<AuthSession?>(null);
-    ref.invalidate(userProfileProvider);
-    ref.invalidate(adminRoleProvider);
-    ref.invalidate(orderHistoryProvider);
-    ref.invalidate(favoritesProvider);
-    ref.invalidate(favoritesListProvider);
-    _notify();
   }
-
-  void _notify() {
-    for (final VoidCallback listener in _listeners) {
-      listener();
-    }
-  }
-
-  @override
-  void addListener(VoidCallback listener) {
-    _listeners.add(listener);
-  }
-
-  @override
-  void removeListener(VoidCallback listener) {
-    _listeners.remove(listener);
-  }
+  
 }
 
 final AsyncNotifierProvider<AuthController, AuthSession?> authControllerProvider =
     AsyncNotifierProvider<AuthController, AuthSession?>(AuthController.new);
-

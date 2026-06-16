@@ -78,9 +78,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(idClaim) || !int.TryParse(idClaim, out var userId))
-            {
-                return Unauthorized();
-            }
+                throw new ForbiddenException("Access denied.");
 
             return await _service.UpdateMyProfile(userId, request);
         }

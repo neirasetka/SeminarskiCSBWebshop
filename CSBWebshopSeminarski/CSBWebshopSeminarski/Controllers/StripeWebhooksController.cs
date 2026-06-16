@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ namespace CSBWebshopSeminarski.Controllers
             catch (StripeException ex)
             {
                 _logger.LogError(ex, "Stripe webhook error: {Message}", ex.Message);
-                return BadRequest();
+                throw new ValidationException($"Stripe webhook error: {ex.Message}");
             }
         }
     }

@@ -1,5 +1,6 @@
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ namespace CSBWebshopSeminarski.Controllers
         public async Task<IActionResult> Tracking(string carrierCode, [FromBody] CarrierWebhookPayload payload)
         {
             if (!_environment.IsDevelopment())
-                return NotFound();
+                throw new NotFoundException("Resource not found.");
 
             CarrierWebhookValidator.Validate(carrierCode, payload);
 

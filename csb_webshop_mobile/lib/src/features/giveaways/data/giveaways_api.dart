@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../core/api_client.dart';
+import '../../../core/api_error_reader.dart';
 import '../../../core/paged_result.dart';
 import '../domain/giveaway.dart';
 import '../domain/participant.dart';
@@ -15,16 +16,12 @@ class GiveawayRegistrationConflictException implements Exception {
   String toString() => message;
 }
 
-/// Parses `{ "message": "..." }` from API error JSON (`message` or `Message`).
+/// Parses API error JSON (`message`, `error`, or RFC 7807 `detail`).
 String? giveawayApiMessageFromJsonBody(String body) {
-  try {
-    final dynamic decoded = json.decode(body);
-    if (decoded is Map<String, dynamic>) {
-      final Object? m = decoded['message'] ?? decoded['Message'];
-      if (m is String && m.isNotEmpty) return m;
-    }
-  } catch (_) {}
-  return null;
+  if (body.trim().isEmpty) return null;
+  final String detail = ApiErrorReader.readDetail(body, fallback: '');
+  if (detail.isEmpty || detail == '(prazan odgovor)') return null;
+  return detail;
 }
 
 class GiveawaysApi {
@@ -142,7 +139,8 @@ class GiveawaysApi {
       final Map<String, dynamic> map = json.decode(response.body) as Map<String, dynamic>;
       return AnnounceWinnerResult.fromJson(map);
     }
-    throw Exception('Failed to announce winner: ${response.statusCode}');
+    final String? apiMessage = giveawayApiMessageFromJsonBody(response.body);
+    throw Exception(apiMessage ?? 'Failed to announce winner: ${response.statusCode}');
   }
 }
 

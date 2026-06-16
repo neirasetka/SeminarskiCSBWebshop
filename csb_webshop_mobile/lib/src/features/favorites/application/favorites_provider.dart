@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_controller.dart';
+import '../../auth/domain/auth_session.dart';
 import '../data/favorites_api.dart';
 import '../data/local_favorites_storage.dart';
 import '../domain/favorites_collections.dart';
@@ -11,14 +12,9 @@ final Provider<LocalFavoritesStorage> localFavoritesStorageProvider =
 final Provider<FavoritesApi> favoritesApiProvider =
     Provider<FavoritesApi>((Ref ref) => FavoritesApi());
 
-bool _isLoggedIn(Ref ref) {
-  final int? userId = ref.read(authControllerProvider).value?.userId;
-  return userId != null && userId > 0;
-}
-
 class FavoritesNotifier extends AsyncNotifier<FavoritesCollections> {
-  late final LocalFavoritesStorage _storage;
-  late final FavoritesApi _api;
+  LocalFavoritesStorage get _storage => ref.read(localFavoritesStorageProvider);
+  FavoritesApi get _api => ref.read(favoritesApiProvider);
 
   Future<FavoritesCollections> _loadLocal() async {
     final Set<int> bags = await _storage.getFavoriteBagIds();
@@ -26,34 +22,36 @@ class FavoritesNotifier extends AsyncNotifier<FavoritesCollections> {
     return FavoritesCollections(bagIds: bags, beltIds: belts);
   }
 
+  Future<FavoritesCollections> _loadForSession(AuthSession? auth) async {
+    if (auth == null) {
+      return _loadLocal();
+    }
+    try {
+      final Set<int> bagIds = await _api.getFavoriteBagIds();
+      final Set<int> beltIds = await _api.getFavoriteBeltIds();
+      await _storage.saveFavoriteBagIds(bagIds);
+      await _storage.saveFavoriteBeltIds(beltIds);
+      return FavoritesCollections(bagIds: bagIds, beltIds: beltIds);
+    } catch (_) {
+      return _loadLocal();
+    }
+  }
+
   @override
   Future<FavoritesCollections> build() async {
-    _storage = ref.read(localFavoritesStorageProvider);
-    _api = ref.read(favoritesApiProvider);
-
-    ref.watch(authControllerProvider);
-
-    if (_isLoggedIn(ref)) {
-      try {
-        final Set<int> bagIds = await _api.getFavoriteBagIds();
-        final Set<int> beltIds = await _api.getFavoriteBeltIds();
-        await _storage.saveFavoriteBagIds(bagIds);
-        await _storage.saveFavoriteBeltIds(beltIds);
-        return FavoritesCollections(bagIds: bagIds, beltIds: beltIds);
-      } catch (_) {
-        return _loadLocal();
-      }
-    }
-    return _loadLocal();
+    final AuthSession? auth = await ref.watch(authControllerProvider.future);
+    return _loadForSession(auth);
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading<FavoritesCollections>();
-    state = await AsyncValue.guard(build);
+    final AuthSession? auth = ref.read(authControllerProvider).valueOrNull;
+    state = await AsyncValue.guard(() => _loadForSession(auth));
   }
 
   Future<void> toggleBag(int bagId) async {
-    if (_isLoggedIn(ref)) {
+    final AuthSession? auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth != null) {
       try {
         final Set<int> updatedBags = await _api.toggleBagFavorite(bagId);
         final Set<int> beltIds =
@@ -76,7 +74,8 @@ class FavoritesNotifier extends AsyncNotifier<FavoritesCollections> {
   }
 
   Future<void> toggleBelt(int beltId) async {
-    if (_isLoggedIn(ref)) {
+    final AuthSession? auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth != null) {
       try {
         final Set<int> updatedBelts = await _api.toggleBeltFavorite(beltId);
         final Set<int> bagIds =

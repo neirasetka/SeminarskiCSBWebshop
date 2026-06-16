@@ -157,9 +157,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var result = await _outfitIdeasService.GetByBagAndUser(bagId, userId);
             if (result == null)
-            {
-                return NotFound();
-            }
+                throw new NotFoundException("Outfit idea not found.");
             return Ok(result);
         }
 
@@ -169,9 +167,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var result = await _outfitIdeasService.GetByBeltAndUser(beltId, userId);
             if (result == null)
-            {
-                return NotFound();
-            }
+                throw new NotFoundException("Outfit idea not found.");
             return Ok(result);
         }
 
@@ -190,9 +186,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var success = await _outfitIdeasService.RemoveImage(imageId);
             if (!success)
-            {
-                return NotFound();
-            }
+                throw new NotFoundException("Outfit idea image not found.");
             return Ok();
         }
 

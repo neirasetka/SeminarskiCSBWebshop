@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,9 +44,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var currentUserId = GetCurrentUserId();
             if (currentUserId <= 0)
-            {
-                return Unauthorized();
-            }
+                throw new ForbiddenException("Access denied.");
 
             request.UserID = currentUserId;
             return Ok(await _service.Insert(request));
@@ -58,9 +57,7 @@ namespace CSBWebshopSeminarski.Controllers
             var existing = await _service.GetById(ID);
             var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyReview");
             if (!authorizationResult.Succeeded)
-            {
-                return Forbid();
-            }
+                throw new ForbiddenException("Access denied.");
 
             request.UserID = existing.UserID;
             var updated = await _service.Update(ID, request);
@@ -74,9 +71,7 @@ namespace CSBWebshopSeminarski.Controllers
             var existing = await _service.GetById(ID);
             var authorizationResult = await _authorizationService.AuthorizeAsync(User, existing, "CanModifyReview");
             if (!authorizationResult.Succeeded)
-            {
-                return Forbid();
-            }
+                throw new ForbiddenException("Access denied.");
             var result = await _service.Delete(ID);
             return Ok(result);
         }

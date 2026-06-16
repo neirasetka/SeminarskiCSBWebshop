@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/paged_list_state.dart';
+import '../../auth/application/auth_controller.dart';
 import '../data/orders_api.dart';
 import '../domain/order_models.dart';
 
@@ -12,8 +13,19 @@ class OrderHistoryNotifier extends AsyncNotifier<PagedListState<OrderModel>> {
   OrdersApi get _api => ref.read(_ordersApiProvider);
   bool _loadingMore = false;
 
+  PagedListState<OrderModel> get _emptyState => PagedListState<OrderModel>(
+        items: const <OrderModel>[],
+        totalCount: 0,
+        page: 1,
+        pageSize: _pageSize,
+      );
+
   @override
   Future<PagedListState<OrderModel>> build() async {
+    final auth = await ref.watch(authControllerProvider.future);
+    if (auth == null) {
+      return _emptyState;
+    }
     return _loadPage(1);
   }
 
@@ -28,6 +40,11 @@ class OrderHistoryNotifier extends AsyncNotifier<PagedListState<OrderModel>> {
   }
 
   Future<void> refresh() async {
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth == null) {
+      state = AsyncData(_emptyState);
+      return;
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _loadPage(1));
   }

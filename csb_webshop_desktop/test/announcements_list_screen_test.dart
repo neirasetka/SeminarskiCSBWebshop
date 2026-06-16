@@ -11,7 +11,11 @@ class _FakeAnnouncementsApi extends AnnouncementsApi {
   final List<Announcement> _items;
 
   @override
-  Future<List<Announcement>> getAnnouncements() async {
+  Future<List<Announcement>> getAnnouncements({
+    int page = 1,
+    int pageSize = 20,
+    String? segment,
+  }) async {
     return _items;
   }
 }

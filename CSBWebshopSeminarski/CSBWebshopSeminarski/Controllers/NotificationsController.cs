@@ -1,4 +1,5 @@
 using CBSWebshopSeminarski.Model.Models;
+using CBSWebshopSeminarski.Services.Exceptions;
 using CBSWebshopSeminarski.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userId = GetCurrentUserId();
             if (userId == 0)
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
 
             return Ok(await _notificationService.GetForUserAsync(userId, page, pageSize));
         }
@@ -39,7 +40,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userId = GetCurrentUserId();
             if (userId == 0)
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
 
             return Ok(await _notificationService.GetUnreadCountAsync(userId));
         }
@@ -49,11 +50,11 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userId = GetCurrentUserId();
             if (userId == 0)
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
 
             var updated = await _notificationService.MarkAsReadAsync(userId, id);
             if (!updated)
-                return NotFound();
+                throw new NotFoundException("Notification not found.");
 
             return NoContent();
         }
@@ -63,7 +64,7 @@ namespace CSBWebshopSeminarski.Controllers
         {
             var userId = GetCurrentUserId();
             if (userId == 0)
-                return Unauthorized();
+                throw new ForbiddenException("Access denied.");
 
             await _notificationService.MarkAllAsReadAsync(userId);
             return NoContent();

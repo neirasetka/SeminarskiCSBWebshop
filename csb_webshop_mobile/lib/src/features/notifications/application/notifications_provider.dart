@@ -15,10 +15,12 @@ class UnreadNotificationsNotifier extends Notifier<int> {
 
   @override
   int build() {
+    ref.watch(authControllerProvider);
     ref.onDispose(() => _pollTimer?.cancel());
-    ref.listen(authControllerProvider, (_, __) {
-      unawaited(refresh());
-    });
+    if (ref.read(authControllerProvider).valueOrNull == null) {
+      _pollTimer?.cancel();
+      return 0;
+    }
     _startPolling();
     unawaited(refresh());
     return 0;
@@ -53,12 +55,16 @@ class NotificationsListNotifier extends AsyncNotifier<List<NotificationModel>> {
 
   @override
   Future<List<NotificationModel>> build() async {
-    return _load();
+    final auth = await ref.watch(authControllerProvider.future);
+    if (auth == null) {
+      return <NotificationModel>[];
+    }
+    return _api.getNotifications(1, 50);
   }
 
   Future<List<NotificationModel>> _load() async {
-    final session = ref.read(authControllerProvider).valueOrNull;
-    if (session == null) return <NotificationModel>[];
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth == null) return <NotificationModel>[];
     return _api.getNotifications(1, 50);
   }
 

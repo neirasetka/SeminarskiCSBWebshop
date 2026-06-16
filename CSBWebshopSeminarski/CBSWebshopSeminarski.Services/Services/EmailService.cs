@@ -1,6 +1,7 @@
+using CBSWebshopSeminarski.Services.Exceptions;
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using MailKit;
 using MimeKit;
 
 namespace CBSWebshopSeminarski.Services.Services
@@ -38,24 +39,19 @@ namespace CBSWebshopSeminarski.Services.Services
                 await smtp.AuthenticateAsync(_smtpUser, _smtpPass);
                 await smtp.SendAsync(email);
             }
-            catch (AuthenticationException ex)
+            catch (AuthenticationException)
             {
-                throw new Exception(
+                throw new BusinessException(
                     $"SMTP autentikacija nije uspjela za korisnika '{_smtpUser}'. " +
-                    "Provjerite App Password i da je 2FA uključena na Gmail nalogu.",
-                    ex);
+                    "Provjerite App Password i da je 2FA uključena na Gmail nalogu.");
             }
             catch (SmtpCommandException ex)
             {
-                throw new Exception(
-                    $"SMTP command error ({ex.StatusCode}): {ex.Message}",
-                    ex);
+                throw new BusinessException($"SMTP command error ({ex.StatusCode}): {ex.Message}");
             }
             catch (SmtpProtocolException ex)
             {
-                throw new Exception(
-                    $"SMTP protocol error: {ex.Message}",
-                    ex);
+                throw new BusinessException($"SMTP protocol error: {ex.Message}");
             }
             finally
             {
