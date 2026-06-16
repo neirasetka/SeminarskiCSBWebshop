@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class RequestPasswordResetRequest
     {
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [Required(ErrorMessage = ValidationMessages.EmailRequired)]
+        [EmailAddress(ErrorMessage = ValidationMessages.EmailInvalid)]
         public string Email { get; set; } = null!;
     }
 }

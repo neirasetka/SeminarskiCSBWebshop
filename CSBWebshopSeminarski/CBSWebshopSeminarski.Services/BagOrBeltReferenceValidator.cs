@@ -1,5 +1,6 @@
 namespace CBSWebshopSeminarski.Services;
 
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Services.Exceptions;
 
 /// <summary>
@@ -14,14 +15,14 @@ public static class BagOrBeltReferenceValidator
         return (bagId, beltId);
     }
 
-    public static void ValidateExactlyOne(int? bagId, int? beltId, string entityName = "Record")
+    public static void ValidateExactlyOne(int? bagId, int? beltId, string entityName = "Zapis")
     {
         var (bag, belt) = Normalize(bagId, beltId);
 
         if (!bag.HasValue && !belt.HasValue)
-            throw new ValidationException($"{entityName} must have either BagID or BeltID.");
+            throw new ValidationException($"{entityName} mora referencirati ili torbu ili kaiš.");
 
         if (bag.HasValue && belt.HasValue)
-            throw new ValidationException($"{entityName} cannot specify both BagID and BeltID.");
+            throw new ValidationException($"{entityName} ne smije referencirati i torbu i kaiš istovremeno.");
     }
 }

@@ -1,14 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class CreatePaymentIntentRequest
     {
-        [Required(ErrorMessage = "Order ID is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Order ID must be valid.")]
+        [Required(ErrorMessage = ValidationMessages.OrderIdRequired)]
+        [Range(1, int.MaxValue, ErrorMessage = ValidationMessages.OrderIdValid)]
         public int OrderID { get; set; }
 
-        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [EmailAddress(ErrorMessage = ValidationMessages.EmailInvalid)]
         public string? ReceiptEmail { get; set; }
     }
 }

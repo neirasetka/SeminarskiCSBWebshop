@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -10,10 +11,10 @@ namespace CBSWebshopSeminarski.Model.Requests
 
         public bool? IsFeatured { get; set; }
 
-        [MaxLength(100, ErrorMessage = "Tag filter can be up to 100 characters.")]
+        [MaxLength(100, ErrorMessage = ValidationMessages.TagFilterMaxLength)]
         public string? Tag { get; set; }
 
-        [MaxLength(200, ErrorMessage = "Title filter can be up to 200 characters.")]
+        [MaxLength(200, ErrorMessage = ValidationMessages.TitleFilterMaxLength)]
         public string? Title { get; set; }
 
         public CBSWebshopSeminarski.Model.Models.OccasionType? Occasion { get; set; }

@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Exceptions;
 
@@ -32,45 +33,45 @@ public static class CarrierWebhookValidator
     public static void Validate(string? carrierCode, CarrierWebhookPayload? payload)
     {
         if (payload == null)
-            throw new ValidationException("Request body is required.");
+            throw new ValidationException("Tijelo zahtjeva je obavezno.");
 
         if (string.IsNullOrWhiteSpace(carrierCode))
-            throw new ValidationException("Carrier code is required.");
+            throw new ValidationException("Kod kurira je obavezan.");
 
         if (carrierCode.Trim().Length > MaxCarrierCodeLength)
-            throw new ValidationException($"Carrier code must not exceed {MaxCarrierCodeLength} characters.");
+            throw new ValidationException(ValidationMessages.CarrierCodeMaxLength);
 
         var hasOrderId = payload.OrderID is > 0;
         var hasTrackingNumber = !string.IsNullOrWhiteSpace(payload.TrackingNumber);
 
         if (!hasOrderId && !hasTrackingNumber)
-            throw new ValidationException("Either OrderID or TrackingNumber must be provided.");
+            throw new ValidationException("Potrebno je navesti OrderID ili TrackingNumber.");
 
         if (payload.OrderID.HasValue && payload.OrderID.Value <= 0)
-            throw new ValidationException("OrderID must be a positive integer when provided.");
+            throw new ValidationException(ValidationMessages.OrderIdPositiveWhenProvided);
 
         if (payload.TrackingNumber != null && payload.TrackingNumber.Length > MaxTrackingNumberLength)
-            throw new ValidationException($"TrackingNumber must not exceed {MaxTrackingNumberLength} characters.");
+            throw new ValidationException(ValidationMessages.TrackingNumberMaxLength);
 
         if (string.IsNullOrWhiteSpace(payload.Status))
-            throw new ValidationException("Status is required.");
+            throw new ValidationException(ValidationMessages.StatusRequired);
 
         if (payload.Status.Trim().Length > MaxStatusLength)
-            throw new ValidationException($"Status must not exceed {MaxStatusLength} characters.");
+            throw new ValidationException(ValidationMessages.StatusMaxLength64);
 
         if (!AllowedStatuses.Contains(payload.Status.Trim()))
         {
             throw new ValidationException(
-                "Status is not supported. Allowed values: shipped, in_transit, at_customs, out_for_delivery, delivered, returned, cancelled.");
+                "Status nije podržan. Dozvoljene vrijednosti: shipped, in_transit, at_customs, out_for_delivery, delivered, returned, cancelled.");
         }
 
         if (payload.Message != null && payload.Message.Length > MaxMessageLength)
-            throw new ValidationException($"Message must not exceed {MaxMessageLength} characters.");
+            throw new ValidationException(ValidationMessages.MessageMaxLength);
 
         if (payload.Location != null && payload.Location.Length > MaxLocationLength)
-            throw new ValidationException($"Location must not exceed {MaxLocationLength} characters.");
+            throw new ValidationException(ValidationMessages.LocationMaxLength);
 
         if (payload.RawJson != null && payload.RawJson.Length > MaxRawJsonLength)
-            throw new ValidationException($"RawJson must not exceed {MaxRawJsonLength} characters.");
+            throw new ValidationException(ValidationMessages.RawJsonMaxLength);
     }
 }

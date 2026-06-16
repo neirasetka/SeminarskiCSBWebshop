@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class BagTypeSearchRequest : PagedSearchRequest
     {
-        [MaxLength(200, ErrorMessage = "Bag type name filter can be up to 200 characters.")]
+        [MaxLength(200, ErrorMessage = ValidationMessages.BagTypeNameFilterMaxLength)]
         public string? BagName { get; set; }
     }
 }

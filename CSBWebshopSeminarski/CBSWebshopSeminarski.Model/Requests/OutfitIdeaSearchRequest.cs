@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -10,7 +11,7 @@ namespace CBSWebshopSeminarski.Model.Requests
 
         public int? UserID { get; set; }
 
-        [MaxLength(200, ErrorMessage = "Title filter can be up to 200 characters.")]
+        [MaxLength(200, ErrorMessage = ValidationMessages.TitleFilterMaxLength)]
         public string? Title { get; set; }
     }
 }

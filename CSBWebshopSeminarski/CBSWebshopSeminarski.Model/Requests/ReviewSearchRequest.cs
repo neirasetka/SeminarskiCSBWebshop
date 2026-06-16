@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -10,7 +11,7 @@ namespace CBSWebshopSeminarski.Model.Requests
 
         public int? BeltID { get; set; }
 
-        [MaxLength(500, ErrorMessage = "Comment filter can be up to 500 characters.")]
+        [MaxLength(500, ErrorMessage = ValidationMessages.CommentFilterMaxLength)]
         public string? Comment { get; set; }
 
         public DateTime Date { get; set; }

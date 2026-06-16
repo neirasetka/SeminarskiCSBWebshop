@@ -1,23 +1,24 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class BagUpsertRequest : IValidatableObject
     {
-        [Required(ErrorMessage = "Bag name is required.")]
-        [MinLength(2, ErrorMessage = "Bag name must have at least 2 characters.")]
-        [MaxLength(200, ErrorMessage = "Bag name can be up to 200 characters.")]
+        [Required(ErrorMessage = ValidationMessages.ProductNameRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.ProductNameMinLength)]
+        [MaxLength(200, ErrorMessage = ValidationMessages.ProductNameMaxLength)]
         public string BagName { get; set; } = null!;
 
-        [Required(ErrorMessage = "Product code is required.")]
-        [MaxLength(50, ErrorMessage = "Product code can be up to 50 characters.")]
+        [Required(ErrorMessage = ValidationMessages.ProductCodeRequired)]
+        [MaxLength(50, ErrorMessage = ValidationMessages.ProductCodeMaxLength)]
         public string Code { get; set; } = null!;
 
-        [Required(ErrorMessage = "Price is required.")]
-        [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = "Price must be greater than zero.")]
+        [Required(ErrorMessage = ValidationMessages.PriceRequired)]
+        [Range(typeof(decimal), "0.01", "100000000", ErrorMessage = ValidationMessages.PriceGreaterThanZero)]
         public decimal Price { get; set; }
 
-        [MaxLength(2000, ErrorMessage = "Description can be up to 2000 characters.")]
+        [MaxLength(2000, ErrorMessage = ValidationMessages.DescriptionMaxLength)]
         public string Description { get; set; } = null!;
 
         public int BagTypeID { get; set; }
@@ -32,7 +33,7 @@ namespace CBSWebshopSeminarski.Model.Requests
             if (BagTypeID <= 0)
             {
                 yield return new ValidationResult(
-                    "Bag type is required.",
+                    "Odaberite tip torbe",
                     new[] { nameof(BagTypeID) });
             }
         }

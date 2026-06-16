@@ -5,30 +5,30 @@ namespace CBSWebshopSeminarski.Model.Requests
 {
     public class RegisterRequest
     {
-        [Required(ErrorMessage = "Name is required.")]
-        [MinLength(2, ErrorMessage = "Name must have at least 2 characters.")]
+        [Required(ErrorMessage = ValidationMessages.NameRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.NameMinLength)]
         public string Name { get; set; } = null!;
 
-        [Required(ErrorMessage = "Surname is required.")]
-        [MinLength(2, ErrorMessage = "Last name must have at least 2 characters.")]
+        [Required(ErrorMessage = ValidationMessages.SurnameRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.SurnameMinLength)]
         public string Surname { get; set; } = null!;
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [Required(ErrorMessage = ValidationMessages.EmailRequired)]
+        [EmailAddress(ErrorMessage = ValidationMessages.EmailInvalid)]
         public string Email { get; set; } = null!;
 
         [RegularExpression(ValidationPatterns.Phone, ErrorMessage = ValidationPatterns.PhoneErrorMessage)]
         public string Phone { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Username is required.")]
-        [MinLength(3, ErrorMessage = "Username must have at least 3 characters.")]
+        [Required(ErrorMessage = ValidationMessages.UsernameRequired)]
+        [MinLength(3, ErrorMessage = ValidationMessages.UsernameMinLength)]
         public string UserName { get; set; } = null!;
 
-        [Required(ErrorMessage = "Password is required.")]
-        [MinLength(6, ErrorMessage = "Password must have at least 6 characters.")]
+        [Required(ErrorMessage = ValidationMessages.PasswordRequired)]
+        [MinLength(6, ErrorMessage = ValidationMessages.PasswordMinLength)]
         public string Password { get; set; } = null!;
 
-        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        [Compare(nameof(Password), ErrorMessage = ValidationMessages.PasswordsDoNotMatch)]
         public string PasswordConfirmation { get; set; } = null!;
 
         public byte[]? Image { get; set; }

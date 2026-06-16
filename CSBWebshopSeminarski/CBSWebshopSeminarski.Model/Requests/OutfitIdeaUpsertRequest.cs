@@ -6,24 +6,24 @@ namespace CBSWebshopSeminarski.Model.Requests
     public class OutfitIdeaUpsertRequest : IValidatableObject
     {
         public int? BagID { get; set; }
-        
+
         public int? BeltID { get; set; }
-        
-        [Required(ErrorMessage = "User ID is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "User ID must be valid.")]
+
+        [Required(ErrorMessage = ValidationMessages.UserIdRequired)]
+        [Range(1, int.MaxValue, ErrorMessage = ValidationMessages.UserIdValid)]
         public int UserID { get; set; }
-        
-        [Required(ErrorMessage = "Title is required.")]
-        [MinLength(2, ErrorMessage = "Title must be at least 2 characters long.")]
-        [MaxLength(200, ErrorMessage = "The title can be a maximum of 200 characters.")]
+
+        [Required(ErrorMessage = ValidationMessages.TitleRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.TitleMinLength)]
+        [MaxLength(200, ErrorMessage = ValidationMessages.TitleMaxLength)]
         public string? Title { get; set; }
-        
-        [MaxLength(1000, ErrorMessage = "The description can be up to 1000 characters long.")]
+
+        [MaxLength(1000, ErrorMessage = ValidationMessages.DescriptionMaxLength1000)]
         public string? Description { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Outfit idea"))
+            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Outfit ideja"))
             {
                 yield return result;
             }

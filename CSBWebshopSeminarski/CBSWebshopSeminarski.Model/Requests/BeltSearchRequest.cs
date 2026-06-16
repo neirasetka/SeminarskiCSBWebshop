@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -8,7 +9,7 @@ namespace CBSWebshopSeminarski.Model.Requests
 
         public int? BeltTypeID { get; set; }
 
-        [MaxLength(200, ErrorMessage = "Belt name filter can be up to 200 characters.")]
+        [MaxLength(200, ErrorMessage = ValidationMessages.BeltNameFilterMaxLength)]
         public string? BeltName { get; set; }
     }
 }

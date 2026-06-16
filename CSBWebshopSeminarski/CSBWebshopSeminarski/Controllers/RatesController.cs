@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Exceptions;
@@ -26,7 +27,7 @@ namespace CSBWebshopSeminarski.Controllers
             if (search.UserID != 0)
             {
                 if (search.UserID <= 0)
-                    throw new ValidationException("UserID must be a positive integer.");
+                    throw new ValidationException(ValidationMessages.UserIdValid);
 
                 if (!(User.Identity?.IsAuthenticated ?? false))
                     return Unauthorized();
@@ -71,7 +72,7 @@ namespace CSBWebshopSeminarski.Controllers
         private void EnsureCanAccessUserRates(int userId)
         {
             if (userId <= 0)
-                throw new ValidationException("UserID must be a positive integer.");
+                throw new ValidationException(ValidationMessages.UserIdValid);
 
             if (!User.IsInRole("Admin"))
             {

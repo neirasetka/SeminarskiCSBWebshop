@@ -1,4 +1,5 @@
 using AutoMapper;
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services;
@@ -49,7 +50,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (request.Password != request.PasswordConfirmation)
             {
-                throw new ValidationException("Passwords do not match!");
+                throw new ValidationException(ValidationMessages.PasswordsDoNotMatch);
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
@@ -133,7 +134,7 @@ namespace CBSWebshopSeminarski.Services.Services
                 {
                     if (request.Password != request.PasswordConfirmation)
                     {
-                        throw new ValidationException("Passwords do not match!");
+                        throw new ValidationException(ValidationMessages.PasswordsDoNotMatch);
                     }
 
                     entity.PasswordSalt = GenerateSalt();
@@ -260,7 +261,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (request.Password != request.PasswordConfirmation)
             {
-                throw new ValidationException("Passwords do not match!");
+                throw new ValidationException(ValidationMessages.PasswordsDoNotMatch);
             }
 
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))

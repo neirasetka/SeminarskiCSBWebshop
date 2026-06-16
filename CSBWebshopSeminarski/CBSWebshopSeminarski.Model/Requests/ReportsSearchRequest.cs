@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -7,7 +8,7 @@ namespace CBSWebshopSeminarski.Model.Requests
         public DateTime? FromDateUtc { get; set; }
         public DateTime? ToDateUtc { get; set; }
 
-        [Range(1, 10_000, ErrorMessage = "Take must be between 1 and 10000 when provided.")]
+        [Range(1, 10_000, ErrorMessage = ValidationMessages.ReportsTakeRange)]
         public int? Take { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -15,7 +16,7 @@ namespace CBSWebshopSeminarski.Model.Requests
             if (FromDateUtc.HasValue && ToDateUtc.HasValue && ToDateUtc.Value < FromDateUtc.Value)
             {
                 yield return new ValidationResult(
-                    "ToDateUtc must be on or after FromDateUtc.",
+                    "ToDateUtc mora biti jednak ili nakon FromDateUtc.",
                     new[] { nameof(ToDateUtc) });
             }
         }

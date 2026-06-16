@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations;
 namespace CBSWebshopSeminarski.Model
 {
     /// <summary>
-    /// Shared cross-field validation: exactly one of BagID or BeltID must be set.
+    /// Zajednička cross-field validacija: tačno jedno od BagID ili BeltID mora biti postavljeno.
     /// </summary>
     public static class BagOrBeltReferenceValidation
     {
         public static IEnumerable<ValidationResult> ValidateExactlyOne(
             int? bagId,
             int? beltId,
-            string entityName = "Record")
+            string entityName = "Zapis")
         {
             var normalizedBagId = bagId is > 0 ? bagId : null;
             var normalizedBeltId = beltId is > 0 ? beltId : null;
@@ -18,14 +18,14 @@ namespace CBSWebshopSeminarski.Model
             if (!normalizedBagId.HasValue && !normalizedBeltId.HasValue)
             {
                 yield return new ValidationResult(
-                    $"{entityName} must have either BagID or BeltID.",
+                    $"{entityName} mora referencirati ili torbu ili kaiš.",
                     new[] { nameof(bagId), nameof(beltId) });
             }
 
             if (normalizedBagId.HasValue && normalizedBeltId.HasValue)
             {
                 yield return new ValidationResult(
-                    $"{entityName} cannot specify both BagID and BeltID.",
+                    $"{entityName} ne smije referencirati i torbu i kaiš istovremeno.",
                     new[] { nameof(bagId), nameof(beltId) });
             }
         }

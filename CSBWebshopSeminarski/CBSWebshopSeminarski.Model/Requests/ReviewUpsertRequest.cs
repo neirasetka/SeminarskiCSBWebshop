@@ -11,9 +11,9 @@ namespace CBSWebshopSeminarski.Model.Requests
         public int? BagID { get; set; }
         public int? BeltID { get; set; }
 
-        [Required(ErrorMessage = "Comment is required.")]
-        [MinLength(3, ErrorMessage = "Comment must be at least 3 characters long.")]
-        [MaxLength(1000, ErrorMessage = "A comment can have a maximum of 1000 characters.")]
+        [Required(ErrorMessage = ValidationMessages.CommentRequired)]
+        [MinLength(3, ErrorMessage = ValidationMessages.CommentMinLength)]
+        [MaxLength(1000, ErrorMessage = ValidationMessages.CommentMaxLength)]
         public string Comment { get; set; } = null!;
 
         /// <summary>Opcionalno u POST-u — server postavlja UTC sada ako nije poslano.</summary>
@@ -21,7 +21,7 @@ namespace CBSWebshopSeminarski.Model.Requests
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Review"))
+            foreach (var result in BagOrBeltReferenceValidation.ValidateExactlyOne(BagID, BeltID, "Recenzija"))
             {
                 yield return result;
             }

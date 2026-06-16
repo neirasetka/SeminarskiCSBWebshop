@@ -38,9 +38,9 @@ namespace CBSWebshopSeminarski.Services.Services
         public void Publish(string sender, string recipient, string subject, string content)
         {
             if (string.IsNullOrWhiteSpace(recipient))
-                throw new ValidationException("Recipient is required.");
+                throw new ValidationException("Primatelj je obavezan.");
             if (string.IsNullOrWhiteSpace(subject))
-                throw new ValidationException("Subject is required.");
+                throw new ValidationException("Naslov emaila je obavezan.");
 
             lock (_sync)
             {

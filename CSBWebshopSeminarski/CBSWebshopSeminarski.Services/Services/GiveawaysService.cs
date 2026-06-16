@@ -44,7 +44,7 @@ namespace CBSWebshopSeminarski.Services.Services
                     case "all":
                         break;
                     default:
-                        throw new ValidationException("Invalid status. Use one of: active, closed, all");
+                        throw new ValidationException(ValidationMessages.GiveawayStatusFilterValues);
                 }
             }
 
@@ -131,7 +131,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (string.IsNullOrWhiteSpace(title))
             {
-                throw new ValidationException("Title is required.");
+                throw new ValidationException(ValidationMessages.TitleRequired);
             }
             //Normalize to UTC
             var startUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Utc).ToUniversalTime();
@@ -139,7 +139,7 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (endUtc <= startUtc)
             {
-                throw new ValidationException("EndDate must be after StartDate");
+                throw new ValidationException("Datum kraja mora biti nakon datuma početka.");
             }
             var giveaway = new Giveaways
             {
@@ -185,19 +185,19 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (string.IsNullOrWhiteSpace(email))
             {
-                throw new ValidationException("Email is required.");
+                throw new ValidationException(ValidationMessages.EmailRequired);
             }
             if (email.Length > 254)
             {
-                throw new ValidationException("Email too long.");
+                throw new ValidationException("Email može imati najviše 254 znaka.");
             }
             try
             {
-                var _ = new EmailAddressAttribute().IsValid(email) ? true : throw new ValidationException("Invalid email format.");
+                var _ = new EmailAddressAttribute().IsValid(email) ? true : throw new ValidationException(ValidationMessages.EmailInvalid);
             }
             catch
             {
-                throw new ValidationException("Invalid email format.");
+                throw new ValidationException(ValidationMessages.EmailInvalid);
             }
 
             var normalizedEmail = email.Trim().ToLowerInvariant();

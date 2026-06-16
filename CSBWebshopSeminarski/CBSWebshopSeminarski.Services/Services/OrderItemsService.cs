@@ -162,7 +162,7 @@ namespace CBSWebshopSeminarski.Services.Services
             }
             else
             {
-                throw new ValidationException("Order item must reference a bag or a belt.");
+                throw new ValidationException("Stavka narudžbe mora referencirati ili torbu ili kaiš.");
             }
 
             if (request.Price.Value <= 0)

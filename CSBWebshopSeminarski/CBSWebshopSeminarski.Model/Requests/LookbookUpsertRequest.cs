@@ -1,23 +1,24 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class LookbookUpsertRequest
     {
-        [Required(ErrorMessage = "Title is required.")]
-        [MinLength(2, ErrorMessage = "Title must be at least 2 characters long.")]
-        [MaxLength(200, ErrorMessage = "Title can be up to 200 characters.")]
+        [Required(ErrorMessage = ValidationMessages.TitleRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.TitleMinLength)]
+        [MaxLength(200, ErrorMessage = ValidationMessages.TitleMaxLength)]
         public string? Title { get; set; }
-        
-        [MaxLength(500, ErrorMessage = "Caption can have a maximum of 500 characters.")]
+
+        [MaxLength(500, ErrorMessage = ValidationMessages.CaptionMaxLength500)]
         public string? Caption { get; set; }
-        
-        [MaxLength(300, ErrorMessage = "Tags can have a maximum of 300 characters.")]
+
+        [MaxLength(300, ErrorMessage = ValidationMessages.TagsMaxLength)]
         public string? Tags { get; set; }
-        
-        [Range(1, int.MaxValue, ErrorMessage = "The order must be a positive number.")]
+
+        [Range(1, int.MaxValue, ErrorMessage = ValidationMessages.DisplayOrderPositive)]
         public int? SortOrder { get; set; }
-        
+
         public bool IsFeatured { get; set; }
         public byte[]? Image { get; set; }
         public int? BagID { get; set; }

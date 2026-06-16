@@ -1,3 +1,4 @@
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
 using CBSWebshopSeminarski.Services.StateMachines;
@@ -264,7 +265,7 @@ namespace CBSWebshopSeminarski.Services.Services
             bool isAdmin)
         {
             if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ValidationException("SessionId is required.");
+                throw new ValidationException(ValidationMessages.SessionIdRequired);
 
             var sessionService = new SessionService();
             Session session;
@@ -312,7 +313,7 @@ namespace CBSWebshopSeminarski.Services.Services
             bool isAdmin)
         {
             if (string.IsNullOrWhiteSpace(paymentIntentId))
-                throw new ValidationException("PaymentIntentId is required.");
+                throw new ValidationException(ValidationMessages.PaymentIntentIdRequired);
 
             var paymentIntentService = new PaymentIntentService();
             PaymentIntent paymentIntent;

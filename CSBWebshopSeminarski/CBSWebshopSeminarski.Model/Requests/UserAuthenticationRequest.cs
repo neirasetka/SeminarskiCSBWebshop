@@ -1,13 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
     public class UserAuthenticationRequest
     {
-        [Required(ErrorMessage = "Username is required.")]
+        [Required(ErrorMessage = ValidationMessages.UsernameRequired)]
         public string UserName { get; set; } = null!;
-        
-        [Required(ErrorMessage = "Password is required.")]
+
+        [Required(ErrorMessage = ValidationMessages.PasswordRequired)]
         public string Password { get; set; } = null!;
     }
 }

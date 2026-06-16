@@ -1,4 +1,5 @@
 using AutoMapper;
+using CBSWebshopSeminarski.Model;
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
@@ -86,11 +87,11 @@ namespace CBSWebshopSeminarski.Services.Services
 
             if (!request.BagID.HasValue && !request.BeltID.HasValue)
             {
-                throw new ValidationException("Either BagID or BeltID must be set.");
+                throw new ValidationException("Outfit ideja mora referencirati ili torbu ili kaiš.");
             }
             if (request.BagID.HasValue && request.BeltID.HasValue)
             {
-                throw new ValidationException("Only one of BagID or BeltID should be set.");
+                throw new ValidationException("Outfit ideja ne smije referencirati i torbu i kaiš istovremeno.");
             }
 
             var userExists = await _context.Users.AnyAsync(u => u.UserID == request.UserID);
@@ -129,7 +130,7 @@ namespace CBSWebshopSeminarski.Services.Services
         {
             if (request.UserID < 1)
             {
-                throw new ValidationException("UserID must be a valid positive integer.");
+                throw new ValidationException(ValidationMessages.UserIdValid);
             }
 
             if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length < 2)

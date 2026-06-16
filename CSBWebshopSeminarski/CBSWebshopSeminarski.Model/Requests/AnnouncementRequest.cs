@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CBSWebshopSeminarski.Model;
 
 namespace CBSWebshopSeminarski.Model.Requests
 {
@@ -11,23 +12,23 @@ namespace CBSWebshopSeminarski.Model.Requests
 
     public class AnnouncementRequest
     {
-        [Required(ErrorMessage = "Title is required.")]
-        [MinLength(2, ErrorMessage = "Title must be at least 2 characters long.")]
+        [Required(ErrorMessage = ValidationMessages.TitleRequired)]
+        [MinLength(2, ErrorMessage = ValidationMessages.TitleMinLength)]
         public string? Subject { get; set; }
-        
-        [Required(ErrorMessage = "Message content is required.")]
-        [MinLength(10, ErrorMessage = "Message content must be at least 10 characters long.")]
+
+        [Required(ErrorMessage = ValidationMessages.MessageContentRequired)]
+        [MinLength(10, ErrorMessage = ValidationMessages.MessageContentMinLength)]
         public string? Body { get; set; }
-        
+
         public string? TemplateKey { get; set; }
         public Dictionary<string, string>? Variables { get; set; }
         public AnnouncementSegment Segment { get; set; } = AnnouncementSegment.AllSubscribers;
         public DateTime? LaunchDate { get; set; }
         public string? ProductName { get; set; }
-        
-        [Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = "Price must be greater than 0.")]
+
+        [Range(typeof(decimal), "0.01", "79228162514264337593543950335", ErrorMessage = ValidationMessages.PriceGreaterThanZero)]
         public decimal? Price { get; set; }
-        
+
         public string? Color { get; set; }
     }
 }
