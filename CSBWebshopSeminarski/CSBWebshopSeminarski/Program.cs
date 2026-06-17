@@ -1,6 +1,7 @@
 using CBSWebshopSeminarski.Model.Models;
 using CBSWebshopSeminarski.Model.Requests;
 using CBSWebshopSeminarski.Services.Interfaces;
+using CBSWebshopSeminarski.Services.RabbitMq;
 using CBSWebshopSeminarski.Services.Services;
 using CSBWebshopSeminarski;
 using CSBWebshopSeminarski.Core.Entities;
@@ -127,7 +128,7 @@ builder.Services.AddTransient<IReviewsService, ReviewsService>();
 builder.Services.AddTransient<ICRUDService<Purchase, PurchaseSearchRequest, PurchaseUpsertRequest, PurchaseUpsertRequest>, PurchasesService>();
 builder.Services.AddTransient<IOrderService, OrdersService>();
 
-builder.Services.AddSingleton<RabbitMqMailPublisher>();
+builder.Services.AddRabbitMqMailInfrastructure(connectionClientName: "CSB Mail Producer", channelPoolSize: 2);
 builder.Services.AddTransient<ICRUDService<OrderItem, OrderItemSearchRequest, OrderItemUpsertRequest, OrderItemUpsertRequest>, OrderItemsService>();
 builder.Services.AddTransient<IRatesService, RatesService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
@@ -257,48 +258,8 @@ using (var scope = app.Services.CreateScope())
         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("StartupSeeding");
 
-        // Idempotent schema patches run before EF migrate so legacy DBs stay usable even when
-        // MigrateAsync fails (e.g. pending model changes block new migrations).
-        await context.Database.ExecuteSqlRawAsync(
-            OrderItemsSchemaCompatibility.EnsureOrderItemsBagOrBeltColumnsNullableSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            OrdersSchemaCompatibility.EnsurePaymentConfirmationEmailSentColumnSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            OrdersSchemaCompatibility.EnsureStripePaymentRefColumnsSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            OrdersSchemaCompatibility.EnsureOrderCancellationColumnsSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            PurchasesSchemaCompatibility.EnsureUniquePurchaseOrderIdIndexSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            ProductBagBeltSchemaCompatibility.EnsureReviewsRatesFavoritesBagOrBeltXorSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            BusinessIdentifiersSchemaCompatibility.EnsureBusinessIdentifierUniqueIndexesSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            PasswordResetTokensSchemaCompatibility.EnsurePasswordResetTokensTableSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            NotificationsSchemaCompatibility.EnsureNotificationsTableSql);
-
-        await context.Database.ExecuteSqlRawAsync(
-            UsersSchemaCompatibility.EnsureUserSoftDeleteColumnsSql);
-
-        try
-        {
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception migrateEx)
-        {
-            logger.LogWarning(migrateEx,
-                "EF migrations could not be applied (pending model changes or migration conflict). " +
-                "Idempotent schema patches above were still applied.");
-        }
+        // Migrate first (creates database + tables on fresh Docker volumes), then legacy patches.
+        await DatabaseBootstrap.ApplyMigrationsAndSchemaPatchesAsync(context, logger);
 
         // Ensure roles
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");

@@ -1,3 +1,5 @@
+using CBSWebshopSeminarski.Services.RabbitMq;
+
 namespace CSBWebshopSeminarski.Notifications
 {
     public class Program
@@ -7,6 +9,7 @@ namespace CSBWebshopSeminarski.Notifications
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
+                    services.AddRabbitMqConnection(connectionClientName: "CSB Mail Consumer");
                     services.AddHostedService<RabbitMqEmailConsumer>();
                 })
                 .Build()

@@ -16,7 +16,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   csb_sqlserver:
-    image: mcr.microsoft.com/mssql/server
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: ib180005_sqlserver
     restart: unless-stopped
     ports:
@@ -24,10 +24,21 @@ services:
     environment:
       SA_PASSWORD: ${SQL_SA_PASSWORD:-YourStrongPassword!}
       ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
     volumes:
       - sqlserverdata:/var/opt/mssql
     networks:
       - csb_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$SA_PASSWORD\" -C -Q \"SELECT 1\" -b -o /dev/null || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   csb_webapi:
     restart: unless-stopped
@@ -51,8 +62,10 @@ services:
     networks:
       - csb_network
     depends_on:
-      - csb_sqlserver
-      - rabbitMQ
+      csb_sqlserver:
+        condition: service_healthy
+      rabbitMQ:
+        condition: service_started
 
   csb_notifications:
     restart: unless-stopped
@@ -68,9 +81,12 @@ services:
       # SMTP credentials come from appsettings.json in local Docker dev.
       # For production, set SMTP_USERNAME/SMTP_PASSWORD in .env (see .env.example).
     depends_on:
-      - csb_sqlserver
-      - csb_webapi
-      - rabbitMQ
+      csb_sqlserver:
+        condition: service_healthy
+      csb_webapi:
+        condition: service_started
+      rabbitMQ:
+        condition: service_started
     networks:
       - csb_network
 

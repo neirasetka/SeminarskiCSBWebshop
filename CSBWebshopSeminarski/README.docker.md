@@ -1,33 +1,61 @@
-Building and running your application
-Before starting, create a `.env` file in the same folder as `docker-compose.yml` and define:
-- `SQL_SA_PASSWORD`
-- `SMTP_SERVER`
-- `SMTP_PORT`
-- `SMTP_USERNAME`
-- `SMTP_PASSWORD`
+# Docker — pokretanje CSB Webshop API-ja
 
-When you're ready, start your application by running from the root folder where `docker-compose.yml` file is located:
-`docker compose up --build`
+## Priprema
 
-Your application will be available at http://localhost:8080.
+U folderu gdje je `docker-compose.yml` kreiraj `.env` (vidi `.env.example`):
 
-After running the `docker compose up` command, connect to SQL Server via SSMS and restore your backup.
+- `SQL_SA_PASSWORD` — lozinka za SQL Server `sa` korisnika
+- `JWT_KEY` — min. 32 znaka (za JWT u Dockeru)
+- opciono: `SMTP_*`, `STRIPE_SECRET_KEY`, `RABBITMQ_*`
 
-First create backup folder in the SQL Server container:
-`docker exec -it ib180005_sqlserver mkdir -p /var/opt/mssql/backup`
+## Pokretanje
 
-Then copy the backup file to the created folder:
-`docker cp /your-local/path/backup_file ib180005_sqlserver:/var/opt/mssql/backup/`
+```bash
+docker compose up -d --build
+```
 
-After the backup is copied, restore it via SSMS.
+Servisi:
 
-Deploying your application to the cloud
-First, build your image, e.g.: docker build -t myapp .. If your cloud uses a different CPU architecture than your development machine (e.g., you are on a Mac M1 and your cloud provider is amd64), you'll want to build the image for that platform, e.g.: docker build --platform=linux/amd64 -t myapp ..
+| Servis | URL / port |
+|--------|------------|
+| API | http://localhost:8080 |
+| RabbitMQ management | http://localhost:15672 |
+| SQL Server | localhost:1433 |
 
-Then, push it to your registry, e.g. docker push myregistry.com/myapp.
+## Baza podataka (automatski)
 
-Consult Docker's getting started docs for more detail on building and pushing.
+Pri **prvom** pokretanju (ili nakon `docker compose down -v`) API:
 
-References
-Docker's .NET guide
-The dotnet-docker repository has many relevant samples and docs.
+1. čeka da SQL Server bude spreman
+2. pokreće EF migracije (`Database.Migrate`) — **kreira bazu `180005` i tabele**
+3. seeda uloge, admin korisnika i demo podatke
+
+**Admin prijava (seed):**
+
+- korisničko ime: `admin`
+- lozinka: `Admin123!` (ili vrijednost iz `AdminSeed:Password` u konfiguraciji)
+
+Ručni restore backupa **nije potreban** za seminarski/demo Docker setup.
+
+### Ako prijava ne radi nakon restarta
+
+1. Provjeri log API-ja: `docker logs ib180005_api --tail 80`
+   - trebaš vidjeti `Database migrations applied successfully.`
+2. Ako si pokrenula `docker compose down -v`, volumen je obrisan — baza se ponovo kreira pri sljedećem `up` (može trajati ~1 min).
+3. Rebuild API-ja nakon promjena koda: `docker compose up -d --build csb_webapi csb_notifications`
+
+## Zaustavljanje
+
+```bash
+docker compose down
+```
+
+Podaci u bazi **ostaju** (volume `sqlserverdata`).
+
+Za potpuno čist start (briše bazu):
+
+```bash
+docker compose down -v
+```
+
+Sljedeći `docker compose up` ponovo kreira bazu i seed.
