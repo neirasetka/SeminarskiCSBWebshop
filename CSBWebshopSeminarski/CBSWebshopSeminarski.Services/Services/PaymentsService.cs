@@ -735,7 +735,7 @@ namespace CBSWebshopSeminarski.Services.Services
             {
                 throw new BusinessException(
                     "Stripe plaćanje nije konfigurirano na serveru. Postavite Stripe:SecretKey " +
-                    "(npr. u appsettings.Development.json ili STRIPE_SECRET_KEY u .env za Docker).");
+                    "(.env iz .env-tajne.zip, user-secrets ili environment varijable za lokalni razvoj).");
             }
 
             if (!string.IsNullOrWhiteSpace(secretKey))
